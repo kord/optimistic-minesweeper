@@ -14,7 +14,7 @@ interface Boardstate {
     flaggedLocs: Set<string>,
 }
 
-class Board extends Component<BoardProps, Boardstate> {
+class MinesweeperBoard extends Component<BoardProps, Boardstate> {
     constructor(props: BoardProps) {
         super(props);
         this.state = {
@@ -38,13 +38,15 @@ class Board extends Component<BoardProps, Boardstate> {
 
     // Ignore the click if the user has clicked on a flagged square.
     visitFn = (loc: BoardLoc) => {
+        console.log(`visiting ${loc.toString()}`)
+
+        let lastVisitResult = this.props.gameProvider.lastVisitResult(loc);
         // No need to revisit, ever.
-        if (this.props.gameProvider.lastVisitResult(loc).everVisited) return;
-        // Don't visit a flagged spot, even if we know full well it's safe.
+        if (!lastVisitResult.onBoard || lastVisitResult.everVisited) return;
+
+        // Don't visit a flagged spot, even if we have the information to know full well it's safe.
         if (this.state.flaggedLocs.has(loc.toString())) return;
 
-
-        if (this.state.flaggedLocs.has(loc.toString())) return;
         const result = this.props.visitFn(loc);
         if (!result.containsMine && result.neighboursWithMine === 0) {
             loc.neighbours.forEach(this.visitFn);
@@ -78,4 +80,4 @@ class Board extends Component<BoardProps, Boardstate> {
     }
 }
 
-export default Board;
+export default MinesweeperBoard;

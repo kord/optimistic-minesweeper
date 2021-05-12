@@ -5,11 +5,20 @@ export interface BoardSize {
     width: number,
 }
 
+export interface FixedBoardMinesweeperConfig {
+    size: BoardSize,
+    mineCount: number,
+}
+
 export interface MineTestResult {
-    onBoard: boolean,
-    everVisited: boolean,
     locationName: string,
     location: BoardLoc,
+    onBoard: boolean,
+    everVisited: boolean,
+    onFrontLandscape: boolean,
+    visitedNeighbourCount: number,
+
+    // These are only provided if a test has been conducted on the tested location.
     containsMine?: boolean,
     neighboursWithMine?: number,
 }
@@ -30,23 +39,36 @@ export interface iMinesweeperGameProvider {
     // Just to iterate over the places on the board for our view.
     locations: BoardLoc[],
     // Convenient to check if a location is on the board.
-    onBoard : (loc: BoardLoc) => boolean,
+    onBoard: (loc: BoardLoc) => boolean,
+    // Game Over
+    gameOver: boolean,
 }
 
-export abstract class MinimalProvider {
+export abstract class MinimalProvider extends EventTarget {
+    // These provide information that, once provided, is irrevoccable. We have to maintain consistency with the data
+    // in these to show a coherent world to the player.
     private visitResults: Map<string, FactualMineTestResult> = new Map<string, FactualMineTestResult>();
+    private frontLandscape: Set<string> = new Set<string>();
 
     constructor(public readonly size: BoardSize) {
+        super();
         console.assert(Number.isInteger(size.height) && size.height > 0);
         console.assert(Number.isInteger(size.width) && size.width > 0);
-        // TODO: Generate a board.
+
+        this._gameOver = false;
+    }
+
+    private _gameOver: boolean;
+
+    get gameOver(): boolean {
+        return this._gameOver;
     }
 
     public get locations(): BoardLoc[] {
         const ret: BoardLoc[] = [];
         for (let row = 0; row < this.size.height; row++) {
             for (let col = 0; col < this.size.width; col++) {
-                ret.push(new BoardLoc(row,col));
+                ret.push(new BoardLoc(row, col));
             }
         }
         return ret;
@@ -57,28 +79,20 @@ export abstract class MinimalProvider {
 
     public lastVisitResult(loc: BoardLoc): MineTestResult {
         const locString = loc.toString();
-        if (!this.onBoard(loc)) return {
-            onBoard: false,  // !!
-            everVisited: false,
-            locationName: locString,
-            location: loc,
-        };
-
         const lastVisit = this.visitResults.get(locString);
-        if (lastVisit) return {
-            onBoard: true,
-            everVisited: true,
-            locationName: locString,
+        const visitedNeighbours = loc.neighbours.filter(nloc => this.visitResults.has(nloc.toString()));
+
+        let ret = {
             location: loc,
+            locationName: locString,
+            onBoard: this.onBoard(loc),
+            onFrontLandscape: this.frontLandscape.has(locString),
+            everVisited: !!lastVisit,
+            visitedNeighbourCount: visitedNeighbours.length,
             ...lastVisit,
         };
 
-        return {
-            everVisited: false,  // !!
-            locationName: locString,
-            location: loc,
-            onBoard: true,
-        }
+        return ret;
     }
 
     public visit(loc: BoardLoc): MineTestResult {
@@ -89,10 +103,32 @@ export abstract class MinimalProvider {
         // Actually do the visit in the provider that extends this class.
         const result = this.performVisit(loc);
 
+        // Update the front landscape to exclude the visited location and include the unvisited neighbours of that
+        // location.
+        this.frontLandscape.delete(loc.toString());
+        loc.neighbours.forEach(nloc => {
+            const nlocstr = nloc.toString();
+            if (this.onBoard(nloc) && !this.visitResults.has(nlocstr)) {
+                this.frontLandscape.add(nlocstr);
+            }
+        });
+        console.log(`frontLandscape has size ${this.frontLandscape.size}`)
+
+        // Release an event for the visit occurring.
+        this.dispatchEvent(
+            new CustomEvent('visit', {
+                detail: {
+                    visitedLocation: loc,
+                }
+            })
+        )
+
+
         this.visitResults.set(lastVisit.locationName, result);
         return this.lastVisitResult(loc);
     }
 
+    // Is a given location even on the board.
     public onBoard(loc: BoardLoc): boolean {
         return loc.row >= 0 && loc.col >= 0 && loc.row < this.size.height && loc.col < this.size.width;
     }

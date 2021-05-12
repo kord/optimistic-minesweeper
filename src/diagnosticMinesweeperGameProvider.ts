@@ -6,7 +6,7 @@ import {
 } from "./gameProvider";
 import {BoardLoc} from "./boardLoc";
 
-class BasicMinesweeperGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
+class DiagnosticMinesweeperGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private readonly minelocs = new Set<number>();
 
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
@@ -40,4 +40,4 @@ class BasicMinesweeperGameProvider extends MinimalProvider implements iMinesweep
 
 }
 
-export default BasicMinesweeperGameProvider;
+export default DiagnosticMinesweeperGameProvider;

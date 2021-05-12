@@ -1,13 +1,15 @@
-import {BoardSize, iMinesweeperGameProvider, FactualMineTestResult, MinimalProvider} from "./gameProvider";
+import {
+    BoardSize,
+    iMinesweeperGameProvider,
+    FactualMineTestResult,
+    MinimalProvider,
+    FixedBoardMinesweeperConfig
+} from "./gameProvider";
 import {BoardLoc} from "./boardLoc";
 
 
-export interface AlwaysMineMinesweeperGameProviderConfig {
-    size: BoardSize,
-}
-
-export class AlwaysMineMinesweeperGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
-    constructor(public readonly config: AlwaysMineMinesweeperGameProviderConfig) {
+class AlwaysMineMinesweeperGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
+    constructor(public readonly config: FixedBoardMinesweeperConfig) {
         super(config.size);
     }
 
@@ -17,3 +19,5 @@ export class AlwaysMineMinesweeperGameProvider extends MinimalProvider implement
         }
     }
 }
+
+export default AlwaysMineMinesweeperGameProvider;
