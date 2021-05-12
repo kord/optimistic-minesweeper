@@ -1,17 +1,15 @@
+import {BoardLoc} from "./boardLoc";
+
 export interface BoardSize {
     height: number,
     width: number,
-}
-
-export interface BoardLoc {
-    row: number,
-    col: number,
 }
 
 export interface MineTestResult {
     onBoard: boolean,
     everVisited: boolean,
     locationName: string,
+    location: BoardLoc,
     containsMine?: boolean,
     neighboursWithMine?: number,
 }
@@ -31,10 +29,11 @@ export interface iMinesweeperGameProvider {
     lastVisitResult: (loc: BoardLoc) => MineTestResult,
     // Just to iterate over the places on the board for our view.
     locations: BoardLoc[],
+    // Convenient to check if a location is on the board.
+    onBoard : (loc: BoardLoc) => boolean,
 }
 
 export abstract class MinimalProvider {
-    private static boardLocMatcher = new RegExp(`^([0-9]+)-([0-9]+)$`);
     private visitResults: Map<string, FactualMineTestResult> = new Map<string, FactualMineTestResult>();
 
     constructor(public readonly size: BoardSize) {
@@ -47,33 +46,22 @@ export abstract class MinimalProvider {
         const ret: BoardLoc[] = [];
         for (let row = 0; row < this.size.height; row++) {
             for (let col = 0; col < this.size.width; col++) {
-                ret.push({row: row, col: col});
+                ret.push(new BoardLoc(row,col));
             }
         }
         return ret;
     }
 
-    public static stringToLoc(str: string): BoardLoc | undefined {
-        let test = this.boardLocMatcher.exec(str);
-        if (test) {
-            return {
-                row: +test[1],
-                col: +test[2],
-            }
-        }
-    }
-
-    private static locToString = (loc: BoardLoc) => `${loc.row}-${loc.col}`;
-
     // This needs to be implemented by any subclass.
     public abstract performVisit(loc: BoardLoc): FactualMineTestResult;
 
     public lastVisitResult(loc: BoardLoc): MineTestResult {
-        const locString = MinimalProvider.locToString(loc);
+        const locString = loc.toString();
         if (!this.onBoard(loc)) return {
             onBoard: false,  // !!
             everVisited: false,
             locationName: locString,
+            location: loc,
         };
 
         const lastVisit = this.visitResults.get(locString);
@@ -81,12 +69,14 @@ export abstract class MinimalProvider {
             onBoard: true,
             everVisited: true,
             locationName: locString,
+            location: loc,
             ...lastVisit,
         };
 
         return {
             everVisited: false,  // !!
             locationName: locString,
+            location: loc,
             onBoard: true,
         }
     }
@@ -103,7 +93,7 @@ export abstract class MinimalProvider {
         return this.lastVisitResult(loc);
     }
 
-    private onBoard(loc: BoardLoc): boolean {
+    public onBoard(loc: BoardLoc): boolean {
         return loc.row >= 0 && loc.col >= 0 && loc.row < this.size.height && loc.col < this.size.width;
     }
 }

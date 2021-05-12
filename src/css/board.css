@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@900&display=swap');
+
+.minesweeper-game {
+
+}
+
+.board {
+    /* Injected variables */
+    --rows: 'number of rows in the puzzle';
+    --cols: 'number of cols in the puzzle';
+    --cell-size: 40px;
+
+}
+
+.board__grid {
+    display: grid;
+    grid-template-rows: repeat(var(--rows), var(--cell-size));
+    grid-template-columns: repeat(var(--cols), var(--cell-size));
+
+}
+
+.game-square {
+    border: solid gray 1px;
+    cursor: pointer;
+    background-color: lightgray;
+}
+
+.game-square--flagged,
+.game-square--pristine {
+    --border-width: calc(var(--cell-size) * .1);
+    border: outset white var(--border-width);
+}
+
+.game-square--pristine:hover {
+    background-color: grey;
+}
+
+.game-square--neighbours-known {
+    --size: calc(var(--cell-size) * .9);
+    font-family: 'Roboto Slab', serif;
+    font-size: var(--size);
+    line-height: var(--size);
+}
+
+.game-square--flagged {
+    background-image: url("../img/flag-1.svg");
+    background-size: 80%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.game-square--killer-mine {
+    background-color: red;
+    background-image: url("../img/mine-5.svg");
+    background-size: 80%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
