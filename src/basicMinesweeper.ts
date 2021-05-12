@@ -1,15 +1,19 @@
-import {BoardLoc, BoardSize, iMineSweeperGameProvider, MineTestResult} from "./gameProvider";
+import {BoardLoc, BoardSize, iMinesweeperGameProvider, FactualMineTestResult, MinimalProvider} from "./gameProvider";
 
 
-export class FixedBoardMinesweeper implements iMineSweeperGameProvider {
-    constructor(public readonly size: BoardSize) {
-        console.assert(Number.isInteger(size.height) && size.height > 0);
-        console.assert(Number.isInteger(size.width) && size.width > 0);
+export interface FixedBoardMinesweeperConfig {
+    size: BoardSize,
+    mineCount?: number,
+}
 
-        // TODO: Generate a board.
+export class AlwaysMineMinesweeperGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
+    constructor(public readonly config: FixedBoardMinesweeperConfig) {
+        super(config.size);
     }
 
-    public visit(loc: BoardLoc) : MineTestResult {
-
+    public performVisit(loc: BoardLoc): FactualMineTestResult {
+        return {
+            containsMine: true,
+        }
     }
 }
