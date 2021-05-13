@@ -67,8 +67,8 @@
     background-size: 90%;
 }
 
-.game-square--on-frontier {
-    border-width: 2px;
+.game-square--on-frontier-and-unknown {
+    background-color: lightgoldenrodyellow;
 }
 
 .game-square--known-non-mine {

@@ -28,11 +28,15 @@ export class BoardLoc {
 
     public static locToString = (loc: BoardLoc) => `${loc.row}-${loc.col}`;
 
+    static fromNumber(locnum: number, size: BoardSize): BoardLoc {
+        return new BoardLoc(Math.floor(locnum / size.width), locnum % size.width);
+    }
+
     public toString(): string {
         return `${this.row}-${this.col}`;
     }
 
-    static fromNumber(locnum: number, size: BoardSize) : BoardLoc {
-        return new BoardLoc(Math.floor(locnum / size.width), locnum % size.width);
+    public toNumber(size: BoardSize) {
+        return size.width * this.row + this.col;
     }
 }

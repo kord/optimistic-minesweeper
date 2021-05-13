@@ -23,7 +23,7 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
 
     hasMine = (loc: BoardLoc) => {
         if (!this.onBoard(loc)) return false;
-        return this.minelocs.has(this.numberLocRep(loc));
+        return this.minelocs.has(loc.toNumber(this.size));
     }
 
     private firstMoveMade = false;

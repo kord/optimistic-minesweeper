@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./gameProviders/gameProvider";
+import {BoardSize, FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./gameProviders/gameProvider";
 import BasicGameProvider from "./gameProviders/basicGameProvider";
 import Board from "./board";
 import {BoardLoc} from "./boardLoc";
@@ -38,10 +38,10 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         super(props);
 
         // Just a basic default config to start the page with.
-        const config: FixedBoardMinesweeperConfig = {
-            size: {height: 10, width: 10},
+        const config = {
+            size: new BoardSize(10, 10),
             mineCount: 20,
-        }
+        } as FixedBoardMinesweeperConfig;
 
         this.state = {
             gameProvider: new DiagnosticGameProvider(config),
@@ -90,11 +90,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             return;
         }
 
+        const boardSize = new BoardSize(+this.state.userHeight,+this.state.userWidth);
         const config = {
-            size: {
-                height: +this.state.userHeight,
-                width: +this.state.userWidth,
-            },
+            size: boardSize,
             mineCount: +this.state.userMineCount,
         } as FixedBoardMinesweeperConfig;
 

@@ -5,19 +5,18 @@ import {
     MinimalProvider
 } from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
-import assert from "assert";
+import {FrontierKnowledge} from "./frontierKnowledge";
 
 class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private minelocs = new Set<number>();
-    private frontier: Set<number> = new Set<number>();
-    private requiredMines = new Set<number>();
-    private requiredNonMines = new Set<number>();
+    private frontierKnowledge: FrontierKnowledge;
     private firstMoveMade = false;
     private movesMade: number = 0;
     private mineVisited: boolean = false;
 
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
         super(config.size);
+        this.frontierKnowledge = new FrontierKnowledge(this.size);
         this.rewriteStaticMineLocations();
         console.assert(this.config.mineCount && this.config.mineCount > 0 && this.config.mineCount < this.numLocs);
     }
@@ -26,9 +25,13 @@ class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGame
         return this.config.mineCount;
     }
 
+    get success(): boolean {
+        return this.config.mineCount + this.movesMade === this.numLocs && !this.mineVisited;
+    }
+
     hasMine = (loc: BoardLoc) => {
         if (!this.onBoard(loc)) return false;
-        const locNumber = this.numberLocRep(loc);
+        const locNumber = loc.toNumber(this.size);
         return this.minelocs.has(locNumber);
     }
 
@@ -41,7 +44,7 @@ class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGame
 
     public performVisit(loc: BoardLoc): FactualMineTestResult {
         // Svelte representation used in here.
-        const locNum = this.numberLocRep(loc);
+        const locNum = loc.toNumber(this.size);
 
         // This demonstrates how we can change the board setup just in time after the user tries to visit somewhere.
         while (!this.firstMoveMade && this.hasMine(loc)) {
@@ -54,26 +57,28 @@ class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGame
         let neighboursWithMine = 0;
         loc.neighbours.forEach(nloc => neighboursWithMine += this.hasMine(nloc) ? 1 : 0);
 
-        // Update the front landscape to exclude the visited location and include the unvisited neighbours of that
-        // location.
-        this.frontier.delete(locNum);
-        loc.neighbours.forEach(nloc => {
-            const nlocNum = this.numberLocRep(nloc);
-            if (this.onBoard(nloc) && !this.visitResults.has(nlocNum)) {
-                this.frontier.add(nlocNum);
-            }
-        });
+        //
+        // this.frontier.delete(locNum);
+        // loc.neighbours.forEach(nloc => {
+        //     const nlocNum = loc.toNumber(this.size);
+        //     if (this.onBoard(nloc) && !this.visitResults.has(nlocNum)) {
+        //         this.frontier.add(nlocNum);
+        //     }
+        // });
 
         const isMine = this.hasMine(loc);
-        if (this.requiredMines.has(locNum)) {
+        if (this.frontierKnowledge.isRequiredMine(loc)) {
             console.log(`It's about to blow, and we know it!`);
-            assert(isMine);
+            console.assert(isMine);
         }
-        if (this.requiredNonMines.has(locNum)) {
-            console.log(`You didn't get lucky, you could have known ${loc.toString()} is not a mine.`)
-            this.frontier.delete(locNum);
-            this.requiredNonMines.delete(locNum);
+        if (this.frontierKnowledge.isRequiredEmpty(loc)) {
+            console.log(`Good pick. You could have known ${loc.toString()} is not a mine.`)
         }
+
+        // Update the front landscape to exclude the visited location and include the unvisited neighbours of that
+        // location.
+        this.frontierKnowledge.remove(loc);
+        loc.neighbours.forEach(this.frontierKnowledge.introduce);
 
         if (isMine) this.mineVisited = true;
 
@@ -91,11 +96,10 @@ class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGame
      * Override of superclass.
      */
     protected diagnosticInfo(loc: BoardLoc): object {
-        let locNum = this.numberLocRep(loc);
         return {
-            knownMine: this.requiredMines.has(locNum),
-            knownNonMine: this.requiredNonMines.has(locNum),
-            onFrontLandscape: this.frontier.has(locNum),
+            knownMine: this.frontierKnowledge.isRequiredMine(loc),
+            knownNonMine: this.frontierKnowledge.isRequiredEmpty(loc),
+            onFrontierAndUnknown: this.frontierKnowledge.onFrontierAndUnknown(loc),
         }
     }
 
@@ -111,10 +115,9 @@ class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGame
         const visited = neighbours.filter(loc => this.lastVisitResult(loc).everVisited);
         const unvisited = neighbours.filter(loc => !this.lastVisitResult(loc).everVisited);
 
-        const knownMines = neighbours.filter(loc => this.requiredMines.has(this.numberLocRep(loc)));
-        const knownNonMines = neighbours.filter(loc => this.requiredNonMines.has(this.numberLocRep(loc)));
-
-        const unvisitedAndUnknown = unvisited.filter(loc => !this.requiredMines.has(this.numberLocRep(loc)) && !this.requiredNonMines.has(this.numberLocRep(loc)));
+        const knownMines = neighbours.filter(loc => this.frontierKnowledge.isRequiredMine(loc));
+        const knownNonMines = neighbours.filter(loc => this.frontierKnowledge.isRequiredEmpty(loc));
+        const unvisitedAndUnknown = unvisited.filter(loc => this.frontierKnowledge.onFrontierAndUnknown(loc));
 
         return {
             neighbours: neighbours,
@@ -146,18 +149,18 @@ class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGame
             }
             if (neededMines === 0) {
                 // All unknowns are non-mines
-                nr.unvisitedAndUnknown.forEach(loc => {
-                    this.requiredNonMines.add(this.numberLocRep(loc));
+                if (nr.unvisitedAndUnknown.length > 0) {
+                    nr.unvisitedAndUnknown.forEach(this.frontierKnowledge.setEmpty);
                     progressMade = true;
-                });
+                }
                 return;
             }
             if (neededMines > 0 && neededMines === nr.unvisitedAndUnknown.length) {
                 // All unvisited unknowns must be mines.
-                nr.unvisitedAndUnknown.forEach(loc => {
-                    this.requiredMines.add(this.numberLocRep(loc));
+                if (nr.unvisitedAndUnknown.length > 0) {
+                    nr.unvisitedAndUnknown.forEach(this.frontierKnowledge.setMine);
                     progressMade = true;
-                });
+                }
                 return;
             }
         });
@@ -169,10 +172,6 @@ class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGame
 
         while (this.propagateKnowledgeStep()) {
         }
-    }
-
-    get success(): boolean {
-        return this.config.mineCount + this.movesMade === this.numLocs && !this.mineVisited;
     }
 }
 

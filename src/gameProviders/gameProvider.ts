@@ -1,8 +1,18 @@
 import {BoardLoc} from "../boardLoc";
 
-export interface BoardSize {
-    height: number,
-    width: number,
+export class BoardSize {
+    constructor(public readonly height: number,
+                public readonly width: number) {
+    }
+
+    /**
+     * Is a given location even on the board.
+     * @param loc Location to check for sanity.
+     */
+    public onBoard(loc: BoardLoc) {
+        return loc.row >= 0 && loc.col >= 0 && loc.row < this.height && loc.col < this.width;
+    }
+
 }
 
 export interface FixedBoardMinesweeperConfig {
@@ -27,7 +37,7 @@ export interface MineTestResult {
     // Diagnostics
     knownNonMine?: boolean,
     knownMine?: boolean,
-    onFrontLandscape?: boolean,
+    onFrontierAndUnknown?: boolean,
 
     // Only provided if the game is over.
     gameOver?: boolean,
@@ -117,7 +127,7 @@ export abstract class MinimalProvider extends EventTarget {
         if (!this.gameOver) return undefined;
         if (!this._gameOverMineLocations) {
             this._gameOverMineLocations = new Set<number>(
-                this.mineLocations().map(this.numberLocRep)
+                this.mineLocations().map(loc => loc.toNumber(this.size))
             );
         }
         return this._gameOverMineLocations;
@@ -143,10 +153,10 @@ export abstract class MinimalProvider extends EventTarget {
 
     public lastVisitResult(loc: BoardLoc): MineTestResult {
         // const loc = BoardLoc.fromNumber(locnum, this.size);
-        const locnum = this.numberLocRep(loc);
+        const locnum = loc.toNumber(this.size);
 
         const lastFactualVisit = this.visitResults.get(locnum);
-        const visitedNeighbours = loc.neighbours.filter(nloc => this.visitResults.has(this.numberLocRep(nloc)));
+        const visitedNeighbours = loc.neighbours.filter(nloc => this.visitResults.has(nloc.toNumber(this.size)));
 
         const finalInfo = this.gameOver ?
             {
@@ -210,8 +220,7 @@ export abstract class MinimalProvider extends EventTarget {
 
     // Is a given location even on the board.
     public onBoard = (loc: BoardLoc) => {
-        // if (typeof loc == "number") throw new Error('bad');
-        return loc.row >= 0 && loc.col >= 0 && loc.row < this.size.height && loc.col < this.size.width;
+        return this.size.onBoard(loc);
     }
 
     /**
@@ -230,6 +239,6 @@ export abstract class MinimalProvider extends EventTarget {
     protected runAfterVisit(): void {
     }
 
-    protected numberLocRep = (loc: BoardLoc) => this.size.width * loc.row + loc.col;
+    // protected numberLocRep = (loc: BoardLoc) => this.size.width * loc.row + loc.col;
 
 }
