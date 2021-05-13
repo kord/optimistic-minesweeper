@@ -23,24 +23,26 @@ class Board extends Component<BoardProps, Boardstate> {
 
     // Ignore the click if the user has clicked on a flagged square.
     visitFn = (loc: BoardLoc) => {
-        if (this.props.gameProvider.gameOver) {
+        const game = this.props.gameProvider;
+        if (game.gameOver) {
             console.error(`Game is over, dummy.`);
             return;
         }
+        // Don't visit a flagged spot, even if we have the information to know full well it's safe.
+        if (this.props.flaggedLocs.has(loc.toString())) return;
 
-        let lastVisitResult = this.props.gameProvider.lastVisitResult(loc);
+        let lastVisitResult = game.lastVisitResult(loc);
         // No need to revisit, ever.
         if (!lastVisitResult.onBoard || lastVisitResult.everVisited) return;
 
         console.log(`visiting ${loc.toString()}`);
-
-        // Don't visit a flagged spot, even if we have the information to know full well it's safe.
-        if (this.props.flaggedLocs.has(loc.toString())) return;
-
         const result = this.props.visitFn(loc);
+
         if (!result.explodedMine && result.neighboursWithMine === 0) {
             loc.neighbours.forEach(this.visitFn);
         }
+
+        console.log(result)
         return result;
     }
 

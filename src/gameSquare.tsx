@@ -30,17 +30,24 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
     }
 
     classes() {
-        const {everVisited, explodedMine, neighboursWithMine, containedMine, onFrontLandscape} = this.props.lastResult;
+        const {everVisited, explodedMine, neighboursWithMine, containedMine, onFrontLandscape, knownMine, knownNonMine} = this.props.lastResult;
         let flagged = this.props.flagged;
         const modifiers = [
             '',  // This renders as 'game-square'
         ];
         if (!everVisited && !flagged) modifiers.push('--pristine');
-        if (containedMine) modifiers.push('--mined');
-        if (explodedMine) modifiers.push('--killer-mine');
         if (neighboursWithMine !== undefined) modifiers.push('--neighbours-known');
         if (flagged) modifiers.push('--flagged');
         if (onFrontLandscape) modifiers.push('--on-frontier');
+
+        // Only after gameover
+        if (containedMine) modifiers.push('--mined');
+        if (explodedMine) modifiers.push('--killer-mine');
+
+        // Diagnostics
+        if (knownMine) modifiers.push('--known-mine');
+        if (knownNonMine) modifiers.push('--known-non-mine');
+
 
         return modifiers.map(mod => `game-square${mod}`).join(' ');
     }

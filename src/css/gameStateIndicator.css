@@ -1,0 +1,33 @@
+.game-state-indicator {
+
+}
+
+
+.game-over-indicator {
+    --size: 40px;
+    height: var(--size);
+    width: var(--size);
+    border: solid black 2px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.game-over-indicator--success {
+    background-color: green;
+    background-image: url("../img/flag-1.svg");
+}
+
+.game-over-indicator--failure {
+    background-color: red;
+    background-image: url("../img/mine-6.svg");
+
+}
+
+.game-over-indicator--game-over {
+    transition: background-color;
+}
+
+.mines-remaining-count {
+
+}

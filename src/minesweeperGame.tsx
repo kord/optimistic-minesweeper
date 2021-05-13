@@ -1,11 +1,12 @@
 import React, {Component} from 'react';
 import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./gameProviders/gameProvider";
-import BasicMinesweeperGameProvider from "./gameProviders/basicMinesweeperGameProvider";
+import BasicGameProvider from "./gameProviders/basicGameProvider";
 import Board from "./board";
 import {BoardLoc} from "./boardLoc";
-import AlwaysMineMinesweeperGameProvider from "./gameProviders/alwaysMineMinesweeperGameProvider";
-import DiagnosticMinesweeperGameProvider from "./gameProviders/diagnosticMinesweeperGameProvider";
+import AlwaysMineGameProvider from "./gameProviders/alwaysMineGameProvider";
+import DiagnosticGameProvider from "./gameProviders/diagnosticGameProvider";
 import FirstClickIsAlwaysMineGameProvider from "./gameProviders/firstClickIsAlwaysMineGameProvider";
+import {GameStateIndicator} from "./gameStateIndicator";
 
 
 interface MinesweeperGameProps {
@@ -21,14 +22,14 @@ interface MinesweeperGameState {
 }
 
 let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeperGameProvider> = new Map([
-    ['BasicMinesweeperGameProvider',
-        (config) => new BasicMinesweeperGameProvider(config)],
+    ['DiagnosticGameProvider',
+        (config) => new DiagnosticGameProvider(config)],
+    ['BasicGameProvider',
+        (config) => new BasicGameProvider(config)],
     ['FirstClickIsAlwaysMineGameProvider',
         (config) => new FirstClickIsAlwaysMineGameProvider(config)],
-    ['AlwaysMineMinesweeperGameProvider',
-        (config) => new AlwaysMineMinesweeperGameProvider(config)],
-    ['DiagnosticMinesweeperGameProvider',
-        (config) => new DiagnosticMinesweeperGameProvider(config)],
+    ['AlwaysMineGameProvider',
+        (config) => new AlwaysMineGameProvider(config)],
 ]);
 
 
@@ -43,8 +44,8 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         }
 
         this.state = {
-            gameProvider: new BasicMinesweeperGameProvider(config),
-            userGameType: 'BasicMinesweeperGameProvider',
+            gameProvider: new DiagnosticGameProvider(config),
+            userGameType: 'DiagnosticGameProvider',
             userHeight: '10',
             userWidth: '10',
             userMineCount: '20',
@@ -169,6 +170,10 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                            onClick={this.restart}/>
                 </div>
 
+
+                <GameStateIndicator gameProvider={this.state.gameProvider}
+                                    flaggedLocs={this.state.flaggedLocs}
+                                    restartFn={this.restart}/>
 
                 <Board gameProvider={this.state.gameProvider}
                        flaggedLocs={this.state.flaggedLocs}

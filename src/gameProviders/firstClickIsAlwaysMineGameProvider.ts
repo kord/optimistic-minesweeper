@@ -19,6 +19,10 @@ class FirstClickIsAlwaysMineGameProvider extends MinimalProvider implements iMin
 
     }
 
+    public get totalMines(): number {
+        return this.config.mineCount;
+    }
+
     hasMine = (loc: BoardLoc) => {
         if (!this.onBoard(loc)) return false;
         const locNumber = this.size.width * loc.row + loc.col;
@@ -40,6 +44,10 @@ class FirstClickIsAlwaysMineGameProvider extends MinimalProvider implements iMin
 
     mineLocations(): BoardLoc[] {
         return this.locations.filter(this.hasMine);
+    }
+
+    get success(): boolean {
+        return false;
     }
 
 }

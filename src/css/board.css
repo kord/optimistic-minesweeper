@@ -25,7 +25,6 @@
 
 .game-square {
     border: solid gray 1px;
-    cursor: pointer;
     background-color: lightgray;
 
     background-size: contain;
@@ -37,6 +36,7 @@
 .game-square--pristine {
     --border-width: calc(var(--cell-size) * .1);
     border: outset white var(--border-width);
+    cursor: pointer;
 }
 
 .game-square--pristine:hover {
@@ -70,6 +70,15 @@
 .game-square--on-frontier {
     border-width: 2px;
 }
+
+.game-square--known-non-mine {
+    background-color: lightgreen;
+}
+
+.game-square--known-mine {
+    background-color: lightpink;
+}
+
 
 .game-controls {
     height: 20vh;

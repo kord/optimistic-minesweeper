@@ -1,3 +1,5 @@
+import {BoardSize} from "./gameProviders/gameProvider";
+
 export class BoardLoc {
     private static boardLocMatcher = new RegExp(`^([0-9]+)-([0-9]+)$`);
 
@@ -30,4 +32,7 @@ export class BoardLoc {
         return `${this.row}-${this.col}`;
     }
 
+    static fromNumber(locnum: number, size: BoardSize) : BoardLoc {
+        return new BoardLoc(Math.floor(locnum / size.width), locnum % size.width);
+    }
 }

@@ -11,17 +11,23 @@ export interface FixedBoardMinesweeperConfig {
 }
 
 export interface MineTestResult {
+    locationNum: number,
     locationName: string,
     location: BoardLoc,
+
     onBoard: boolean,
 
     everVisited: boolean,
-    onFrontLandscape: boolean,
     visitedNeighbourCount: number,
 
     // These are only provided if a test has been conducted on the tested location.
     explodedMine?: boolean,
     neighboursWithMine?: number,
+
+    // Diagnostics
+    knownNonMine?: boolean,
+    knownMine?: boolean,
+    onFrontLandscape?: boolean,
 
     // Only provided if the game is over.
     gameOver?: boolean,
@@ -38,7 +44,12 @@ export interface FactualMineTestResult {
 
 
 export interface iMinesweeperGameProvider {
+    // The dimensions of the board.
     size: BoardSize,
+    // The number of squares on the board, syntactic sugar for member 'size'.
+    numLocs: number,
+    // The number of mines in the game.
+    totalMines: number,
     // Visit a location, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
     visit: (loc: BoardLoc) => MineTestResult,
     // Check what was the last result of visiting the square. This can be called without changing anything in the
@@ -50,28 +61,41 @@ export interface iMinesweeperGameProvider {
     onBoard: (loc: BoardLoc) => boolean,
     // Game Over
     gameOver: boolean,
+    // You won
+    success: boolean,
+    // You lost
+    failure: boolean,
     // Reveal mines, ending the game in the process, if it's not over already.
     mineLocations: () => BoardLoc[],
 }
 
 export abstract class MinimalProvider extends EventTarget {
-    // These provide information that, once provided, is irrevoccable. We have to maintain consistency with the data
-    // in these to show a coherent world to the player.
-    private visitResults: Map<string, FactualMineTestResult> = new Map<string, FactualMineTestResult>();
-    private frontLandscape: Set<string> = new Set<string>();
+    public readonly numLocs: number;
+
+    /**
+     *  These provide information that, once provided, is irrevoccable. We have to maintain consistency with the data
+     *  in these to show a coherent world to the player.
+     */
+    protected visitResults: Map<number, FactualMineTestResult> = new Map<number, FactualMineTestResult>();
+    private successfulVisitCount: number = 0;
 
     constructor(public readonly size: BoardSize) {
         super();
         console.assert(Number.isInteger(size.height) && size.height > 0);
         console.assert(Number.isInteger(size.width) && size.width > 0);
 
-        this._gameOver = false;
+        this.numLocs = size.width * size.height;
+        this._failure = false;
     }
 
-    private _gameOver: boolean;
+    private _failure: boolean;
 
-    get gameOver(): boolean {
-        return this._gameOver;
+    get gameOver() : boolean {
+        return this.failure || this.success;
+    }
+
+    get failure(): boolean {
+        return this._failure;
     }
 
     public get locations(): BoardLoc[] {
@@ -84,57 +108,72 @@ export abstract class MinimalProvider extends EventTarget {
         return ret;
     }
 
-    private _gameOverMineLocations: Set<string> | undefined;
+    private _gameOverMineLocations: Set<number> | undefined;
 
-    // This is for convenience, processing out the final mine locations so we can use them in calls to lastVisitResult
-    // after game end.
-    private get gameOverMineLocations(): Set<string> | undefined {
+    /**
+     *  This is for convenience, processing out the final mine locations so we can use them in calls to lastVisitResult after game end.
+     */
+    private get gameOverMineLocations(): Set<number> | undefined {
         if (!this.gameOver) return undefined;
         if (!this._gameOverMineLocations) {
-            this._gameOverMineLocations = new Set<string>(
-                this.mineLocations().map(loc => loc.toString())
+            this._gameOverMineLocations = new Set<number>(
+                this.mineLocations().map(this.numberLocRep)
             );
         }
         return this._gameOverMineLocations;
     }
 
-    // This needs to be implemented by any subclass. Test if a mine is present at some location.
+    /**
+     * This needs to be implemented by any subclass. Test if a mine is present at some location.
+     * @param loc Where the user is committing to visit.
+     */
     public abstract performVisit(loc: BoardLoc): FactualMineTestResult;
 
-    // This needs to be implemented by any subclass. Return a board state consistent with the results of
-    // performVisit calls made before this was requested. performVisit can be ignored after any call of this,
-    // since we are now committed to the entire board state.
+    /**
+     * The subclass has to tell us when the game is over.
+     */
+    public abstract get success(): boolean;
+
+    /**
+     * Return a board state consistent with the results of performVisit calls made before this was requested.
+     * performVisit can be ignored after any call of this, since we are now committed to the entire board state.
+     * This needs to be implemented by any subclass.
+     */
     public abstract mineLocations(): BoardLoc[];
 
     public lastVisitResult(loc: BoardLoc): MineTestResult {
-        const locString = loc.toString();
-        const lastFactualVisit = this.visitResults.get(locString);
-        const visitedNeighbours = loc.neighbours.filter(nloc => this.visitResults.has(nloc.toString()));
+        // const loc = BoardLoc.fromNumber(locnum, this.size);
+        const locnum = this.numberLocRep(loc);
+
+        const lastFactualVisit = this.visitResults.get(locnum);
+        const visitedNeighbours = loc.neighbours.filter(nloc => this.visitResults.has(this.numberLocRep(nloc)));
 
         const finalInfo = this.gameOver ?
             {
                 gameOver: true,
-                containedMine: this.gameOverMineLocations!.has(locString),
+                containedMine: this.gameOverMineLocations!.has(locnum),
             } :
             undefined;
 
+        const diagnostics = this.diagnosticInfo(loc);
         let ret = {
             location: loc,
-            locationName: locString,
+            locationNum: locnum,
+            locationName: loc.toString(),
             onBoard: this.onBoard(loc),
-            gameOver: this._gameOver,
-            onFrontLandscape: this.frontLandscape.has(locString),
+            gameOver: this.gameOver,
             everVisited: !!lastFactualVisit,
             visitedNeighbourCount: visitedNeighbours.length,
             ...lastFactualVisit,
+            ...diagnostics,
             ...finalInfo,
-        };
+        } as MineTestResult;
 
         return ret;
     }
 
     public visit(loc: BoardLoc): MineTestResult {
-        if (this._gameOver) {
+        if (this._failure) {
             throw new Error(`Game is over. You can't visit anywhere anymore.`);
         }
 
@@ -142,24 +181,14 @@ export abstract class MinimalProvider extends EventTarget {
         const lastVisit = this.lastVisitResult(loc);
         if (lastVisit?.everVisited) return lastVisit;
 
-        // Actually do the visit in the provider that extends this class.
+        // Actually do the visit in the gameProvider that extends this class.
         const result = this.performVisit(loc);
 
         // Permanantly mark the game as done when we've visited a mine, refusing all future visits.
         if (result.explodedMine) {
             console.log('BOOM');
-            this._gameOver = true;
+            this._failure = true;
         }
-
-        // Update the front landscape to exclude the visited location and include the unvisited neighbours of that
-        // location.
-        this.frontLandscape.delete(loc.toString());
-        loc.neighbours.forEach(nloc => {
-            const nlocstr = nloc.toString();
-            if (this.onBoard(nloc) && !this.visitResults.has(nlocstr)) {
-                this.frontLandscape.add(nlocstr);
-            }
-        });
 
 
         // // Release an event for the visit occurring.
@@ -171,12 +200,36 @@ export abstract class MinimalProvider extends EventTarget {
         //     })
         // );
 
-        this.visitResults.set(lastVisit.locationName, result);
+        this.visitResults.set(lastVisit.locationNum, result);
+
+        // Potentially do some work updating a subclass's view of stuff.
+        this.runAfterVisit();
+
         return this.lastVisitResult(loc);
     }
 
     // Is a given location even on the board.
-    public onBoard(loc: BoardLoc): boolean {
+    public onBoard = (loc: BoardLoc) => {
+        // if (typeof loc == "number") throw new Error('bad');
         return loc.row >= 0 && loc.col >= 0 && loc.row < this.size.height && loc.col < this.size.width;
     }
+
+    /**
+     * Some info to attach to our responses to lastVisitResult.
+     * This can be overridden in subclasses to automatically get some data attached and sent to the view layer.
+     * @param loc
+     */
+    protected diagnosticInfo(loc: BoardLoc): object {
+        return {};
+    }
+
+    /**
+     * This can be overridden by subclasses and is run AFTER every authentic visit is performed before any additional
+     * work in the UI.
+     */
+    protected runAfterVisit(): void {
+    }
+
+    protected numberLocRep = (loc: BoardLoc) => this.size.width * loc.row + loc.col;
+
 }
