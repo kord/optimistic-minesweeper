@@ -7,7 +7,8 @@ import {
 import {BoardLoc} from "../boardLoc";
 import {FrontierKnowledge} from "./frontierKnowledge";
 
-class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
+
+class MonteCarloInferenceDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private minelocs = new Set<number>();
     private frontierKnowledge: FrontierKnowledge;
     private firstMoveMade = false;
@@ -180,8 +181,22 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
     }
 
     private propagateKnowledge = () => {
+        // We can learn some facts about the world we have inherited here.
         while (this.propagateKnowledgeStep()) {
         }
+        // And now we make some guesses on how we could proceed, not generating new knowledge, exactly, but discovering
+        // some of the possibilities for expansion of this setup.
+
+        // lastVisitResult(loc).neighboursWithMine is fixed for all time
+        // frontierKnowledge has some mines and
+
+        // Lets do some random rollouts
+        this.randomRollouts()
+
+    }
+
+    private randomRollouts() {
+
     }
 }
 
@@ -197,4 +212,4 @@ interface NeighbourhoodReport {
     knownNonMines: BoardLoc[],
 }
 
-export default SimpleInferenceDiagnosticGameProvider;
+export default MonteCarloInferenceDiagnosticGameProvider;
