@@ -1,4 +1,4 @@
-import {MineTestResult} from "./gameProvider";
+import {MineTestResult} from "./gameProviders/gameProvider";
 import React, {PureComponent} from "react";
 import {BoardLoc} from "./boardLoc";
 
@@ -16,27 +16,31 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
 
     onClick = (e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();
+        // If the game's over, we can't do anything anymore.
+        if (this.props.lastResult.gameOver) return;
 
         if (e.type === 'click') {
-            console.log('Left click');
+            // console.log('Left click');
             this.props.visitFn(this.props.lastResult.location);
         } else if (e.type === 'contextmenu') {
-            console.log('Right click');
+            // console.log('Right click');
             this.props.flagFn(this.props.lastResult.location);
         }
-        console.log('click handled');
+        console.log('Click handled');
     }
 
     classes() {
-        const {everVisited, containsMine, neighboursWithMine} = this.props.lastResult;
+        const {everVisited, explodedMine, neighboursWithMine, containedMine, onFrontLandscape} = this.props.lastResult;
         let flagged = this.props.flagged;
         const modifiers = [
             '',  // This renders as 'game-square'
         ];
         if (!everVisited && !flagged) modifiers.push('--pristine');
-        if (everVisited && containsMine) modifiers.push('--killer-mine');
+        if (containedMine) modifiers.push('--mined');
+        if (explodedMine) modifiers.push('--killer-mine');
         if (neighboursWithMine !== undefined) modifiers.push('--neighbours-known');
         if (flagged) modifiers.push('--flagged');
+        if (onFrontLandscape) modifiers.push('--on-frontier');
 
         return modifiers.map(mod => `game-square${mod}`).join(' ');
     }
@@ -46,7 +50,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
         let displayNumber = <></>;
         let neighboursWithMine = this.props.lastResult.neighboursWithMine;
         // Don't show number on exploded ordinance.
-        if (neighboursWithMine !== undefined && neighboursWithMine > 0 && !this.props.lastResult.containsMine)
+        if (neighboursWithMine !== undefined && neighboursWithMine > 0 && !this.props.lastResult.explodedMine)
             displayNumber = <>{neighboursWithMine}</>;
 
         return (

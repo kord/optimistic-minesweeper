@@ -5,7 +5,7 @@ import {
     MinimalProvider,
     FixedBoardMinesweeperConfig
 } from "./gameProvider";
-import {BoardLoc} from "./boardLoc";
+import {BoardLoc} from "../boardLoc";
 
 
 class AlwaysMineMinesweeperGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
@@ -15,8 +15,12 @@ class AlwaysMineMinesweeperGameProvider extends MinimalProvider implements iMine
 
     public performVisit(loc: BoardLoc): FactualMineTestResult {
         return {
-            containsMine: true,
+            explodedMine: true,
         }
+    }
+
+    mineLocations(): BoardLoc[] {
+        return this.locations;
     }
 }
 

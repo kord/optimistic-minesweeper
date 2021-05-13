@@ -12,6 +12,10 @@
 
 }
 
+.board--game-over {
+
+}
+
 .board__grid {
     display: grid;
     grid-template-rows: repeat(var(--rows), var(--cell-size));
@@ -23,6 +27,10 @@
     border: solid gray 1px;
     cursor: pointer;
     background-color: lightgray;
+
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .game-square--flagged,
@@ -44,17 +52,23 @@
 
 .game-square--flagged {
     background-image: url("../img/flag-1.svg");
-    background-size: 80%;
-    background-position: center;
-    background-repeat: no-repeat;
+}
+
+.game-square--mined {
+    background-image: url("../img/mine-6.svg");
+}
+
+.game-square--flagged.game-square--mined {
+    background-image: url("../img/flagbomb.svg");
 }
 
 .game-square--killer-mine {
     background-color: red;
-    background-image: url("../img/mine-6.svg");
-    background-size: 80%;
-    background-position: center;
-    background-repeat: no-repeat;
+    background-size: 90%;
+}
+
+.game-square--on-frontier {
+    border-width: 2px;
 }
 
 .game-controls {

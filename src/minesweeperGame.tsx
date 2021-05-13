@@ -1,10 +1,11 @@
 import React, {Component} from 'react';
-import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./gameProvider";
-import BasicMinesweeperGameProvider from "./basicMinesweeperGameProvider";
-import MinesweeperBoard from "./minesweeperBoard";
+import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./gameProviders/gameProvider";
+import BasicMinesweeperGameProvider from "./gameProviders/basicMinesweeperGameProvider";
+import Board from "./board";
 import {BoardLoc} from "./boardLoc";
-import AlwaysMineMinesweeperGameProvider from "./alwaysMineMinesweeperGameProvider";
-import DiagnosticMinesweeperGameProvider from "./diagnosticMinesweeperGameProvider";
+import AlwaysMineMinesweeperGameProvider from "./gameProviders/alwaysMineMinesweeperGameProvider";
+import DiagnosticMinesweeperGameProvider from "./gameProviders/diagnosticMinesweeperGameProvider";
+import FirstClickIsAlwaysMineGameProvider from "./gameProviders/firstClickIsAlwaysMineGameProvider";
 
 
 interface MinesweeperGameProps {
@@ -16,11 +17,14 @@ interface MinesweeperGameState {
     userWidth: string,
     userMineCount: string,
     userGameType: string,
+    flaggedLocs: Set<string>,
 }
 
 let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeperGameProvider> = new Map([
     ['BasicMinesweeperGameProvider',
         (config) => new BasicMinesweeperGameProvider(config)],
+    ['FirstClickIsAlwaysMineGameProvider',
+        (config) => new FirstClickIsAlwaysMineGameProvider(config)],
     ['AlwaysMineMinesweeperGameProvider',
         (config) => new AlwaysMineMinesweeperGameProvider(config)],
     ['DiagnosticMinesweeperGameProvider',
@@ -44,6 +48,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             userHeight: '10',
             userWidth: '10',
             userMineCount: '20',
+            flaggedLocs: new Set<string>(),
         }
     }
 
@@ -58,11 +63,52 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         });
     }
 
-
     visit = (loc: BoardLoc) => {
         const result = this.state.gameProvider.visit(loc);
         this.forceUpdate();
         return result;
+    }
+
+    toggleFlag = (loc: BoardLoc) => {
+        // Can't flag a visited spot. You already know what it is.
+        if (this.state.gameProvider.lastVisitResult(loc).everVisited) return;
+
+        const locString = loc.toString();
+        if (this.state.flaggedLocs.has(locString)) {
+            this.state.flaggedLocs.delete(locString);
+        } else {
+            this.state.flaggedLocs.add(locString)
+        }
+        // Force update because we're changing flaggedLocs in our state without properly setting state.
+        this.forceUpdate();
+    }
+
+    private restart = () => {
+        if (!this.state.userGameType) {
+            console.error(`userGameType invalidly set to ${this.state.userGameType}`);
+            return;
+        }
+
+        const config = {
+            size: {
+                height: +this.state.userHeight,
+                width: +this.state.userWidth,
+            },
+            mineCount: +this.state.userMineCount,
+        } as FixedBoardMinesweeperConfig;
+
+        const providerFn = gameTypes.get(this.state.userGameType);
+        if (!providerFn) {
+            console.error(`userGameType invalidly set to ${this.state.userGameType}`);
+            return;
+        }
+
+        console.log(`Setting gameProvider with ${this.state.userGameType}`);
+        console.log(config);
+        this.setState({
+            gameProvider: providerFn(config),
+            flaggedLocs: new Set<string>(),
+        });
     }
 
     render() {
@@ -124,37 +170,13 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 </div>
 
 
-                <MinesweeperBoard gameProvider={this.state.gameProvider}
-                                  visitFn={this.visit}/>
+                <Board gameProvider={this.state.gameProvider}
+                       flaggedLocs={this.state.flaggedLocs}
+                       visitFn={this.visit}
+                       toggleFlagFn={this.toggleFlag}
+                />
             </div>
         );
-    }
-
-    private restart = () => {
-        if (!this.state.userGameType) {
-            console.error(`userGameType invalidly set to ${this.state.userGameType}`);
-            return;
-        }
-
-        const config = {
-            size: {
-                height: +this.state.userHeight,
-                width: +this.state.userWidth,
-            },
-            mineCount: +this.state.userMineCount,
-        } as FixedBoardMinesweeperConfig;
-
-        const providerFn = gameTypes.get(this.state.userGameType);
-        if (!providerFn) {
-            console.error(`userGameType invalidly set to ${this.state.userGameType}`);
-            return;
-        }
-
-        console.log(`Setting gameProvider with ${this.state.userGameType}`);
-        console.log(config);
-        this.setState({
-            gameProvider: providerFn(config),
-        });
     }
 }
 

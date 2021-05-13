@@ -4,7 +4,7 @@ import {
     iMinesweeperGameProvider,
     MinimalProvider
 } from "./gameProvider";
-import {BoardLoc} from "./boardLoc";
+import {BoardLoc} from "../boardLoc";
 
 class DiagnosticMinesweeperGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private readonly minelocs = new Set<number>();
@@ -22,7 +22,7 @@ class DiagnosticMinesweeperGameProvider extends MinimalProvider implements iMine
         }
     }
 
-    hasMine(loc: BoardLoc) {
+    hasMine = (loc: BoardLoc) => {
         if (!this.onBoard(loc)) return false;
         const locNumber = this.size.width * loc.row + loc.col;
         return this.minelocs.has(locNumber);
@@ -33,9 +33,13 @@ class DiagnosticMinesweeperGameProvider extends MinimalProvider implements iMine
         loc.neighbours.forEach(nloc => neighboursWithMine += this.hasMine(nloc) ? 1 : 0);
 
         return {
-            containsMine: this.hasMine(loc),
+            explodedMine: this.hasMine(loc),
             neighboursWithMine: neighboursWithMine,
         }
+    }
+
+    mineLocations(): BoardLoc[] {
+        return this.locations.filter(this.hasMine);
     }
 
 }
