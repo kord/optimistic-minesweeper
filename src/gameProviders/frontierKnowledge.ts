@@ -6,7 +6,7 @@ import {BoardLoc} from "../boardLoc";
  */
 export class FrontierKnowledge {
     private frontier = new Set<number>();
-    private nonRequired= new Set<number>();
+    private nonRequired = new Set<number>();
     private requiredMines = new Set<number>();
     private requiredEmpty = new Set<number>();
     private expired = new Set<number>();
@@ -15,6 +15,7 @@ export class FrontierKnowledge {
     }
 
     introduce = (loc: BoardLoc) => {
+        if (!this.size.onBoard(loc)) return;
         const locn = loc.toNumber(this.size);
         if (this.frontier.has(locn) || this.expired.has(locn)) return;
         this.frontier.add(locn);

@@ -7,7 +7,7 @@ import {
 import {BoardLoc} from "../boardLoc";
 import {FrontierKnowledge} from "./frontierKnowledge";
 
-class DiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
+class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private minelocs = new Set<number>();
     private frontierKnowledge: FrontierKnowledge;
     private firstMoveMade = false;
@@ -187,4 +187,4 @@ interface NeighbourhoodReport {
     knownNonMines: BoardLoc[],
 }
 
-export default DiagnosticGameProvider;
+export default SimpleInferenceDiagnosticGameProvider;

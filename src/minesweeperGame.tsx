@@ -4,7 +4,7 @@ import BasicGameProvider from "./gameProviders/basicGameProvider";
 import Board from "./board";
 import {BoardLoc} from "./boardLoc";
 import AlwaysMineGameProvider from "./gameProviders/alwaysMineGameProvider";
-import DiagnosticGameProvider from "./gameProviders/diagnosticGameProvider";
+import SimpleInferenceDiagnosticGameProvider from "./gameProviders/simpleInferenceDiagnosticGameProvider";
 import FirstClickIsAlwaysMineGameProvider from "./gameProviders/firstClickIsAlwaysMineGameProvider";
 import {GameStateIndicator} from "./gameStateIndicator";
 
@@ -22,8 +22,8 @@ interface MinesweeperGameState {
 }
 
 let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeperGameProvider> = new Map([
-    ['DiagnosticGameProvider',
-        (config) => new DiagnosticGameProvider(config)],
+    ['SimpleInferenceDiagnosticGameProvider',
+        (config) => new SimpleInferenceDiagnosticGameProvider(config)],
     ['BasicGameProvider',
         (config) => new BasicGameProvider(config)],
     ['FirstClickIsAlwaysMineGameProvider',
@@ -44,8 +44,8 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         } as FixedBoardMinesweeperConfig;
 
         this.state = {
-            gameProvider: new DiagnosticGameProvider(config),
-            userGameType: 'DiagnosticGameProvider',
+            gameProvider: new SimpleInferenceDiagnosticGameProvider(config),
+            userGameType: 'SimpleInferenceDiagnosticGameProvider',
             userHeight: '10',
             userWidth: '10',
             userMineCount: '20',
