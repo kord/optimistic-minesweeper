@@ -171,8 +171,11 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 </div>
 
 
-                <GameStateIndicator gameProvider={this.state.gameProvider}
-                                    flaggedLocs={this.state.flaggedLocs}
+                <GameStateIndicator totalMines={this.state.gameProvider.totalMines}
+                                    failure={this.state.gameProvider.failure}
+                                    success={this.state.gameProvider.success}
+                                    gameOver={this.state.gameProvider.gameOver}
+                                    flaggedCount={this.state.flaggedLocs.size}
                                     restartFn={this.restart}/>
 
                 <Board gameProvider={this.state.gameProvider}

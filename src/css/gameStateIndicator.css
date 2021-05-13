@@ -21,11 +21,11 @@
 .game-over-indicator--failure {
     background-color: red;
     background-image: url("../img/mine-6.svg");
-
 }
 
 .game-over-indicator--game-over {
     transition: background-color;
+    border-color: lawngreen;
 }
 
 .mines-remaining-count {

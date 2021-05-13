@@ -1,10 +1,12 @@
-import {iMinesweeperGameProvider} from "./gameProviders/gameProvider";
 import React, {PureComponent} from "react";
-import 'css/gameStateIndicator.css';
+import './css/gameStateIndicator.css';
 
 interface GameStateIndicatorProps {
-    gameProvider: iMinesweeperGameProvider,
-    flaggedLocs: Set<string>,
+    success: boolean,
+    failure: boolean,
+    gameOver: boolean,
+    totalMines: number,
+    flaggedCount: number,
     restartFn: VoidFunction,
 }
 
@@ -31,26 +33,25 @@ export class GameStateIndicator extends PureComponent<GameStateIndicatorProps, G
         console.log('Click handled');
     }
 
-    classes() {
-        const {success, failure, gameOver} = this.props.gameProvider;
+    private buttonClasses() {
+        const {success, failure, gameOver} = this.props;
         const modifiers = [
             '',  // This renders as 'game-over-indicator'
         ];
-        if (success) modifiers.push('success');
-        if (failure) modifiers.push('failure');
-        if (gameOver) modifiers.push('game-over');
-
+        if (success) modifiers.push('--success');
+        if (failure) modifiers.push('--failure');
+        if (gameOver) modifiers.push('--game-over');
 
         return modifiers.map(mod => `game-over-indicator${mod}`).join(' ');
     }
 
 
     render() {
-        const minesLeft = this.props.gameProvider.totalMines - this.props.flaggedLocs.size;
+        const minesLeft = this.props.totalMines - this.props.flaggedCount;
         return (
             <div className={'game-state-indicator'}>
-                <button className={this.classes()}
-                     onClick={this.onClick}
+                <button className={this.buttonClasses()}
+                        onClick={this.onClick}
                 />
                 <p className={'mines-remaining-count'}>
                     There are {minesLeft} unflagged mines remaining.
