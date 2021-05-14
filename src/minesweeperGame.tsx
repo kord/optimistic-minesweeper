@@ -7,48 +7,70 @@ import AlwaysMineGameProvider from "./gameProviders/alwaysMineGameProvider";
 import SimpleInferenceDiagnosticGameProvider from "./gameProviders/simpleInferenceDiagnosticGameProvider";
 import FirstClickIsAlwaysMineGameProvider from "./gameProviders/firstClickIsAlwaysMineGameProvider";
 import {GameStateIndicator} from "./gameStateIndicator";
+import {Constants} from "./constants";
 
+export interface BoardOptions {
+    displayZeroNumber: boolean,
+    expandNeighboursOfZero: boolean,
+    expandWhenEnoughFlagsLaid: boolean,
+    showBasicInferenceTips: boolean,
+}
 
 interface MinesweeperGameProps {
 }
 
 interface MinesweeperGameState {
     gameProvider: iMinesweeperGameProvider,
+    flaggedLocs: Set<string>,
+
+    /* User input values, options. */
     userHeight: string,
     userWidth: string,
     userMineCount: string,
     userGameType: string,
-    flaggedLocs: Set<string>,
+    displayZeroNumber: boolean,
+    expandNeighboursOfZero: boolean,
+    expandWhenEnoughFlagsLaid: boolean,
+    showBasicInferenceTips: boolean,
 }
 
+
 let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeperGameProvider> = new Map([
-    ['SimpleInferenceDiagnosticGameProvider',
-        (config) => new SimpleInferenceDiagnosticGameProvider(config)],
     ['BasicGameProvider',
         (config) => new BasicGameProvider(config)],
     ['FirstClickIsAlwaysMineGameProvider',
         (config) => new FirstClickIsAlwaysMineGameProvider(config)],
     ['AlwaysMineGameProvider',
         (config) => new AlwaysMineGameProvider(config)],
+    ['SimpleInferenceDiagnosticGameProvider',
+        (config) => new SimpleInferenceDiagnosticGameProvider(config)],
 ]);
 
-
 class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameState> {
+    public get boardOptions(): BoardOptions {
+        const boardOptions: BoardOptions =
+            {
+                displayZeroNumber: this.state.displayZeroNumber,
+                expandNeighboursOfZero: this.state.expandNeighboursOfZero,
+                expandWhenEnoughFlagsLaid: this.state.expandWhenEnoughFlagsLaid,
+                showBasicInferenceTips: this.state.showBasicInferenceTips,
+            };
+        return boardOptions;
+    };
+
     constructor(props: MinesweeperGameProps) {
         super(props);
 
-        // Just a basic default config to start the page with.
-        const config = {
-            size: new BoardSize(10, 10),
-            mineCount: 20,
-        } as FixedBoardMinesweeperConfig;
-
         this.state = {
-            gameProvider: new SimpleInferenceDiagnosticGameProvider(config),
+            gameProvider: new SimpleInferenceDiagnosticGameProvider(Constants.defaultGameConfig),
             userGameType: 'SimpleInferenceDiagnosticGameProvider',
-            userHeight: '10',
-            userWidth: '10',
-            userMineCount: '20',
+            userHeight: Constants.defaultGameConfig.size.height.toString(),
+            userWidth: Constants.defaultGameConfig.size.width.toString(),
+            userMineCount: Constants.defaultGameConfig.mineCount.toString(),
+            displayZeroNumber: Constants.defaultBoardOptions.displayZeroNumber,
+            expandNeighboursOfZero: Constants.defaultBoardOptions.expandNeighboursOfZero,
+            expandWhenEnoughFlagsLaid: Constants.defaultBoardOptions.expandWhenEnoughFlagsLaid,
+            showBasicInferenceTips: Constants.defaultBoardOptions.showBasicInferenceTips,
             flaggedLocs: new Set<string>(),
         }
     }
@@ -90,7 +112,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             return;
         }
 
-        const boardSize = new BoardSize(+this.state.userHeight,+this.state.userWidth);
+        const boardSize = new BoardSize(+this.state.userHeight, +this.state.userWidth);
         const config = {
             size: boardSize,
             mineCount: +this.state.userMineCount,
@@ -166,6 +188,44 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                            className={'game-button restart-button'}
                            value="Restart"
                            onClick={this.restart}/>
+
+                    <br/>
+                    <label>
+                        expandNeighboursOfZero:
+                        <input type="checkbox"
+                               key={'expandNeighboursOfZero'}
+                               checked={this.state.expandNeighboursOfZero}
+                               name={'expandNeighboursOfZero'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        displayZeroNumber:
+                        <input type="checkbox"
+                               key={'displayZeroNumber'}
+                               checked={this.state.displayZeroNumber}
+                               name={'displayZeroNumber'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        expandWhenEnoughFlagsLaid:
+                        <input type="checkbox"
+                               key={'expandWhenEnoughFlagsLaid'}
+                               checked={this.state.expandWhenEnoughFlagsLaid}
+                               name={'expandWhenEnoughFlagsLaid'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        showBasicInferenceTips:
+                        <input type="checkbox"
+                               key={'showBasicInferenceTips'}
+                               checked={this.state.showBasicInferenceTips}
+                               name={'showBasicInferenceTips'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+
                 </div>
 
 
@@ -180,6 +240,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                        flaggedLocs={this.state.flaggedLocs}
                        visitFn={this.visit}
                        toggleFlagFn={this.toggleFlag}
+                       boardOptions={this.boardOptions}
                 />
             </div>
         );

@@ -9,9 +9,8 @@ export class BoardSize {
      * Is a given location even on the board.
      * @param loc Location to check for sanity.
      */
-    public onBoard(loc: BoardLoc) {
-        return loc.row >= 0 && loc.col >= 0 && loc.row < this.height && loc.col < this.width;
-    }
+    public onBoard = (loc: BoardLoc) => loc.row >= 0 && loc.col >= 0 && loc.row < this.height && loc.col < this.width;
+
 
 }
 
@@ -100,12 +99,12 @@ export abstract class MinimalProvider extends EventTarget {
 
     private _failure: boolean;
 
-    get gameOver() : boolean {
-        return this.failure || this.success;
-    }
-
     get failure(): boolean {
         return this._failure;
+    }
+
+    get gameOver(): boolean {
+        return this.failure || this.success;
     }
 
     public get locations(): BoardLoc[] {
@@ -117,6 +116,11 @@ export abstract class MinimalProvider extends EventTarget {
         }
         return ret;
     }
+
+    /**
+     * The subclass has to tell us when the game is over.
+     */
+    public abstract get success(): boolean;
 
     private _gameOverMineLocations: Set<number> | undefined;
 
@@ -140,18 +144,18 @@ export abstract class MinimalProvider extends EventTarget {
     public abstract performVisit(loc: BoardLoc): FactualMineTestResult;
 
     /**
-     * The subclass has to tell us when the game is over.
-     */
-    public abstract get success(): boolean;
-
-    /**
      * Return a board state consistent with the results of performVisit calls made before this was requested.
      * performVisit can be ignored after any call of this, since we are now committed to the entire board state.
      * This needs to be implemented by any subclass.
      */
     public abstract mineLocations(): BoardLoc[];
 
-    public lastVisitResult(loc: BoardLoc): MineTestResult {
+    /**
+     * At any time, you can ask the game what the last result for theching this loc was. No visit is ever madeunder
+     * this call.
+     * @param loc The board location to check our state of knowledge about.
+     */
+    public lastVisitResult = (loc: BoardLoc) => {
         // const loc = BoardLoc.fromNumber(locnum, this.size);
         const locnum = loc.toNumber(this.size);
 
@@ -166,7 +170,8 @@ export abstract class MinimalProvider extends EventTarget {
             undefined;
 
         const diagnostics = this.diagnosticInfo(loc);
-        let ret = {
+
+        return {
             location: loc,
             locationNum: locnum,
             locationName: loc.toString(),
@@ -178,8 +183,6 @@ export abstract class MinimalProvider extends EventTarget {
             ...diagnostics,
             ...finalInfo,
         } as MineTestResult;
-
-        return ret;
     }
 
     public visit(loc: BoardLoc): MineTestResult {
@@ -219,9 +222,8 @@ export abstract class MinimalProvider extends EventTarget {
     }
 
     // Is a given location even on the board.
-    public onBoard = (loc: BoardLoc) => {
-        return this.size.onBoard(loc);
-    }
+    public onBoard = (loc: BoardLoc) => this.size.onBoard(loc);
+
 
     /**
      * Some info to attach to our responses to lastVisitResult.

@@ -39,4 +39,9 @@ export class BoardLoc {
     public toNumber(size: BoardSize) {
         return size.width * this.row + this.col;
     }
+
+    neighboursOnBoard = (boardSize: BoardSize) => this.neighbours.filter(boardSize.onBoard);
+
+    neighbourhoodIncludingSelf = (boardSize: BoardSize) => [...this.neighbours, this].filter(boardSize.onBoard);
+
 }

@@ -10,15 +10,23 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
     private minelocs = new Set<number>();
     private movesMade: number = 0;
     private mineVisited: Boolean = false;
+    private firstMoveMade = false;
 
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
         super(config.size);
-        this.rewriteStaticMineLocations();
-        console.assert(this.config.mineCount && this.config.mineCount > 0 && this.config.mineCount < this.numLocs);
+        // this.rewriteStaticMineLocations();
+        console.assert(this.config.mineCount > 0,
+            'The game is boring without any mines.');
+        console.assert(this.config.mineCount - this.numLocs > 9,
+            'There needs to be space for a first move. Use fewer mines.');
     }
 
     public get totalMines(): number {
         return this.config.mineCount;
+    }
+
+    get success(): boolean {
+        return !this.mineVisited && this.config.mineCount + this.movesMade === this.numLocs;
     }
 
     hasMine = (loc: BoardLoc) => {
@@ -26,20 +34,31 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
         return this.minelocs.has(loc.toNumber(this.size));
     }
 
-    private firstMoveMade = false;
-
-    rewriteStaticMineLocations = () => {
+    rewriteStaticMineLocationsToExcludeNeighbourhood = (loc: BoardLoc) => {
         this.minelocs.clear();
+        let iterationcount = 0;
         while (this.minelocs.size < this.config.mineCount) {
             this.minelocs.add(Math.floor(Math.random() * this.numLocs));
+            loc.neighbourhoodIncludingSelf(this.size).forEach(loc => this.minelocs.delete(loc.toNumber(this.size)));
+            iterationcount++;
         }
+        console.log(`Took ${iterationcount} rounds to find a good board setup.`)
         console.log(`minelocs.size ${this.minelocs.size}`)
     }
 
+    // rewriteStaticMineLocations = () => {
+    //     this.minelocs.clear();
+    //     while (this.minelocs.size < this.config.mineCount) {
+    //         this.minelocs.add(Math.floor(Math.random() * this.numLocs));
+    //     }
+    //     console.log(`minelocs.size ${this.minelocs.size}`)
+    // }
+
     public performVisit(loc: BoardLoc): FactualMineTestResult {
-        while (!this.firstMoveMade && this.hasMine(loc)) {
-            this.rewriteStaticMineLocations();
-        }
+        // while (!this.firstMoveMade && (this.hasMine(loc)) || loc.neighboursOnBoard(this.size).some(this.hasMine)) {
+        //     this.rewriteStaticMineLocations();
+        // }
+        if (!this.firstMoveMade) this.rewriteStaticMineLocationsToExcludeNeighbourhood(loc);
         this.firstMoveMade = true;
         this.movesMade++;
 
@@ -57,10 +76,6 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
 
     mineLocations(): BoardLoc[] {
         return this.locations.filter(this.hasMine);
-    }
-
-    get success(): boolean {
-        return this.config.mineCount + this.movesMade === this.numLocs && !this.mineVisited;
     }
 
 }

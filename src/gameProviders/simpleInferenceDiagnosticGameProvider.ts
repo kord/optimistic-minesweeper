@@ -17,8 +17,13 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
         super(config.size);
         this.frontierKnowledge = new FrontierKnowledge(this.size);
-        this.rewriteStaticMineLocations();
-        console.assert(this.config.mineCount && this.config.mineCount > 0 && this.config.mineCount < this.numLocs);
+        // this.rewriteStaticMineLocations();
+        // console.assert(this.config.mineCount && this.config.mineCount > 0 && this.config.mineCount < this.numLocs);
+
+        console.assert(this.config.mineCount > 0,
+            'The game is boring without any mines.');
+        console.assert(this.config.mineCount - this.numLocs > 9,
+            'There needs to be space for a first move. Use fewer mines.');
     }
 
     /**
@@ -41,12 +46,25 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
         return this.minelocs.has(locNumber);
     }
 
-    rewriteStaticMineLocations = () => {
+    // rewriteStaticMineLocations = () => {
+    //     this.minelocs.clear();
+    //     while (this.minelocs.size < this.config.mineCount) {
+    //         this.minelocs.add(Math.floor(Math.random() * this.numLocs));
+    //     }
+    // }
+
+    rewriteStaticMineLocationsToExcludeNeighbourhood = (loc: BoardLoc) => {
         this.minelocs.clear();
+        let iterationcount = 0;
         while (this.minelocs.size < this.config.mineCount) {
             this.minelocs.add(Math.floor(Math.random() * this.numLocs));
+            loc.neighbourhoodIncludingSelf(this.size).forEach(loc => this.minelocs.delete(loc.toNumber(this.size)));
+            iterationcount++;
         }
+        console.log(`Took ${iterationcount} rounds to find a good board setup.`)
+        console.log(`minelocs.size ${this.minelocs.size}`)
     }
+
 
     /**
      * Required by superclass.
@@ -56,9 +74,10 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
         const locNum = loc.toNumber(this.size);
 
         // This demonstrates how we can change the board setup just in time after the user tries to visit somewhere.
-        while (!this.firstMoveMade && this.hasMine(loc)) {
-            this.rewriteStaticMineLocations();
-        }
+        // while (!this.firstMoveMade && this.hasMine(loc)) {
+        //     this.rewriteStaticMineLocations();
+        // }
+        if (!this.firstMoveMade) this.rewriteStaticMineLocationsToExcludeNeighbourhood(loc);
         this.firstMoveMade = true;
 
         this.movesMade++;
