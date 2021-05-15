@@ -48,13 +48,18 @@ export class GameStateIndicator extends PureComponent<GameStateIndicatorProps, G
 
     render() {
         const minesLeft = this.props.totalMines - this.props.flaggedCount;
+        let statusText: string = '';
+        if (this.props.success) statusText = 'Congratulations. You win!';
+        else if (this.props.failure) statusText = 'Congratulations. You lose!';
+        else statusText = `${minesLeft} unflagged mines remain.`
+
         return (
             <div className={'game-state-indicator'}>
                 <button className={this.buttonClasses()}
                         onClick={this.onClick}
                 />
-                <p className={'mines-remaining-count'}>
-                    There are {minesLeft} unflagged mines remaining.
+                <p className={'game-status-text'}>
+                    {statusText}
                 </p>
             </div>
         );

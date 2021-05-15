@@ -7,14 +7,7 @@ import AlwaysMineGameProvider from "./gameProviders/alwaysMineGameProvider";
 import SimpleInferenceDiagnosticGameProvider from "./gameProviders/simpleInferenceDiagnosticGameProvider";
 import FirstClickIsAlwaysMineGameProvider from "./gameProviders/firstClickIsAlwaysMineGameProvider";
 import {GameStateIndicator} from "./gameStateIndicator";
-import {Constants} from "./constants";
-
-export interface BoardOptions {
-    displayZeroNumber: boolean,
-    expandNeighboursOfZero: boolean,
-    expandWhenEnoughFlagsLaid: boolean,
-    showBasicInferenceTips: boolean,
-}
+import {BoardOptions, Constants} from "./constants";
 
 interface MinesweeperGameProps {
 }
@@ -28,10 +21,15 @@ interface MinesweeperGameState {
     userWidth: string,
     userMineCount: string,
     userGameType: string,
+
+    // The BoardOptions, unpacked
     displayZeroNumber: boolean,
     expandNeighboursOfZero: boolean,
     expandWhenEnoughFlagsLaid: boolean,
     showBasicInferenceTips: boolean,
+    useAllBasicInferenceTips: boolean,
+    decrementVisibleNumberByAdjacentFlags: boolean,
+    decrementVisibleNumberByAdjacentInferredMines: boolean,
 }
 
 
@@ -50,10 +48,14 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
     public get boardOptions(): BoardOptions {
         const boardOptions: BoardOptions =
             {
-                displayZeroNumber: this.state.displayZeroNumber,
+                displayNumberZeroWhenNoMinesAdjacent: this.state.displayZeroNumber,
                 expandNeighboursOfZero: this.state.expandNeighboursOfZero,
                 expandWhenEnoughFlagsLaid: this.state.expandWhenEnoughFlagsLaid,
                 showBasicInferenceTips: this.state.showBasicInferenceTips,
+                useAllBasicInferenceTips: this.state.useAllBasicInferenceTips,
+                decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
+                decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
+
             };
         return boardOptions;
     };
@@ -67,10 +69,13 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             userHeight: Constants.defaultGameConfig.size.height.toString(),
             userWidth: Constants.defaultGameConfig.size.width.toString(),
             userMineCount: Constants.defaultGameConfig.mineCount.toString(),
-            displayZeroNumber: Constants.defaultBoardOptions.displayZeroNumber,
+            displayZeroNumber: Constants.defaultBoardOptions.displayNumberZeroWhenNoMinesAdjacent,
             expandNeighboursOfZero: Constants.defaultBoardOptions.expandNeighboursOfZero,
             expandWhenEnoughFlagsLaid: Constants.defaultBoardOptions.expandWhenEnoughFlagsLaid,
             showBasicInferenceTips: Constants.defaultBoardOptions.showBasicInferenceTips,
+            useAllBasicInferenceTips: Constants.defaultBoardOptions.useAllBasicInferenceTips,
+            decrementVisibleNumberByAdjacentFlags: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentFlags,
+            decrementVisibleNumberByAdjacentInferredMines: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentInferredMines,
             flaggedLocs: new Set<string>(),
         }
     }
@@ -191,20 +196,20 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
 
                     <br/>
                     <label>
-                        expandNeighboursOfZero:
-                        <input type="checkbox"
-                               key={'expandNeighboursOfZero'}
-                               checked={this.state.expandNeighboursOfZero}
-                               name={'expandNeighboursOfZero'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
                         displayZeroNumber:
                         <input type="checkbox"
                                key={'displayZeroNumber'}
                                checked={this.state.displayZeroNumber}
                                name={'displayZeroNumber'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        expandNeighboursOfZero:
+                        <input type="checkbox"
+                               key={'expandNeighboursOfZero'}
+                               checked={this.state.expandNeighboursOfZero}
+                               name={'expandNeighboursOfZero'}
                                onChange={this.handleInputChange}/>
                     </label>
                     <br/>
@@ -223,6 +228,33 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                key={'showBasicInferenceTips'}
                                checked={this.state.showBasicInferenceTips}
                                name={'showBasicInferenceTips'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        useAllBasicInferenceTips:
+                        <input type="checkbox"
+                               key={'useAllBasicInferenceTips'}
+                               checked={this.state.useAllBasicInferenceTips}
+                               name={'useAllBasicInferenceTips'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        decrementVisibleNumberByAdjacentFlags:
+                        <input type="checkbox"
+                               key={'decrementVisibleNumberByAdjacentFlags'}
+                               checked={this.state.decrementVisibleNumberByAdjacentFlags}
+                               name={'decrementVisibleNumberByAdjacentFlags'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        decrementVisibleNumberByAdjacentInferredMines:
+                        <input type="checkbox"
+                               key={'decrementVisibleNumberByAdjacentInferredMines'}
+                               checked={this.state.decrementVisibleNumberByAdjacentInferredMines}
+                               name={'decrementVisibleNumberByAdjacentInferredMines'}
                                onChange={this.handleInputChange}/>
                     </label>
 

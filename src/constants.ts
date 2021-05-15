@@ -1,5 +1,14 @@
 import {BoardSize, FixedBoardMinesweeperConfig} from "./gameProviders/gameProvider";
-import {BoardOptions} from "./minesweeperGame";
+
+export interface BoardOptions {
+    displayNumberZeroWhenNoMinesAdjacent: boolean,
+    expandNeighboursOfZero: boolean,
+    expandWhenEnoughFlagsLaid: boolean,
+    showBasicInferenceTips: boolean,
+    useAllBasicInferenceTips: boolean,
+    decrementVisibleNumberByAdjacentFlags: boolean,
+    decrementVisibleNumberByAdjacentInferredMines: boolean,
+}
 
 export class Constants {
     static defaultGameConfig: FixedBoardMinesweeperConfig = {
@@ -9,9 +18,12 @@ export class Constants {
 
     static defaultBoardOptions: BoardOptions = {
         expandNeighboursOfZero: true,
-        displayZeroNumber: false,
+        displayNumberZeroWhenNoMinesAdjacent: false,
         expandWhenEnoughFlagsLaid: true,
         showBasicInferenceTips: false,
+        useAllBasicInferenceTips: false,
+        decrementVisibleNumberByAdjacentFlags: false,
+        decrementVisibleNumberByAdjacentInferredMines: false,
     };
 
 

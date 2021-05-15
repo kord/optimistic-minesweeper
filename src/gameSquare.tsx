@@ -1,11 +1,13 @@
 import {MineTestResult} from "./gameProviders/gameProvider";
 import React, {PureComponent} from "react";
 import {BoardLoc} from "./boardLoc";
-import {BoardOptions} from "./minesweeperGame";
+import {BoardOptions} from "./constants";
 
 interface GameSquareProps {
     lastResult: MineTestResult,
     flagged: boolean,
+    flaggedNeighbours: number,
+    inferredMineNeighbours: number,
     visitFn: (loc: BoardLoc) => void,
     flagFn: (loc: BoardLoc) => void,
     boardOptions: BoardOptions,
@@ -58,12 +60,19 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
 
     render() {
         let neighboursWithMine = this.props.lastResult.neighboursWithMine;
-        let displayNumber = <></>;
         // Don't show number on exploded ordinance.
         if (neighboursWithMine !== undefined && !this.props.lastResult.explodedMine) {
-            if (this.props.boardOptions.displayZeroNumber || neighboursWithMine > 0)
-                displayNumber = <>{neighboursWithMine}</>;
+            if (this.props.boardOptions.displayNumberZeroWhenNoMinesAdjacent || neighboursWithMine > 0)
+                if (this.props.boardOptions.decrementVisibleNumberByAdjacentInferredMines) {
+                    neighboursWithMine -= this.props.inferredMineNeighbours;
+                } else if (this.props.boardOptions.decrementVisibleNumberByAdjacentFlags) {
+                    neighboursWithMine -= this.props.flaggedNeighbours;
+                }
         }
+        const displayNumber = this.props.lastResult.explodedMine ||
+        (!this.props.boardOptions.displayNumberZeroWhenNoMinesAdjacent && neighboursWithMine === 0) ?
+            <></> :
+            <>{neighboursWithMine}</>
 
 
         return (

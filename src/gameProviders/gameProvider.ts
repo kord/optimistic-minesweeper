@@ -122,19 +122,19 @@ export abstract class MinimalProvider extends EventTarget {
      */
     public abstract get success(): boolean;
 
-    private _gameOverMineLocations: Set<number> | undefined;
+    private _gameFinishedMineLocations: Set<number> | undefined;
 
     /**
      *  This is for convenience, processing out the final mine locations so we can use them in calls to lastVisitResult after game end.
      */
-    private get gameOverMineLocations(): Set<number> | undefined {
+    private get gameFinishedMineLocations(): Set<number> | undefined {
         if (!this.gameOver) return undefined;
-        if (!this._gameOverMineLocations) {
-            this._gameOverMineLocations = new Set<number>(
+        if (!this._gameFinishedMineLocations) {
+            this._gameFinishedMineLocations = new Set<number>(
                 this.mineLocations().map(loc => loc.toNumber(this.size))
             );
         }
-        return this._gameOverMineLocations;
+        return this._gameFinishedMineLocations;
     }
 
     /**
@@ -156,7 +156,6 @@ export abstract class MinimalProvider extends EventTarget {
      * @param loc The board location to check our state of knowledge about.
      */
     public lastVisitResult = (loc: BoardLoc) => {
-        // const loc = BoardLoc.fromNumber(locnum, this.size);
         const locnum = loc.toNumber(this.size);
 
         const lastFactualVisit = this.visitResults.get(locnum);
@@ -165,7 +164,7 @@ export abstract class MinimalProvider extends EventTarget {
         const finalInfo = this.gameOver ?
             {
                 gameOver: true,
-                containedMine: this.gameOverMineLocations!.has(locnum),
+                containedMine: this.gameFinishedMineLocations!.has(locnum),
             } :
             undefined;
 
