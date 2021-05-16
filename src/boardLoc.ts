@@ -1,4 +1,4 @@
-import {BoardSize} from "./gameProviders/gameProvider";
+import {BoardSize} from "./boardSize";
 
 export class BoardLoc {
     private static boardLocMatcher = new RegExp(`^([0-9]+)-([0-9]+)$`);
@@ -26,7 +26,7 @@ export class BoardLoc {
         }
     }
 
-    public static locToString = (loc: BoardLoc) => `${loc.row}-${loc.col}`;
+    // public static locToString = (loc: BoardLoc) => `${loc.row}-${loc.col}`;
 
     static fromNumber(locnum: number, size: BoardSize): BoardLoc {
         return new BoardLoc(Math.floor(locnum / size.width), locnum % size.width);
@@ -36,12 +36,10 @@ export class BoardLoc {
         return `${this.row}-${this.col}`;
     }
 
-    public toNumber(size: BoardSize) {
-        return size.width * this.row + this.col;
-    }
+    public toNumber = (size: BoardSize) => size.width * this.row + this.col;
 
-    neighboursOnBoard = (boardSize: BoardSize) => this.neighbours.filter(boardSize.onBoard);
+    public neighboursOnBoard = (boardSize: BoardSize) => this.neighbours.filter(boardSize.onBoard);
 
-    neighbourhoodIncludingSelf = (boardSize: BoardSize) => [...this.neighbours, this].filter(boardSize.onBoard);
+    public neighbourhoodIncludingSelf = (boardSize: BoardSize) => [...this.neighbours, this].filter(boardSize.onBoard);
 
 }

@@ -8,6 +8,7 @@ interface GameSquareProps {
     flagged: boolean,
     flaggedNeighbours: number,
     inferredMineNeighbours: number,
+    inferredOrInferredMineNeighbours: number,
     visitFn: (loc: BoardLoc) => void,
     flagFn: (loc: BoardLoc) => void,
     boardOptions: BoardOptions,
@@ -62,12 +63,18 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
         let neighboursWithMine = this.props.lastResult.neighboursWithMine;
         // Don't show number on exploded ordinance.
         if (neighboursWithMine !== undefined && !this.props.lastResult.explodedMine) {
-            if (this.props.boardOptions.displayNumberZeroWhenNoMinesAdjacent || neighboursWithMine > 0)
+            if (this.props.boardOptions.displayNumberZeroWhenNoMinesAdjacent || neighboursWithMine > 0) {
                 if (this.props.boardOptions.decrementVisibleNumberByAdjacentInferredMines) {
                     neighboursWithMine -= this.props.inferredMineNeighbours;
-                } else if (this.props.boardOptions.decrementVisibleNumberByAdjacentFlags) {
+                }
+                if (this.props.boardOptions.decrementVisibleNumberByAdjacentFlags) {
                     neighboursWithMine -= this.props.flaggedNeighbours;
                 }
+                if (this.props.boardOptions.decrementVisibleNumberByAdjacentFlags &&
+                    this.props.boardOptions.decrementVisibleNumberByAdjacentInferredMines) {
+                    neighboursWithMine = this.props.lastResult.neighboursWithMine! - this.props.inferredOrInferredMineNeighbours;
+                }
+            }
         }
         const displayNumber = this.props.lastResult.explodedMine ||
         (!this.props.boardOptions.displayNumberZeroWhenNoMinesAdjacent && neighboursWithMine === 0) ?

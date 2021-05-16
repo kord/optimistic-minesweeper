@@ -39,7 +39,7 @@ class Board extends Component<BoardProps, Boardstate> {
             return 0;
         }
         // Don't visit a flagged spot, even if we have the information to know full well it's safe.
-        if (this.props.flaggedLocs.has(loc.toString())) return 0;
+        if (this.isFlagged(loc)) return 0;
 
         let lastVisitResult = game.lastVisitResult(loc);
         // No need to revisit, ever.
@@ -103,7 +103,7 @@ class Board extends Component<BoardProps, Boardstate> {
 
         if (this.flaggedNeighbours(loc) === flagsNeeded) {
             const unvisitedNeighbours = loc.neighboursOnBoard(game.size)
-                .filter(nloc => !game.lastVisitResult(nloc).everVisited && !this.props.flaggedLocs.has(nloc.toString()));
+                .filter(nloc => !game.lastVisitResult(nloc).everVisited && !this.isFlagged(nloc));
             if (unvisitedNeighbours.length === 0) {
                 return openedSquares;
             }
@@ -156,12 +156,6 @@ class Board extends Component<BoardProps, Boardstate> {
         return openedSquares;
     }
 
-    private flaggedNeighbours = (loc: BoardLoc) =>
-        loc.neighboursOnBoard(this.props.gameProvider.size)
-            .map(loc => loc.toString())
-            .filter(strloc => this.props.flaggedLocs.has(strloc))
-            .length;
-
     boardClasses() {
         const ret = [
             'board',
@@ -188,6 +182,7 @@ class Board extends Component<BoardProps, Boardstate> {
                                     flagged={this.props.flaggedLocs.has(testResultRecord.locationName)}
                                     flaggedNeighbours={this.flaggedNeighbours(testResultRecord.location)}
                                     inferredMineNeighbours={this.inferredMineNeighbours(testResultRecord.location)}
+                                    inferredOrInferredMineNeighbours={this.inferredOrInferredMineNeighbours(testResultRecord.location)}
                                     lastResult={testResultRecord}
                                     flagFn={this.toggleFlagFn}
                                     visitFn={loc => this.visitFn(loc, true)}
@@ -199,8 +194,24 @@ class Board extends Component<BoardProps, Boardstate> {
 
     }
 
+    private isFlagged = (loc: BoardLoc) => this.props.flaggedLocs.has(loc.toString());
+
+    private flaggedNeighbours = (loc: BoardLoc) => {
+        const game = this.props.gameProvider;
+        return loc.neighboursOnBoard(game.size)
+            .filter(this.isFlagged)
+            .length;
+    };
+
     private inferredMineNeighbours = (loc: BoardLoc) =>
-        loc.neighboursOnBoard(this.props.gameProvider.size).filter(loc => this.props.gameProvider.lastVisitResult(loc).knownMine).length;
+        loc.neighboursOnBoard(this.props.gameProvider.size)
+            .filter(loc => this.props.gameProvider.lastVisitResult(loc).knownMine)
+            .length;
+
+    private inferredOrInferredMineNeighbours = (loc: BoardLoc) =>
+        loc.neighboursOnBoard(this.props.gameProvider.size)
+            .filter(loc => this.props.gameProvider.lastVisitResult(loc).knownMine || this.isFlagged(loc))
+            .length;
 
 }
 

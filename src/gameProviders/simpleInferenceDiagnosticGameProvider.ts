@@ -2,7 +2,7 @@ import {
     FactualMineTestResult,
     FixedBoardMinesweeperConfig,
     iMinesweeperGameProvider,
-    MinimalProvider
+    MinimalProvider, NeighbourhoodReport
 } from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
 import {FrontierKnowledge} from "./frontierKnowledge";
@@ -204,16 +204,5 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
     }
 }
 
-
-interface NeighbourhoodReport {
-    neighbours: BoardLoc[],
-    visited: BoardLoc[],
-    unvisited: BoardLoc[],
-
-    unvisitedAndUnknown: BoardLoc[],
-
-    knownMines: BoardLoc[],
-    knownNonMines: BoardLoc[],
-}
 
 export default SimpleInferenceDiagnosticGameProvider;

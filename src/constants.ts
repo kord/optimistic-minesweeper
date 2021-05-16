@@ -1,4 +1,5 @@
-import {BoardSize, FixedBoardMinesweeperConfig} from "./gameProviders/gameProvider";
+import {FixedBoardMinesweeperConfig} from "./gameProviders/gameProvider";
+import {BoardSize} from "./boardSize";
 
 export interface BoardOptions {
     displayNumberZeroWhenNoMinesAdjacent: boolean,

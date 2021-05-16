@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {BoardSize, FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./gameProviders/gameProvider";
+import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./gameProviders/gameProvider";
 import BasicGameProvider from "./gameProviders/basicGameProvider";
 import Board from "./board";
 import {BoardLoc} from "./boardLoc";
@@ -8,6 +8,8 @@ import SimpleInferenceDiagnosticGameProvider from "./gameProviders/simpleInferen
 import FirstClickIsAlwaysMineGameProvider from "./gameProviders/firstClickIsAlwaysMineGameProvider";
 import {GameStateIndicator} from "./gameStateIndicator";
 import {BoardOptions, Constants} from "./constants";
+import {BoardSize} from "./boardSize";
+import WatchedDiagnosticGameProvider from "./gameProviders/watchedDiagnosticGameProvider";
 
 interface MinesweeperGameProps {
 }
@@ -42,30 +44,29 @@ let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeper
         (config) => new AlwaysMineGameProvider(config)],
     ['SimpleInferenceDiagnosticGameProvider',
         (config) => new SimpleInferenceDiagnosticGameProvider(config)],
+    ['WatchedDiagnosticGameProvider',
+        (config) => new WatchedDiagnosticGameProvider(config)],
 ]);
 
 class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameState> {
     public get boardOptions(): BoardOptions {
-        const boardOptions: BoardOptions =
-            {
-                displayNumberZeroWhenNoMinesAdjacent: this.state.displayZeroNumber,
-                expandNeighboursOfZero: this.state.expandNeighboursOfZero,
-                expandWhenEnoughFlagsLaid: this.state.expandWhenEnoughFlagsLaid,
-                showBasicInferenceTips: this.state.showBasicInferenceTips,
-                useAllBasicInferenceTips: this.state.useAllBasicInferenceTips,
-                decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
-                decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
-
-            };
-        return boardOptions;
+        return {
+            displayNumberZeroWhenNoMinesAdjacent: this.state.displayZeroNumber,
+            expandNeighboursOfZero: this.state.expandNeighboursOfZero,
+            expandWhenEnoughFlagsLaid: this.state.expandWhenEnoughFlagsLaid,
+            showBasicInferenceTips: this.state.showBasicInferenceTips,
+            useAllBasicInferenceTips: this.state.useAllBasicInferenceTips,
+            decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
+            decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
+        } as BoardOptions;
     };
 
     constructor(props: MinesweeperGameProps) {
         super(props);
 
         this.state = {
-            gameProvider: new SimpleInferenceDiagnosticGameProvider(Constants.defaultGameConfig),
-            userGameType: 'SimpleInferenceDiagnosticGameProvider',
+            gameProvider: new WatchedDiagnosticGameProvider(Constants.defaultGameConfig),
+            userGameType: 'WatchedDiagnosticGameProvider',
             userHeight: Constants.defaultGameConfig.size.height.toString(),
             userWidth: Constants.defaultGameConfig.size.width.toString(),
             userMineCount: Constants.defaultGameConfig.mineCount.toString(),
