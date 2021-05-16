@@ -8,7 +8,7 @@ interface GameSquareProps {
     flagged: boolean,
     flaggedNeighbours: number,
     inferredMineNeighbours: number,
-    inferredOrInferredMineNeighbours: number,
+    flaggedOrInferredMineNeighbours: number,
     visitFn: (loc: BoardLoc) => void,
     flagFn: (loc: BoardLoc) => void,
     boardOptions: BoardOptions,
@@ -35,7 +35,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
     }
 
     classes() {
-        const {everVisited, explodedMine, neighboursWithMine, containedMine, onFrontierAndUnknown, knownMine, knownNonMine} = this.props.lastResult;
+        const {everVisited, explodedMine, neighboursWithMine, containedMine, diagnostics} = this.props.lastResult;
         let flagged = this.props.flagged;
         const modifiers = [
             '',  // This renders as 'game-square'
@@ -50,9 +50,14 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
 
         if (this.props.boardOptions.showBasicInferenceTips) {
             // Diagnostics
-            if (onFrontierAndUnknown) modifiers.push('--on-frontier-and-unknown');
-            if (knownMine) modifiers.push('--known-mine');
-            if (knownNonMine) modifiers.push('--known-non-mine');
+            if (diagnostics?.onFrontierAndUnknown) modifiers.push('--on-frontier-and-unknown');
+            if (diagnostics?.knownMine) modifiers.push('--known-mine');
+            if (diagnostics?.knownNonMine) modifiers.push('--known-non-mine');
+        }
+        if (this.props.boardOptions.showMineProbabilities &&
+            this.props.lastResult.diagnostics?.onFrontierAndUnknown &&
+            this.props.lastResult.diagnostics?.mineProbability !== undefined) {
+            modifiers.push('--has-known-probability');
         }
 
         return modifiers.map(mod => `game-square${mod}`).join(' ');
@@ -72,7 +77,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
                 }
                 if (this.props.boardOptions.decrementVisibleNumberByAdjacentFlags &&
                     this.props.boardOptions.decrementVisibleNumberByAdjacentInferredMines) {
-                    neighboursWithMine = this.props.lastResult.neighboursWithMine! - this.props.inferredOrInferredMineNeighbours;
+                    neighboursWithMine = this.props.lastResult.neighboursWithMine! - this.props.flaggedOrInferredMineNeighbours;
                 }
             }
         }
@@ -81,14 +86,24 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             <></> :
             <>{neighboursWithMine}</>
 
-
         return (
             <div className={this.classes()}
+                 style={this.style()}
                  onClick={this.onClick}
                  onContextMenu={this.onClick}
             >
                 {displayNumber}
             </div>
         );
+    }
+
+    private style() {
+        if (!this.props.boardOptions.showMineProbabilities) return undefined;
+        if (!this.props.lastResult.diagnostics) return undefined;
+        if (!this.props.lastResult.diagnostics.onFrontierAndUnknown) return undefined;
+        if (this.props.lastResult.diagnostics.mineProbability === undefined) return undefined;
+        return {
+            '--mine-probability': this.props.lastResult.diagnostics.mineProbability,
+        } as React.CSSProperties;
     }
 }

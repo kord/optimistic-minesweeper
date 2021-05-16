@@ -11,6 +11,10 @@ export class FrontierKnowledge {
     private requiredEmpty = new Set<number>();
     private expired = new Set<number>();
 
+    public get unknowns() {
+        return this.nonRequired;
+    }
+
     public get size() : number {
         return this.frontier.size;
     }

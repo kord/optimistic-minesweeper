@@ -1,5 +1,6 @@
 import {BoardLoc} from "../boardLoc";
 import {BoardSize} from "../boardSize";
+import {DiagnosticInfo} from "../watcher";
 
 export interface NeighbourhoodReport {
     neighbours: BoardLoc[],
@@ -31,10 +32,8 @@ export interface MineTestResult {
     explodedMine?: boolean,
     neighboursWithMine?: number,
 
-    // Diagnostics
-    knownNonMine?: boolean,
-    knownMine?: boolean,
-    onFrontierAndUnknown?: boolean,
+    // Diagnostic info.
+    diagnostics?: DiagnosticInfo,
 
     // Only provided if the game is over.
     gameOver?: boolean,
@@ -176,8 +175,8 @@ export abstract class MinimalProvider extends EventTarget {
             gameOver: this.gameOver,
             everVisited: !!lastFactualVisit,
             visitedNeighbourCount: visitedNeighbours.length,
+            diagnostics: diagnostics,
             ...lastFactualVisit,
-            ...diagnostics,
             ...finalInfo,
         } as MineTestResult;
     }

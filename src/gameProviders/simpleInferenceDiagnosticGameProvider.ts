@@ -6,6 +6,7 @@ import {
 } from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
 import {FrontierKnowledge} from "./frontierKnowledge";
+import {DiagnosticInfo} from "../watcher";
 
 class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private minelocs = new Set<number>();
@@ -126,7 +127,7 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
     /**
      * Override of superclass.
      */
-    protected diagnosticInfo(loc: BoardLoc): object {
+    protected diagnosticInfo(loc: BoardLoc): DiagnosticInfo {
         return {
             knownMine: this.frontierKnowledge.isRequiredMine(loc),
             knownNonMine: this.frontierKnowledge.isRequiredEmpty(loc),

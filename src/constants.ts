@@ -6,6 +6,7 @@ export interface BoardOptions {
     expandNeighboursOfZero: boolean,
     expandWhenEnoughFlagsLaid: boolean,
     showBasicInferenceTips: boolean,
+    showMineProbabilities: boolean,
     useAllBasicInferenceTips: boolean,
     decrementVisibleNumberByAdjacentFlags: boolean,
     decrementVisibleNumberByAdjacentInferredMines: boolean,
@@ -13,8 +14,8 @@ export interface BoardOptions {
 
 export class Constants {
     static defaultGameConfig: FixedBoardMinesweeperConfig = {
-        size: new BoardSize(16, 30),
-        mineCount: 99,
+        size: new BoardSize(16, 20),
+        mineCount: 66,
     };
 
     static defaultBoardOptions: BoardOptions = {
@@ -22,6 +23,7 @@ export class Constants {
         displayNumberZeroWhenNoMinesAdjacent: false,
         expandWhenEnoughFlagsLaid: true,
         showBasicInferenceTips: false,
+        showMineProbabilities: false,
         useAllBasicInferenceTips: false,
         decrementVisibleNumberByAdjacentFlags: false,
         decrementVisibleNumberByAdjacentInferredMines: false,

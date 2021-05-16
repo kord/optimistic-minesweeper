@@ -29,6 +29,7 @@ interface MinesweeperGameState {
     expandNeighboursOfZero: boolean,
     expandWhenEnoughFlagsLaid: boolean,
     showBasicInferenceTips: boolean,
+    showMineProbabilities: boolean,
     useAllBasicInferenceTips: boolean,
     decrementVisibleNumberByAdjacentFlags: boolean,
     decrementVisibleNumberByAdjacentInferredMines: boolean,
@@ -55,6 +56,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             expandNeighboursOfZero: this.state.expandNeighboursOfZero,
             expandWhenEnoughFlagsLaid: this.state.expandWhenEnoughFlagsLaid,
             showBasicInferenceTips: this.state.showBasicInferenceTips,
+            showMineProbabilities: this.state.showMineProbabilities,
             useAllBasicInferenceTips: this.state.useAllBasicInferenceTips,
             decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
@@ -74,6 +76,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             expandNeighboursOfZero: Constants.defaultBoardOptions.expandNeighboursOfZero,
             expandWhenEnoughFlagsLaid: Constants.defaultBoardOptions.expandWhenEnoughFlagsLaid,
             showBasicInferenceTips: Constants.defaultBoardOptions.showBasicInferenceTips,
+            showMineProbabilities: Constants.defaultBoardOptions.showMineProbabilities,
             useAllBasicInferenceTips: Constants.defaultBoardOptions.useAllBasicInferenceTips,
             decrementVisibleNumberByAdjacentFlags: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentInferredMines,
@@ -229,6 +232,15 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                key={'showBasicInferenceTips'}
                                checked={this.state.showBasicInferenceTips}
                                name={'showBasicInferenceTips'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        showMineProbabilities:
+                        <input type="checkbox"
+                               key={'showMineProbabilities'}
+                               checked={this.state.showMineProbabilities}
+                               name={'showMineProbabilities'}
                                onChange={this.handleInputChange}/>
                     </label>
                     <br/>

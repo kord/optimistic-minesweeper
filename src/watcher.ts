@@ -6,15 +6,21 @@ export class Watcher {
     private frontier: FrontierKnowledge;
     private results: Map<number, FactualMineTestResult>;
     private needsInvestigation: Set<number>;
+    private satisfyingAssignments: Set<number>[];
 
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
         this.frontier = new FrontierKnowledge(config.size);
         this.results = new Map<number, FactualMineTestResult>()
         this.needsInvestigation = new Set<number>();
+        this.satisfyingAssignments = [];
     }
 
     private get size() {
         return this.config.size
+    }
+
+    private get naiveMineProbability(): number {
+        return this.config.mineCount / (this.config.size.width * this.config.size.height);
     }
 
     public observe(loc: BoardLoc, result: FactualMineTestResult) {
@@ -27,16 +33,30 @@ export class Watcher {
         neighbours.forEach(this.frontier.introduce);
         this.frontier.remove(loc);
 
-        this.assignInvestigationOfNeighbourhood(loc);
+        if (result.explodedMine) {
+            console.log('Watcher saw an explosion.')
+            return;
+        }
 
+        this.assignInvestigationOfNeighbourhood(loc);
         this.attemptSimpleInference();
+        this.randomRollouts();
+
     }
 
     diagnosticInfo(loc: BoardLoc): DiagnosticInfo {
+        let mineProbability = undefined;
+        const onFrontierAndUnknown = this.frontier.onFrontierAndUnknown(loc);
+        const locnum = loc.toNumber(this.size);
+        if (onFrontierAndUnknown && this.satisfyingAssignments.length > 0) {
+            const mineTimes = this.satisfyingAssignments.filter(ass => ass.has(locnum)).length;
+            mineProbability =  mineTimes / this.satisfyingAssignments.length;
+        }
         return {
             knownMine: this.frontier.isRequiredMine(loc),
             knownNonMine: this.frontier.isRequiredEmpty(loc),
-            onFrontierAndUnknown: this.frontier.onFrontierAndUnknown(loc),
+            onFrontierAndUnknown: onFrontierAndUnknown,
+            mineProbability: mineProbability,
         }
     }
 
@@ -102,6 +122,7 @@ export class Watcher {
         }
         console.log(`After attemptSimpleInference, frontier still size ${this.frontier.unknownSize} of ${this.frontier.size}`);
         console.log(wr);
+
         return wr;
     }
 
@@ -123,12 +144,57 @@ export class Watcher {
             .map(neighbour => neighbour.toNumber(this.size))
             .forEach(x => this.needsInvestigation.add(x));
     }
+
+    private randomRollouts() {
+        // Start from scratch.
+        this.satisfyingAssignments = [];
+
+        const rollouts = 5000;
+        const mineProbability = this.naiveMineProbability;
+        for (let i = 0; i < rollouts; i++) {
+            const frontierMines: Set<number> = this.assignRandomly(this.frontier.unknowns, mineProbability);
+            if (this.satisfiesConstraints(frontierMines)) {
+                this.satisfyingAssignments.push(frontierMines);
+            }
+        }
+
+        console.log(`${this.satisfyingAssignments.length} of ${rollouts} rollouts succeeded.`);
+
+
+    }
+
+    private assignRandomly(locs: Set<number>, mineProbability: number) {
+        const ret = new Set<number>();
+        locs.forEach(loc => {
+            if (Math.random() <= mineProbability) ret.add(loc);
+        });
+        return ret;
+    }
+
+    private satisfiesConstraints(frontierMines: Set<number>): boolean {
+        const hasMine = (loc: BoardLoc) => (frontierMines.has(loc.toNumber(this.size)) || this.frontier.isRequiredMine(loc));
+
+        const iter = this.results.entries();
+        let result = iter.next();
+        while (!result.done) {
+            const locnum = result.value[0];
+            const requiredMines = result.value[1].neighboursWithMine;
+            const loc = BoardLoc.fromNumber(locnum, this.size);
+            const neighbourMinesInFrontier = loc.neighboursOnBoard(this.size).filter(hasMine);
+            if (neighbourMinesInFrontier.length !== requiredMines) {
+                return false;
+            }
+            result = iter.next();
+        }
+        return true;
+    }
 }
 
-interface DiagnosticInfo {
+export interface DiagnosticInfo {
     knownNonMine?: boolean,
     knownMine?: boolean,
     onFrontierAndUnknown?: boolean,
+    mineProbability?: number,
 }
 
 interface WorkReport {

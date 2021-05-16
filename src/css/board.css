@@ -30,6 +30,10 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
+
+    --mine-probability: 0;
+    --mine-probability-color: hsl(0, calc(var(--mine-probability) * 100%), 80%);
+    /*--mine-probability-color: hsl(0, 50%, 50%);*/
 }
 
 .game-square--flagged,
@@ -71,12 +75,16 @@
     background-color: lightgoldenrodyellow;
 }
 
+.game-square--has-known-probability {
+    background-color: var(--mine-probability-color);
+}
+
 .game-square--known-non-mine {
     background-color: lightgreen;
 }
 
 .game-square--known-mine {
-    background-color: lightpink;
+    background-color: red;
 }
 
 

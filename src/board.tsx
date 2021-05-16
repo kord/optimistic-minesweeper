@@ -61,7 +61,7 @@ class Board extends Component<BoardProps, Boardstate> {
         if (game.gameOver) return 0;
         let openedSquares = 0;
         game.locations.forEach(loc => {
-            if (game.lastVisitResult(loc).knownNonMine) {
+            if (game.lastVisitResult(loc).diagnostics?.knownNonMine) {
                 openedSquares += this.visitFn(loc);
             }
         })
@@ -182,7 +182,7 @@ class Board extends Component<BoardProps, Boardstate> {
                                     flagged={this.props.flaggedLocs.has(testResultRecord.locationName)}
                                     flaggedNeighbours={this.flaggedNeighbours(testResultRecord.location)}
                                     inferredMineNeighbours={this.inferredMineNeighbours(testResultRecord.location)}
-                                    inferredOrInferredMineNeighbours={this.inferredOrInferredMineNeighbours(testResultRecord.location)}
+                                    flaggedOrInferredMineNeighbours={this.flaggedOrInferredMineNeighbours(testResultRecord.location)}
                                     lastResult={testResultRecord}
                                     flagFn={this.toggleFlagFn}
                                     visitFn={loc => this.visitFn(loc, true)}
@@ -205,12 +205,12 @@ class Board extends Component<BoardProps, Boardstate> {
 
     private inferredMineNeighbours = (loc: BoardLoc) =>
         loc.neighboursOnBoard(this.props.gameProvider.size)
-            .filter(loc => this.props.gameProvider.lastVisitResult(loc).knownMine)
+            .filter(loc => this.props.gameProvider.lastVisitResult(loc).diagnostics?.knownMine)
             .length;
 
-    private inferredOrInferredMineNeighbours = (loc: BoardLoc) =>
+    private flaggedOrInferredMineNeighbours = (loc: BoardLoc) =>
         loc.neighboursOnBoard(this.props.gameProvider.size)
-            .filter(loc => this.props.gameProvider.lastVisitResult(loc).knownMine || this.isFlagged(loc))
+            .filter(loc => this.props.gameProvider.lastVisitResult(loc).diagnostics?.knownMine || this.isFlagged(loc))
             .length;
 
 }
