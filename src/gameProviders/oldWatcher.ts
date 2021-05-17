@@ -1,10 +1,11 @@
-import {BoardLoc} from "./boardLoc";
-import {FactualMineTestResult, FixedBoardMinesweeperConfig, NeighbourhoodReport} from "./gameProviders/gameProvider";
-import {FrontierKnowledge} from "./gameProviders/frontierKnowledge";
+import {BoardLoc} from "../boardLoc";
+import {FrontierKnowledge} from "./frontierKnowledge";
+import {DiagnosticInfo, FactualMineTestResult, FixedBoardMinesweeperConfig, NeighbourhoodReport} from "../types";
 
-export class Watcher {
+export class OldWatcher {
     private frontier: FrontierKnowledge;
     private results: Map<number, FactualMineTestResult>;
+    // private constraints: Constraint[];
     private needsInvestigation: Set<number>;
     private satisfyingAssignments: Set<number>[];
 
@@ -13,6 +14,7 @@ export class Watcher {
         this.results = new Map<number, FactualMineTestResult>()
         this.needsInvestigation = new Set<number>();
         this.satisfyingAssignments = [];
+        // this.constraints = [];
     }
 
     private get size() {
@@ -22,6 +24,8 @@ export class Watcher {
     private get naiveMineProbability(): number {
         return this.config.mineCount / (this.config.size.width * this.config.size.height);
     }
+
+    neighbours = (loc: BoardLoc) => loc.neighboursOnBoard(this.size).map(loc => loc.toNumber(this.size));
 
     public observe(loc: BoardLoc, result: FactualMineTestResult) {
         const locnum = loc.toNumber(this.size);
@@ -34,9 +38,16 @@ export class Watcher {
         this.frontier.remove(loc);
 
         if (result.explodedMine) {
-            console.log('Watcher saw an explosion.')
+            console.log('OldWatcher saw an explosion.')
             return;
         }
+
+        // const constraint = {
+        //     locs: this.neighbours(loc),
+        //     requiredMines: result.neighboursWithMine,
+        // } as Constraint;
+        // this.constraints.push(constraint);
+
 
         this.assignInvestigationOfNeighbourhood(loc);
         this.attemptSimpleInference();
@@ -149,7 +160,7 @@ export class Watcher {
         // Start from scratch.
         this.satisfyingAssignments = [];
 
-        const rollouts = 5000;
+        const rollouts = 1000;
         const mineProbability = this.naiveMineProbability;
         for (let i = 0; i < rollouts; i++) {
             const frontierMines: Set<number> = this.assignRandomly(this.frontier.unknowns, mineProbability);
@@ -188,13 +199,6 @@ export class Watcher {
         }
         return true;
     }
-}
-
-export interface DiagnosticInfo {
-    knownNonMine?: boolean,
-    knownMine?: boolean,
-    onFrontierAndUnknown?: boolean,
-    mineProbability?: number,
 }
 
 interface WorkReport {

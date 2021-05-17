@@ -83,6 +83,10 @@
     background-color: lightgreen;
 }
 
+.game-square--has-some-chance-of-being-a-mine {
+    background-color: red;
+}
+
 .game-square--known-mine {
     background-color: red;
 }

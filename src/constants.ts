@@ -1,5 +1,5 @@
-import {FixedBoardMinesweeperConfig} from "./gameProviders/gameProvider";
 import {BoardSize} from "./boardSize";
+import {FixedBoardMinesweeperConfig} from "./types";
 
 export interface BoardOptions {
     displayNumberZeroWhenNoMinesAdjacent: boolean,
@@ -31,4 +31,3 @@ export class Constants {
 
 
 }
-

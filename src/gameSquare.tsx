@@ -1,7 +1,7 @@
-import {MineTestResult} from "./gameProviders/gameProvider";
 import React, {PureComponent} from "react";
 import {BoardLoc} from "./boardLoc";
 import {BoardOptions} from "./constants";
+import {MineTestResult} from "./types";
 
 interface GameSquareProps {
     lastResult: MineTestResult,
@@ -53,6 +53,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             if (diagnostics?.onFrontierAndUnknown) modifiers.push('--on-frontier-and-unknown');
             if (diagnostics?.knownMine) modifiers.push('--known-mine');
             if (diagnostics?.knownNonMine) modifiers.push('--known-non-mine');
+            if (diagnostics?.couldBeAMine) modifiers.push('--has-some-chance-of-being-a-mine');
         }
         if (this.props.boardOptions.showMineProbabilities &&
             this.props.lastResult.diagnostics?.onFrontierAndUnknown &&

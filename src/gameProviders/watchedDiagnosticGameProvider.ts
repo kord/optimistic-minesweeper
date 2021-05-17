@@ -1,15 +1,13 @@
 import {
-    FactualMineTestResult,
-    FixedBoardMinesweeperConfig,
-    iMinesweeperGameProvider,
     MinimalProvider
 } from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
-import {Watcher} from "../watcher";
+import {OldWatcher} from "./oldWatcher";
+import {FactualMineTestResult, FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "../types";
 
 class WatchedDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private minelocs = new Set<number>();
-    private watcher: Watcher;
+    private watcher: OldWatcher;
     private firstMoveMade = false;
     private movesMade: number = 0;
     private mineVisited: boolean = false;
@@ -24,7 +22,7 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
         console.assert(this.config.mineCount - this.numLocs > 9,
             'There needs to be space for a first move. Use fewer mines.');
 
-        this.watcher = new Watcher(config);
+        this.watcher = new OldWatcher(config);
     }
 
     /**

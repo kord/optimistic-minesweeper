@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./gameProviders/gameProvider";
 import BasicGameProvider from "./gameProviders/basicGameProvider";
 import Board from "./board";
 import {BoardLoc} from "./boardLoc";
@@ -10,6 +9,8 @@ import {GameStateIndicator} from "./gameStateIndicator";
 import {BoardOptions, Constants} from "./constants";
 import {BoardSize} from "./boardSize";
 import WatchedDiagnosticGameProvider from "./gameProviders/watchedDiagnosticGameProvider";
+import NewWatchedDiagnosticGameProvider from "./gameProviders/newWatchedDiagnosticGameProvider";
+import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./types";
 
 interface MinesweeperGameProps {
 }
@@ -47,6 +48,8 @@ let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeper
         (config) => new SimpleInferenceDiagnosticGameProvider(config)],
     ['WatchedDiagnosticGameProvider',
         (config) => new WatchedDiagnosticGameProvider(config)],
+    ['NewWatchedDiagnosticGameProvider',
+        (config) => new NewWatchedDiagnosticGameProvider(config)],
 ]);
 
 class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameState> {
@@ -67,8 +70,8 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         super(props);
 
         this.state = {
-            gameProvider: new WatchedDiagnosticGameProvider(Constants.defaultGameConfig),
-            userGameType: 'WatchedDiagnosticGameProvider',
+            gameProvider: new NewWatchedDiagnosticGameProvider(Constants.defaultGameConfig),
+            userGameType: 'NewWatchedDiagnosticGameProvider',
             userHeight: Constants.defaultGameConfig.size.height.toString(),
             userWidth: Constants.defaultGameConfig.size.width.toString(),
             userMineCount: Constants.defaultGameConfig.mineCount.toString(),

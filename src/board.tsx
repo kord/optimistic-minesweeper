@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
-import {iMinesweeperGameProvider, MineTestResult} from "./gameProviders/gameProvider";
 import {GameSquare} from "./gameSquare";
 import './css/board.css';
 import {BoardLoc} from "./boardLoc";
 import {BoardOptions} from "./constants";
+import {iMinesweeperGameProvider, MineTestResult} from "./types";
 
 
 interface BoardProps {
