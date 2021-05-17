@@ -4,7 +4,7 @@ import {
 import {BoardLoc} from "../boardLoc";
 import {OldWatcher} from "./oldWatcher";
 import NewWatcher from "./newWatcher";
-import {FactualMineTestResult, FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "../types";
+import {DiagnosticInfo, FactualMineTestResult, FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "../types";
 
 class NewWatchedDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private minelocs = new Set<number>();
@@ -106,7 +106,8 @@ class NewWatchedDiagnosticGameProvider extends MinimalProvider implements iMines
     /**
      * Override of superclass.
      */
-    protected diagnosticInfo(loc: BoardLoc): object {
+    protected diagnosticInfo(loc: BoardLoc): DiagnosticInfo {
+        if (this.visitResults.has(loc.toNumber(this.size))) return {};
         return this.watcher.diagnosticInfo(loc);
     }
 

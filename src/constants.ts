@@ -21,9 +21,9 @@ export class Constants {
     static defaultBoardOptions: BoardOptions = {
         expandNeighboursOfZero: true,
         displayNumberZeroWhenNoMinesAdjacent: false,
-        expandWhenEnoughFlagsLaid: true,
+        expandWhenEnoughFlagsLaid: false,
         showBasicInferenceTips: false,
-        showMineProbabilities: false,
+        showMineProbabilities: true,
         useAllBasicInferenceTips: false,
         decrementVisibleNumberByAdjacentFlags: false,
         decrementVisibleNumberByAdjacentInferredMines: false,

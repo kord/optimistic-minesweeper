@@ -80,3 +80,8 @@ export interface iMinesweeperGameProvider {
     // Reveal mines, ending the game in the process, if it's not over already.
     mineLocations: () => BoardLoc[],
 }
+
+export interface SatisfyingAssignment {
+    mines: Set<number>,
+    empties: Set<number>,
+}

@@ -1,5 +1,5 @@
 import {BoardLoc} from "../boardLoc";
-import {DiagnosticInfo, FactualMineTestResult, FixedBoardMinesweeperConfig} from "../types";
+import {DiagnosticInfo, FactualMineTestResult, FixedBoardMinesweeperConfig, SatisfyingAssignment} from "../types";
 
 interface iWatcher {
     observe: (loc: BoardLoc, result: FactualMineTestResult) => void,
@@ -97,8 +97,8 @@ class ConstraintSet {
             }
         }
         return {
-            knownMine: toy.knownTrue,
-            knownEmpty: toy.knownFalse,
+            mines: toy.knownTrue,
+            empties: toy.knownFalse,
         };
     }
 
@@ -150,17 +150,29 @@ class ConstraintSet {
         return ret;
     }
 
+    consistentAssignment = (ass: SatisfyingAssignment) => {
+        let iter = this.knownFalse.entries();
+        let next = iter.next();
+        while (!next.done) {
+            if (ass.mines.has(next.value[0])) return false;
+            next = iter.next();
+        }
+
+        iter = this.knownTrue.entries();
+        next = iter.next();
+        while (!next.done) {
+            if (ass.empties.has(next.value[0])) return false;
+            next = iter.next();
+        }
+
+        return true;
+    }
 }
 
-
-interface SatisfyingAssignment {
-    knownMine: Set<number>,
-    knownEmpty: Set<number>,
-}
 
 class NewWatcher implements iWatcher {
-    // private knownMine = new Set<number>();
-    // private knownEmpty = new Set<number>();
+    // private mines = new Set<number>();
+    // private empties = new Set<number>();
     // private unknown = new Set<number>();
     // private constraints: Constraint[];
     private constraints: ConstraintSet;
@@ -215,24 +227,29 @@ class NewWatcher implements iWatcher {
     }
 
     private findRandomSatisfyingAssignments() {
-        const ret = [];
-        const attempts = 100;
+        this.pruneRandomSatisfyingAssignments();
+        const attempts = 50;
         let failures = 0;
-        for (let i = 0; i < attempts; i++) {
+        let i = 0;
+        for (i = 0; i < attempts && this.randomSatisfyingAssignments.length < 500; i++) {
             let ass = this.constraints.findRandomSatisfyingAssignment();
             if (ass === undefined) failures++;
-            else ret.push(ass);
+            else this.randomSatisfyingAssignments.push(ass);
         }
 
-        console.log(`Found ${ret.length} minefiends in ${attempts} tries.`);
-        this.randomSatisfyingAssignments = ret;
+        console.log(`Know ${this.randomSatisfyingAssignments.length} minefiends in ${i} tries.`);
     }
 
     private mineProbability(locnum: number) {
         if (this.randomSatisfyingAssignments.length > 0) {
-            const mineCount = this.randomSatisfyingAssignments.filter(sa => sa.knownMine.has(locnum)).length;
+            const mineCount = this.randomSatisfyingAssignments.filter(sa => sa.mines.has(locnum)).length;
             return mineCount / this.randomSatisfyingAssignments.length;
         }
+    }
+
+    private pruneRandomSatisfyingAssignments() {
+        this.randomSatisfyingAssignments =
+            this.randomSatisfyingAssignments.filter(this.constraints.consistentAssignment);
     }
 }
 

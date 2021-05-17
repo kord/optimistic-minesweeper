@@ -53,13 +53,13 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             if (diagnostics?.onFrontierAndUnknown) modifiers.push('--on-frontier-and-unknown');
             if (diagnostics?.knownMine) modifiers.push('--known-mine');
             if (diagnostics?.knownNonMine) modifiers.push('--known-non-mine');
-            if (diagnostics?.couldBeAMine) modifiers.push('--has-some-chance-of-being-a-mine');
         }
         if (this.props.boardOptions.showMineProbabilities &&
             this.props.lastResult.diagnostics?.onFrontierAndUnknown &&
             this.props.lastResult.diagnostics?.mineProbability !== undefined) {
             modifiers.push('--has-known-probability');
         }
+        // if (diagnostics?.couldBeAMine) modifiers.push('--has-some-chance-of-being-a-mine');
 
         return modifiers.map(mod => `game-square${mod}`).join(' ');
     }
@@ -87,14 +87,15 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             <></> :
             <>{neighboursWithMine}</>
 
-        return (
-            <div className={this.classes()}
-                 style={this.style()}
-                 onClick={this.onClick}
-                 onContextMenu={this.onClick}
-            >
-                {displayNumber}
-            </div>
+        return (<>
+                <div className={this.classes()}
+                     style={this.style()}
+                     onClick={this.onClick}
+                     onContextMenu={this.onClick}
+                >
+                    {displayNumber}
+                </div>
+            </>
         );
     }
 
@@ -104,7 +105,11 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
         if (!this.props.lastResult.diagnostics.onFrontierAndUnknown) return undefined;
         if (this.props.lastResult.diagnostics.mineProbability === undefined) return undefined;
         return {
-            '--mine-probability': this.props.lastResult.diagnostics.mineProbability,
+            '--mine-probability': this.probabilityManipulateFn(this.props.lastResult.diagnostics.mineProbability),
         } as React.CSSProperties;
+    }
+
+    private probabilityManipulateFn(mineProbability: number): number {
+        return 1 - (1 - mineProbability) ** 2;
     }
 }
