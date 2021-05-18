@@ -3,11 +3,11 @@ import {FixedBoardMinesweeperConfig} from "./types";
 
 export interface BoardOptions {
     displayNumberZeroWhenNoMinesAdjacent: boolean,
-    expandNeighboursOfZero: boolean,
-    expandWhenEnoughFlagsLaid: boolean,
+    autoVisitNeighboursOfZeros: boolean,
+    autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
     showBasicInferenceTips: boolean,
     showMineProbabilities: boolean,
-    useAllBasicInferenceTips: boolean,
+    autoVisitDiagnosticKnownNonMines: boolean,
     decrementVisibleNumberByAdjacentFlags: boolean,
     decrementVisibleNumberByAdjacentInferredMines: boolean,
 }
@@ -19,12 +19,12 @@ export class Constants {
     };
 
     static defaultBoardOptions: BoardOptions = {
-        expandNeighboursOfZero: true,
+        autoVisitNeighboursOfZeros: true,
         displayNumberZeroWhenNoMinesAdjacent: false,
-        expandWhenEnoughFlagsLaid: false,
+        autoVisitNeighboursOfFlagSatisfiedNumbers: false,
         showBasicInferenceTips: false,
         showMineProbabilities: true,
-        useAllBasicInferenceTips: false,
+        autoVisitDiagnosticKnownNonMines: false,
         decrementVisibleNumberByAdjacentFlags: false,
         decrementVisibleNumberByAdjacentInferredMines: false,
     };

@@ -14,9 +14,9 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
         super(config.size);
         // this.rewriteStaticMineLocations();
         console.assert(this.config.mineCount > 0,
-            'The game is boring without any mines.');
+            'The game is boring without any trues.');
         console.assert(this.config.mineCount - this.numLocs > 9,
-            'There needs to be space for a first move. Use fewer mines.');
+            'There needs to be space for a first move. Use fewer trues.');
     }
 
     public get totalMines(): number {

@@ -2,12 +2,12 @@ import {
     MinimalProvider
 } from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
-import {OldWatcher} from "./oldWatcher";
-import {FactualMineTestResult, FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "../types";
+import Watcher from "../logic/watcher";
+import {DiagnosticInfo, FactualMineTestResult, FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "../types";
 
 class WatchedDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
-    private minelocs = new Set<number>();
-    private watcher: OldWatcher;
+    private mineField = new Set<number>();
+    protected watcher: Watcher;
     private firstMoveMade = false;
     private movesMade: number = 0;
     private mineVisited: boolean = false;
@@ -18,11 +18,11 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
         // console.assert(this.config.mineCount && this.config.mineCount > 0 && this.config.mineCount < this.numLocs);
 
         console.assert(this.config.mineCount > 0,
-            'The game is boring without any mines.');
-        console.assert(this.config.mineCount - this.numLocs > 9,
-            'There needs to be space for a first move. Use fewer mines.');
+            'The game is boring without any trues.');
+        console.assert(this.numLocs - this.config.mineCount > 9,
+            'There needs to be space for a first move. Use fewer trues.');
 
-        this.watcher = new OldWatcher(config);
+        this.watcher = new Watcher(config, 500, 100);
     }
 
     /**
@@ -42,42 +42,46 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
     hasMine = (loc: BoardLoc) => {
         if (!this.onBoard(loc)) return false;
         const locNumber = loc.toNumber(this.size);
-        return this.minelocs.has(locNumber);
+        return this.mineField.has(locNumber);
     }
-
-    // rewriteStaticMineLocations = () => {
-    //     this.minelocs.clear();
-    //     while (this.minelocs.size < this.config.mineCount) {
-    //         this.minelocs.add(Math.floor(Math.random() * this.numLocs));
-    //     }
-    // }
 
     rewriteStaticMineLocationsToExcludeNeighbourhood = (loc: BoardLoc) => {
-        this.minelocs.clear();
+        this.mineField.clear();
         let iterationcount = 0;
-        while (this.minelocs.size < this.config.mineCount) {
-            this.minelocs.add(Math.floor(Math.random() * this.numLocs));
-            loc.neighbourhoodIncludingSelf(this.size).forEach(loc => this.minelocs.delete(loc.toNumber(this.size)));
+        while (this.mineField.size < this.config.mineCount) {
+            this.mineField.add(Math.floor(Math.random() * this.numLocs));
+            loc.neighbourhoodIncludingSelf(this.size).forEach(loc => this.mineField.delete(loc.toNumber(this.size)));
             iterationcount++;
         }
-        console.log(`Took ${iterationcount} rounds to find a good board setup.`)
-        console.log(`minelocs.size ${this.minelocs.size}`)
+        console.log(`Took ${iterationcount} rounds to find a good board setup.`);
     }
 
+
+    /**
+     * This can be rewritten by subclasses to change the overall behaviour.
+     * @param loc Place we're about to visit at the request of the user.
+     */
+    protected changedMinefieldInResponseToNextVisit(loc: BoardLoc) : Set<number> | undefined {
+        return undefined;
+    }
 
     /**
      * Required by superclass.
      */
     public performVisit(loc: BoardLoc): FactualMineTestResult {
-        // Svelte representation used in here.
-        const locNum = loc.toNumber(this.size);
+
+        // Give subclasses an opportunity to rewrite the trues in response to the user move.
+        if (this.firstMoveMade) {
+            const newMines = this.changedMinefieldInResponseToNextVisit(loc);
+            if (newMines) this.mineField = newMines;
+        }
 
         // This demonstrates how we can change the board setup just in time after the user tries to visit somewhere.
-        // while (!this.firstMoveMade && this.hasMine(loc)) {
-        //     this.rewriteStaticMineLocations();
-        // }
-        if (!this.firstMoveMade) this.rewriteStaticMineLocationsToExcludeNeighbourhood(loc);
-        this.firstMoveMade = true;
+        if (!this.firstMoveMade) {
+            this.rewriteStaticMineLocationsToExcludeNeighbourhood(loc);
+            this.firstMoveMade = true;
+        }
+
 
         this.movesMade++;
 
@@ -108,11 +112,10 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
     /**
      * Override of superclass.
      */
-    protected diagnosticInfo(loc: BoardLoc): object {
+    protected diagnosticInfo(loc: BoardLoc): DiagnosticInfo {
+        if (this.visitResults.has(loc.toNumber(this.size))) return {};
         return this.watcher.diagnosticInfo(loc);
     }
-
-
 }
 
 

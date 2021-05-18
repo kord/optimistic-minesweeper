@@ -3,7 +3,7 @@ import {BoardSize} from "../boardSize";
 import {FactualMineTestResult, MineTestResult} from "../types";
 
 
-export abstract class MinimalProvider extends EventTarget {
+export abstract class MinimalProvider  {
     public readonly numLocs: number;
 
     /**
@@ -14,7 +14,6 @@ export abstract class MinimalProvider extends EventTarget {
     private successfulVisitCount: number = 0;
 
     constructor(public readonly size: BoardSize) {
-        super();
         console.assert(Number.isInteger(size.height) && size.height > 0);
         console.assert(Number.isInteger(size.width) && size.width > 0);
 
@@ -110,7 +109,7 @@ export abstract class MinimalProvider extends EventTarget {
     }
 
     public visit(loc: BoardLoc): MineTestResult {
-        if (this._failure) {
+        if (this.gameOver) {
             throw new Error(`Game is over. You can't visit anywhere anymore.`);
         }
 
@@ -126,16 +125,6 @@ export abstract class MinimalProvider extends EventTarget {
             console.log('BOOM');
             this._failure = true;
         }
-
-
-        // // Release an event for the visit occurring.
-        // this.dispatchEvent(
-        //     new CustomEvent('visit', {
-        //         detail: {
-        //             visitedLocation: loc,
-        //         }
-        //     })
-        // );
 
         this.visitResults.set(lastVisit.locationNum, result);
 
@@ -164,7 +153,5 @@ export abstract class MinimalProvider extends EventTarget {
      */
     protected runAfterVisit(): void {
     }
-
-    // protected numberLocRep = (loc: BoardLoc) => this.size.width * loc.row + loc.col;
 
 }

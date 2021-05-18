@@ -2,7 +2,7 @@ import {
     MinimalProvider
 } from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
-import {FrontierKnowledge} from "./frontierKnowledge";
+import {FrontierKnowledge} from "../logic/frontierKnowledge";
 import {
     DiagnosticInfo,
     FactualMineTestResult,
@@ -25,9 +25,9 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
         // console.assert(this.config.mineCount && this.config.mineCount > 0 && this.config.mineCount < this.numLocs);
 
         console.assert(this.config.mineCount > 0,
-            'The game is boring without any mines.');
+            'The game is boring without any trues.');
         console.assert(this.config.mineCount - this.numLocs > 9,
-            'There needs to be space for a first move. Use fewer mines.');
+            'There needs to be space for a first move. Use fewer trues.');
     }
 
     /**
@@ -183,7 +183,7 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
                 console.error(nr);
             }
             if (neededMines === 0) {
-                // All unknowns are non-mines
+                // All unknowns are non-trues
                 if (nr.unvisitedAndUnknown.length > 0) {
                     nr.unvisitedAndUnknown.forEach(this.frontierKnowledge.setEmpty);
                     progressMade = true;
@@ -191,7 +191,7 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
                 return;
             }
             if (neededMines > 0 && neededMines === nr.unvisitedAndUnknown.length) {
-                // All unvisited unknowns must be mines.
+                // All unvisited unknowns must be trues.
                 if (nr.unvisitedAndUnknown.length > 0) {
                     nr.unvisitedAndUnknown.forEach(this.frontierKnowledge.setMine);
                     progressMade = true;

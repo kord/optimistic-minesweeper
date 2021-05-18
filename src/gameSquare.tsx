@@ -2,6 +2,7 @@ import React, {PureComponent} from "react";
 import {BoardLoc} from "./boardLoc";
 import {BoardOptions} from "./constants";
 import {MineTestResult} from "./types";
+import ReactTooltip from "react-tooltip";
 
 interface GameSquareProps {
     lastResult: MineTestResult,
@@ -55,7 +56,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             if (diagnostics?.knownNonMine) modifiers.push('--known-non-mine');
         }
         if (this.props.boardOptions.showMineProbabilities &&
-            this.props.lastResult.diagnostics?.onFrontierAndUnknown &&
+            // this.props.lastResult.diagnostics?.onFrontierAndUnknown &&
             this.props.lastResult.diagnostics?.mineProbability !== undefined) {
             modifiers.push('--has-known-probability');
         }
@@ -87,29 +88,43 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             <></> :
             <>{neighboursWithMine}</>
 
-        return (<>
-                <div className={this.classes()}
-                     style={this.style()}
-                     onClick={this.onClick}
-                     onContextMenu={this.onClick}
-                >
-                    {displayNumber}
-                </div>
-            </>
+        const showTooltip = this.props.boardOptions.showMineProbabilities &&
+            this.props.lastResult.diagnostics?.mineProbability;
+        return (
+            <div data-tip data-for={this.props.lastResult.locationName}
+                 className={this.classes()}
+                 style={this.style()}
+                 onClick={this.onClick}
+                 onContextMenu={this.onClick}
+            >
+
+
+                {displayNumber}
+
+                {showTooltip ?
+                    <ReactTooltip id={this.props.lastResult.locationName}
+                                  place="top"
+                                  effect="solid">
+                        {`${this.props.lastResult.diagnostics?.mineProbability?.toFixed(2)}`}
+                    </ReactTooltip>
+                    : null}
+            </div>
         );
     }
 
     private style() {
         if (!this.props.boardOptions.showMineProbabilities) return undefined;
         if (!this.props.lastResult.diagnostics) return undefined;
-        if (!this.props.lastResult.diagnostics.onFrontierAndUnknown) return undefined;
+        // if (!this.props.lastResult.diagnostics.onFrontierAndUnknown) return undefined;
         if (this.props.lastResult.diagnostics.mineProbability === undefined) return undefined;
         return {
             '--mine-probability': this.probabilityManipulateFn(this.props.lastResult.diagnostics.mineProbability),
         } as React.CSSProperties;
     }
 
+    // This makes it redder.
     private probabilityManipulateFn(mineProbability: number): number {
-        return 1 - (1 - mineProbability) ** 2;
+        return mineProbability;
+        // return 1 - (1 - mineProbability) ** 2;
     }
 }

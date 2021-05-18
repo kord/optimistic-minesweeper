@@ -23,6 +23,9 @@ export interface NeighbourhoodReport {
 export interface FixedBoardMinesweeperConfig {
     size: BoardSize,
     mineCount: number,
+
+    // This is a hack place to store the callback but I don't care right now.
+    onLearning?: VoidFunction,
 }
 
 export interface MineTestResult {
@@ -60,7 +63,7 @@ export interface iMinesweeperGameProvider {
     size: BoardSize,
     // The number of squares on the board, syntactic sugar for member 'size'.
     numLocs: number,
-    // The number of mines in the game.
+    // The number of trues in the game.
     totalMines: number,
     // Visit a location, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
     visit: (loc: BoardLoc) => MineTestResult,
@@ -77,11 +80,69 @@ export interface iMinesweeperGameProvider {
     success: boolean,
     // You lost
     failure: boolean,
-    // Reveal mines, ending the game in the process, if it's not over already.
+    // Reveal trues, ending the game in the process, if it's not over already.
     mineLocations: () => BoardLoc[],
 }
 
-export interface SatisfyingAssignment {
-    mines: Set<number>,
-    empties: Set<number>,
+export class VariableAssignments {
+    public trues = new Set<number>();
+    public falses = new Set<number>();
+
+    public known = (variable: number) => this.trues.has(variable) || this.falses.has(variable);
+
+    public setTrue = (variable: number) => {
+        if (this.falses.has(variable)) {
+            throw new Error('Trying to set known false variable to true.')
+        }
+        this.trues.add(variable);
+    }
+
+    public setFalse = (variable: number) => {
+        if (this.trues.has(variable)) {
+            throw new Error('Trying to set known true variable to false.')
+        }
+        this.falses.add(variable);
+    }
+
+    public copy(): VariableAssignments {
+        const ret = new VariableAssignments();
+        this.trues.forEach(v => ret.trues.add(v));
+        this.falses.forEach(v => ret.falses.add(v));
+        return ret;
+    }
+
+    /**
+     * Push all of the variables from other into this. Return true if everything is cool, false if a conflict was
+     * found preventing the merger.
+     * @param other
+     */
+    public mergeFrom(other: VariableAssignments): boolean {
+        let iter = other.falses.entries();
+        let next = iter.next();
+        while (!next.done) {
+            const variable = next.value[0];
+            if (this.trues.has(variable)) {
+                return false;
+            }
+            this.falses.add(variable)
+            next = iter.next();
+        }
+
+        iter = other.trues.entries();
+        next = iter.next();
+        while (!next.done) {
+            const variable = next.value[0];
+            if (this.falses.has(variable)) {
+                return false;
+            }
+            this.trues.add(variable)
+            next = iter.next();
+        }
+        return true;
+    }
+}
+
+export interface iWatcher {
+    observe: (loc: BoardLoc, result: FactualMineTestResult) => void,
+    diagnosticInfo: (loc: BoardLoc) => DiagnosticInfo,
 }

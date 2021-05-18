@@ -27,11 +27,11 @@ class Board extends Component<BoardProps, Boardstate> {
         const game = this.props.gameProvider;
         this.props.toggleFlagFn(loc);
 
-        return this.performAppropriateAutomaticInference();
+        return this.doAppropriateAutomaticVisitsRecursively();
     }
 
     // Ignore the click if the user has clicked on a flagged square.
-    private visitFn = (loc: BoardLoc, visitWithInference: boolean = false) => {
+    private visitFn = (loc: BoardLoc, allowAutomaticVisits = true) => {
         let openedSquares = 0;
         const game = this.props.gameProvider;
         if (game.gameOver) {
@@ -45,30 +45,15 @@ class Board extends Component<BoardProps, Boardstate> {
         // No need to revisit, ever.
         if (!lastVisitResult.onBoard || lastVisitResult.everVisited) return 0;
 
-        console.log(`visiting ${loc.toString()}`);
+        // console.log(`visiting ${loc.toString()}`);
         const result = this.props.visitFn(loc);
         if (result.everVisited) openedSquares += 1;
 
-        if (visitWithInference) openedSquares += this.performAppropriateAutomaticInference();
-
+        if (allowAutomaticVisits) openedSquares += this.doAppropriateAutomaticVisitsRecursively();
 
         // console.log(result)
         return openedSquares;
     }
-
-    private useAllBasicInferenceTips = () => {
-        const game = this.props.gameProvider;
-        if (game.gameOver) return 0;
-        let openedSquares = 0;
-        game.locations.forEach(loc => {
-            if (game.lastVisitResult(loc).diagnostics?.knownNonMine) {
-                openedSquares += this.visitFn(loc);
-            }
-        })
-        if (openedSquares > 0) this.useAllBasicInferenceTips();
-        return openedSquares;
-    }
-
 
     private visitNeighboursOfSatisfiedLocs(seed?: BoardLoc): number {
         const game = this.props.gameProvider;
@@ -118,43 +103,51 @@ class Board extends Component<BoardProps, Boardstate> {
         return openedSquares;
     }
 
-
-    private performAppropriateAutomaticInference(): number {
-        let openedSquares = 0;
-
-        if (this.props.boardOptions.expandNeighboursOfZero) {
-            openedSquares += this.expandNeighboursOfZero();
-        }
-
-        if (this.props.boardOptions.expandWhenEnoughFlagsLaid) {
-            openedSquares += this.visitNeighboursOfSatisfiedLocs();
-        }
-
-        if (this.props.boardOptions.useAllBasicInferenceTips) {
-            openedSquares += this.useAllBasicInferenceTips();
-        }
-
-        // Recursive entry
-        if (openedSquares > 0) {
-            openedSquares += this.performAppropriateAutomaticInference();
-        }
-        return openedSquares;
-    }
-
-    private expandNeighboursOfZero(): number {
-        let openedSquares = 0;
+    private doAppropriateAutomaticVisitsRecursively(): number {
         const game = this.props.gameProvider;
-        game.locations.forEach(loc => {
-                const result = game.lastVisitResult(loc);
-                if (!result.explodedMine && result.neighboursWithMine === 0) {
-                    loc.neighboursOnBoard(game.size).forEach(loc => {
-                        openedSquares += this.visitFn(loc)
-                    });
-                }
+        let totalVisits = 0;
+        let visitsMade = 1;
+        while (visitsMade > 0) {
+            visitsMade = 0;
+            const locs = this.appropriateAutomaticVisits();
+            const iter = locs.keys();
+            for (let val = iter.next(); !val.done; val = iter.next()) {
+                const loc = BoardLoc.fromNumber(val.value, game.size);
+                visitsMade += this.visitFn(loc, false);
             }
-        );
-        return openedSquares;
+            totalVisits += visitsMade;
+        }
+        return totalVisits;
     }
+
+    private appropriateAutomaticVisits(): Set<number> {
+        const game = this.props.gameProvider;
+
+        const needsOpening = new Set<number>();
+        if (this.props.boardOptions.autoVisitNeighboursOfZeros) {
+            const zeroes = game.locations.filter(loc => game.lastVisitResult(loc).neighboursWithMine === 0);
+            zeroes.forEach(loc => loc.neighboursOnBoard(game.size)
+                .forEach(nloc => needsOpening.add(nloc.toNumber(game.size)))
+            );
+        }
+
+        if (this.props.boardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers) {
+            const flagMatches = game.locations.filter(loc =>
+                game.lastVisitResult(loc).neighboursWithMine === this.flaggedNeighbours(loc));
+            flagMatches.forEach(loc => loc.neighboursOnBoard(game.size)
+                .forEach(nloc => needsOpening.add(nloc.toNumber(game.size)))
+            );
+        }
+
+        if (this.props.boardOptions.autoVisitDiagnosticKnownNonMines) {
+            const knownNonMines = game.locations.filter(loc =>
+                game.lastVisitResult(loc).diagnostics?.knownNonMine);
+            knownNonMines.forEach(nloc => needsOpening.add(nloc.toNumber(game.size)));
+        }
+
+        return needsOpening;
+    }
+
 
     boardClasses() {
         const ret = [

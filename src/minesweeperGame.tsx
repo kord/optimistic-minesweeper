@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import BasicGameProvider from "./gameProviders/basicGameProvider";
 import Board from "./board";
 import {BoardLoc} from "./boardLoc";
@@ -9,8 +9,9 @@ import {GameStateIndicator} from "./gameStateIndicator";
 import {BoardOptions, Constants} from "./constants";
 import {BoardSize} from "./boardSize";
 import WatchedDiagnosticGameProvider from "./gameProviders/watchedDiagnosticGameProvider";
-import NewWatchedDiagnosticGameProvider from "./gameProviders/newWatchedDiagnosticGameProvider";
 import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./types";
+import RuthlessPersecutionGameProvider from "./gameProviders/ruthlessPersecutionGameProvider";
+import GentleKindnessGameProvider from "./gameProviders/gentleKindnessGameProvider";
 
 interface MinesweeperGameProps {
 }
@@ -27,11 +28,11 @@ interface MinesweeperGameState {
 
     // The BoardOptions, unpacked
     displayZeroNumber: boolean,
-    expandNeighboursOfZero: boolean,
-    expandWhenEnoughFlagsLaid: boolean,
+    autoVisitNeighboursOfZeros: boolean,
+    autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
     showBasicInferenceTips: boolean,
     showMineProbabilities: boolean,
-    useAllBasicInferenceTips: boolean,
+    autoVisitDiagnosticKnownNonMines: boolean,
     decrementVisibleNumberByAdjacentFlags: boolean,
     decrementVisibleNumberByAdjacentInferredMines: boolean,
 }
@@ -48,19 +49,23 @@ let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeper
         (config) => new SimpleInferenceDiagnosticGameProvider(config)],
     ['WatchedDiagnosticGameProvider',
         (config) => new WatchedDiagnosticGameProvider(config)],
-    ['NewWatchedDiagnosticGameProvider',
-        (config) => new NewWatchedDiagnosticGameProvider(config)],
+    ['RuthlessPersecutionGameProvider',
+        (config) => new RuthlessPersecutionGameProvider(config)],
+    ['GentleKindnessGameProvider',
+        (config) => new GentleKindnessGameProvider(config)],
 ]);
 
 class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameState> {
+    private boardRef = createRef<Board>();
+
     public get boardOptions(): BoardOptions {
         return {
             displayNumberZeroWhenNoMinesAdjacent: this.state.displayZeroNumber,
-            expandNeighboursOfZero: this.state.expandNeighboursOfZero,
-            expandWhenEnoughFlagsLaid: this.state.expandWhenEnoughFlagsLaid,
+            autoVisitNeighboursOfZeros: this.state.autoVisitNeighboursOfZeros,
+            autoVisitNeighboursOfFlagSatisfiedNumbers: this.state.autoVisitNeighboursOfFlagSatisfiedNumbers,
             showBasicInferenceTips: this.state.showBasicInferenceTips,
             showMineProbabilities: this.state.showMineProbabilities,
-            useAllBasicInferenceTips: this.state.useAllBasicInferenceTips,
+            autoVisitDiagnosticKnownNonMines: this.state.autoVisitDiagnosticKnownNonMines,
             decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
         } as BoardOptions;
@@ -70,17 +75,20 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         super(props);
 
         this.state = {
-            gameProvider: new NewWatchedDiagnosticGameProvider(Constants.defaultGameConfig),
-            userGameType: 'NewWatchedDiagnosticGameProvider',
+            gameProvider: new GentleKindnessGameProvider({
+                ...Constants.defaultGameConfig,
+                onLearning: () => this.boardRef.current?.forceUpdate()
+            }),
+            userGameType: 'GentleKindnessGameProvider',
             userHeight: Constants.defaultGameConfig.size.height.toString(),
             userWidth: Constants.defaultGameConfig.size.width.toString(),
             userMineCount: Constants.defaultGameConfig.mineCount.toString(),
             displayZeroNumber: Constants.defaultBoardOptions.displayNumberZeroWhenNoMinesAdjacent,
-            expandNeighboursOfZero: Constants.defaultBoardOptions.expandNeighboursOfZero,
-            expandWhenEnoughFlagsLaid: Constants.defaultBoardOptions.expandWhenEnoughFlagsLaid,
+            autoVisitNeighboursOfZeros: Constants.defaultBoardOptions.autoVisitNeighboursOfZeros,
+            autoVisitNeighboursOfFlagSatisfiedNumbers: Constants.defaultBoardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers,
             showBasicInferenceTips: Constants.defaultBoardOptions.showBasicInferenceTips,
             showMineProbabilities: Constants.defaultBoardOptions.showMineProbabilities,
-            useAllBasicInferenceTips: Constants.defaultBoardOptions.useAllBasicInferenceTips,
+            autoVisitDiagnosticKnownNonMines: Constants.defaultBoardOptions.autoVisitDiagnosticKnownNonMines,
             decrementVisibleNumberByAdjacentFlags: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentInferredMines,
             flaggedLocs: new Set<string>(),
@@ -128,6 +136,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         const config = {
             size: boardSize,
             mineCount: +this.state.userMineCount,
+            onLearning: () => this.boardRef.current?.forceUpdate(),
         } as FixedBoardMinesweeperConfig;
 
         const providerFn = gameTypes.get(this.state.userGameType);
@@ -147,6 +156,22 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
     render() {
         return (
             <div className={'minesweeper-game'}>
+
+                <GameStateIndicator totalMines={this.state.gameProvider.totalMines}
+                                    failure={this.state.gameProvider.failure}
+                                    success={this.state.gameProvider.success}
+                                    gameOver={this.state.gameProvider.gameOver}
+                                    flaggedCount={this.state.flaggedLocs.size}
+                                    restartFn={this.restart}/>
+
+                <Board ref={this.boardRef}
+                       gameProvider={this.state.gameProvider}
+                       flaggedLocs={this.state.flaggedLocs}
+                       visitFn={this.visit}
+                       toggleFlagFn={this.toggleFlag}
+                       boardOptions={this.boardOptions}
+                />
+
                 <div className={'game-controls'}>
                     {/*<label>*/}
                     {/*    Gamne Type*/}
@@ -212,24 +237,6 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                     </label>
                     <br/>
                     <label>
-                        expandNeighboursOfZero:
-                        <input type="checkbox"
-                               key={'expandNeighboursOfZero'}
-                               checked={this.state.expandNeighboursOfZero}
-                               name={'expandNeighboursOfZero'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        expandWhenEnoughFlagsLaid:
-                        <input type="checkbox"
-                               key={'expandWhenEnoughFlagsLaid'}
-                               checked={this.state.expandWhenEnoughFlagsLaid}
-                               name={'expandWhenEnoughFlagsLaid'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
                         showBasicInferenceTips:
                         <input type="checkbox"
                                key={'showBasicInferenceTips'}
@@ -248,11 +255,29 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                     </label>
                     <br/>
                     <label>
-                        useAllBasicInferenceTips:
+                        autoVisitNeighboursOfZeros:
                         <input type="checkbox"
-                               key={'useAllBasicInferenceTips'}
-                               checked={this.state.useAllBasicInferenceTips}
-                               name={'useAllBasicInferenceTips'}
+                               key={'autoVisitNeighboursOfZeros'}
+                               checked={this.state.autoVisitNeighboursOfZeros}
+                               name={'autoVisitNeighboursOfZeros'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        autoVisitNeighboursOfFlagSatisfiedNumbers:
+                        <input type="checkbox"
+                               key={'autoVisitNeighboursOfFlagSatisfiedNumbers'}
+                               checked={this.state.autoVisitNeighboursOfFlagSatisfiedNumbers}
+                               name={'autoVisitNeighboursOfFlagSatisfiedNumbers'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        autoVisitDiagnosticKnownNonMines:
+                        <input type="checkbox"
+                               key={'autoVisitDiagnosticKnownNonMines'}
+                               checked={this.state.autoVisitDiagnosticKnownNonMines}
+                               name={'autoVisitDiagnosticKnownNonMines'}
                                onChange={this.handleInputChange}/>
                     </label>
                     <br/>
@@ -277,19 +302,6 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 </div>
 
 
-                <GameStateIndicator totalMines={this.state.gameProvider.totalMines}
-                                    failure={this.state.gameProvider.failure}
-                                    success={this.state.gameProvider.success}
-                                    gameOver={this.state.gameProvider.gameOver}
-                                    flaggedCount={this.state.flaggedLocs.size}
-                                    restartFn={this.restart}/>
-
-                <Board gameProvider={this.state.gameProvider}
-                       flaggedLocs={this.state.flaggedLocs}
-                       visitFn={this.visit}
-                       toggleFlagFn={this.toggleFlag}
-                       boardOptions={this.boardOptions}
-                />
             </div>
         );
     }
