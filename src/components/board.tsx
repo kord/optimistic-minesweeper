@@ -179,8 +179,8 @@ class Board extends Component<BoardProps, Boardstate> {
 
 
         return (
-            <div className={this.boardClasses()}>
-                <div className={'board__grid'} style={style}>
+            <div className={this.boardClasses()} style={style}>
+                <div className={'board__grid'}>
                     {boardState.map(testResultRecord =>
                         <GameSquare key={testResultRecord.locationName}
                                     flagged={this.props.flaggedLocs.has(testResultRecord.locationName)}

@@ -1,16 +1,20 @@
 .game-state-indicator {
-
+    display: flex;
+    flex-direction: row;
+    /*align-content: space-around;*/
+    /*align-self: center;*/
+    justify-content: space-evenly;
 }
 
-
 .game-over-indicator {
-    --size: 40px;
+    --size: 50px;
     height: var(--size);
     width: var(--size);
     border: solid black 2px;
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
+    margin: 5px;
 }
 
 .game-over-indicator--success {
@@ -28,6 +32,10 @@
     border-color: lawngreen;
 }
 
-.game-status-text {
+.game-over-indicator--game-in-progress {
+    background-image: url("../img/sunshine.svg");
+}
 
+.game-status-text {
+    /*padding: 10px;*/
 }

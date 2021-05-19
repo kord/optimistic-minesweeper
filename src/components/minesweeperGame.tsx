@@ -12,6 +12,7 @@ import WatchedDiagnosticGameProvider from "../gameProviders/watchedDiagnosticGam
 import RuthlessPersecutionGameProvider from "../gameProviders/ruthlessPersecutionGameProvider";
 import GentleKindnessGameProvider from "../gameProviders/gentleKindnessGameProvider";
 import {iMinesweeperGameProvider} from "../gameProviders/gameProvider";
+import "../css/minesweeperGame.css";
 
 interface MinesweeperGameProps {
 }
@@ -196,6 +197,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         return (
             <div className={'minesweeper-game'}>
 
+                <div className={'gameplay-elements'}>
                 <GameStateIndicator totalMines={this.state.gameProvider.totalMines}
                                     failure={this.state.gameProvider.failure}
                                     success={this.state.gameProvider.success}
@@ -210,164 +212,160 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                        toggleFlagFn={this.toggleFlag}
                        boardOptions={this.boardOptions}
                 />
-
-                <div className={'game-controls'}>
-                    {/*<label>*/}
-                    {/*    Gamne Type*/}
-                    {/*    <input type={'select'} onChange={this.handleChange}>*/}
-
-                    {/*    </input>*/}
-                    {/*</label>*/}
-                    <select name={"gameType"}
-                            className={"gametype-dropdown"}
-                            value={this.state.userGameType}
-                        // size={this.props.solutionsHeight}
-                            onChange={(e) => {
-                                this.setState({userGameType: e.target.value});
-                            }}>
-                        {Array.from(gameTypes.keys()).map((gameTypeName) =>
-                            <option className={'level-list__level'}
-                                    key={gameTypeName}
-                                    value={gameTypeName}>
-                                {gameTypeName}
-                            </option>
-                        )}
-                    </select>
-                    <br/>
-                    <label>
-                        firstMoveAlwaysZero:
-                        <input type="checkbox"
-                               key={'firstMoveAlwaysZero'}
-                               checked={this.state.firstMoveAlwaysZero}
-                               name={'firstMoveAlwaysZero'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        firstMoveNeverMined:
-                        <input type="checkbox"
-                               key={'firstMoveNeverMined'}
-                               checked={this.state.firstMoveNeverMined}
-                               name={'firstMoveNeverMined'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        Height:
-                        <input type={'text'}
-                               name={'userHeight'}
-                               className={'textbox textbox--small'}
-                               value={this.state.userHeight}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        Width:
-                        <input type={'text'}
-                               name={'userWidth'}
-                               className={'textbox textbox--small'}
-                               value={this.state.userWidth}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        Mines:
-                        <input type={'text'}
-                               name={'userMineCount'}
-                               className={'textbox textbox--small'}
-                               value={this.state.userMineCount}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <input type="submit"
-                           className={'game-button restart-button'}
-                           value="Restart"
-                           onClick={this.restart}/>
-
-                    <br/>
-                    <label>
-                        displayZeroNumber:
-                        <input type="checkbox"
-                               key={'displayZeroNumber'}
-                               checked={this.state.displayZeroNumber}
-                               name={'displayZeroNumber'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        showBasicInferenceTips:
-                        <input type="checkbox"
-                               key={'showBasicInferenceTips'}
-                               checked={this.state.showBasicInferenceTips}
-                               name={'showBasicInferenceTips'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        showMineProbabilities:
-                        <input type="checkbox"
-                               key={'showMineProbabilities'}
-                               checked={this.state.showMineProbabilities}
-                               name={'showMineProbabilities'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        autoPlay:
-                        <input type="checkbox"
-                               key={'autoPlay'}
-                               checked={this.state.autoPlay}
-                               name={'autoPlay'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        autoVisitNeighboursOfZeros:
-                        <input type="checkbox"
-                               key={'autoVisitNeighboursOfZeros'}
-                               checked={this.state.autoVisitNeighboursOfZeros}
-                               name={'autoVisitNeighboursOfZeros'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        autoVisitNeighboursOfFlagSatisfiedNumbers:
-                        <input type="checkbox"
-                               key={'autoVisitNeighboursOfFlagSatisfiedNumbers'}
-                               checked={this.state.autoVisitNeighboursOfFlagSatisfiedNumbers}
-                               name={'autoVisitNeighboursOfFlagSatisfiedNumbers'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        autoVisitDiagnosticKnownNonMines:
-                        <input type="checkbox"
-                               key={'autoVisitDiagnosticKnownNonMines'}
-                               checked={this.state.autoVisitDiagnosticKnownNonMines}
-                               name={'autoVisitDiagnosticKnownNonMines'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        decrementVisibleNumberByAdjacentFlags:
-                        <input type="checkbox"
-                               key={'decrementVisibleNumberByAdjacentFlags'}
-                               checked={this.state.decrementVisibleNumberByAdjacentFlags}
-                               name={'decrementVisibleNumberByAdjacentFlags'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-                    <br/>
-                    <label>
-                        decrementVisibleNumberByAdjacentInferredMines:
-                        <input type="checkbox"
-                               key={'decrementVisibleNumberByAdjacentInferredMines'}
-                               checked={this.state.decrementVisibleNumberByAdjacentInferredMines}
-                               name={'decrementVisibleNumberByAdjacentInferredMines'}
-                               onChange={this.handleInputChange}/>
-                    </label>
-
                 </div>
+                <div className={'options-groups'}>
+                    <div className={'options-group'}>
+                        <select name={"gameType"}
+                                className={"gametype-dropdown"}
+                                value={this.state.userGameType}
+                            // size={this.props.solutionsHeight}
+                                onChange={(e) => {
+                                    this.setState({userGameType: e.target.value});
+                                }}>
+                            {Array.from(gameTypes.keys()).map((gameTypeName) =>
+                                <option className={'level-list__level'}
+                                        key={gameTypeName}
+                                        value={gameTypeName}>
+                                    {gameTypeName}
+                                </option>
+                            )}
+                        </select>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'firstMoveAlwaysZero'}
+                                   checked={this.state.firstMoveAlwaysZero}
+                                   name={'firstMoveAlwaysZero'}
+                                   onChange={this.handleInputChange}/>
+                            firstMoveAlwaysZero
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'firstMoveNeverMined'}
+                                   checked={this.state.firstMoveNeverMined}
+                                   name={'firstMoveNeverMined'}
+                                   onChange={this.handleInputChange}/>
+                            firstMoveNeverMined
+                        </label>
+                        <br/>
+                        <label>
+                            Height:&nbsp;
+                            <input type={'text'}
+                                   name={'userHeight'}
+                                   className={'textbox textbox--small'}
+                                   value={this.state.userHeight}
+                                   onChange={this.handleInputChange}/>
+                        </label>
+                        <br/>
+                        <label>
+                            Width:&nbsp;
+                            <input type={'text'}
+                                   name={'userWidth'}
+                                   className={'textbox textbox--small'}
+                                   value={this.state.userWidth}
+                                   onChange={this.handleInputChange}/>
+                        </label>
+                        <br/>
+                        <label>
+                            Mines:&nbsp;
+                            <input type={'text'}
+                                   name={'userMineCount'}
+                                   className={'textbox textbox--small'}
+                                   value={this.state.userMineCount}
+                                   onChange={this.handleInputChange}/>
+                        </label>
+                        <br/>
+                        <input type="submit"
+                               className={'game-button restart-button'}
+                               value="Restart"
+                               onClick={this.restart}/>
+                    </div>
 
+                    <div className={'options-group'}>
+                        <label>
+                            <input type="checkbox"
+                                   key={'displayZeroNumber'}
+                                   checked={this.state.displayZeroNumber}
+                                   name={'displayZeroNumber'}
+                                   onChange={this.handleInputChange}/>
+                            displayZeroNumber
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'showBasicInferenceTips'}
+                                   checked={this.state.showBasicInferenceTips}
+                                   name={'showBasicInferenceTips'}
+                                   onChange={this.handleInputChange}/>
+                            showBasicInferenceTips
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'showMineProbabilities'}
+                                   checked={this.state.showMineProbabilities}
+                                   name={'showMineProbabilities'}
+                                   onChange={this.handleInputChange}/>
+                            showMineProbabilities
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'autoPlay'}
+                                   checked={this.state.autoPlay}
+                                   name={'autoPlay'}
+                                   onChange={this.handleInputChange}/>
+                            autoPlay
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'autoVisitNeighboursOfZeros'}
+                                   checked={this.state.autoVisitNeighboursOfZeros}
+                                   name={'autoVisitNeighboursOfZeros'}
+                                   onChange={this.handleInputChange}/>
+                            autoVisitNeighboursOfZeros
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'autoVisitNeighboursOfFlagSatisfiedNumbers'}
+                                   checked={this.state.autoVisitNeighboursOfFlagSatisfiedNumbers}
+                                   name={'autoVisitNeighboursOfFlagSatisfiedNumbers'}
+                                   onChange={this.handleInputChange}/>
+                            autoVisitNeighboursOfFlagSatisfiedNumbers
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'autoVisitDiagnosticKnownNonMines'}
+                                   checked={this.state.autoVisitDiagnosticKnownNonMines}
+                                   name={'autoVisitDiagnosticKnownNonMines'}
+                                   onChange={this.handleInputChange}/>
+                            autoVisitDiagnosticKnownNonMines
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'decrementVisibleNumberByAdjacentFlags'}
+                                   checked={this.state.decrementVisibleNumberByAdjacentFlags}
+                                   name={'decrementVisibleNumberByAdjacentFlags'}
+                                   onChange={this.handleInputChange}/>
+                            decrementVisibleNumberByAdjacentFlags
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'decrementVisibleNumberByAdjacentInferredMines'}
+                                   checked={this.state.decrementVisibleNumberByAdjacentInferredMines}
+                                   name={'decrementVisibleNumberByAdjacentInferredMines'}
+                                   onChange={this.handleInputChange}/>
+                            decrementVisibleNumberByAdjacentInferredMines
+                        </label>
 
+                    </div>
+                </div>
             </div>
         );
     }

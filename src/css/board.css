@@ -1,9 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@900&display=swap');
 
-.minesweeper-game {
-
-}
-
 .board {
     /* Injected variables */
     --rows: 'number of rows in the puzzle';
@@ -14,9 +10,15 @@
 
 .board--game-over {
 
+    /*margin: 20px;*/
+
 }
 
 .board__grid {
+    margin: 20px;
+    width: calc(var(--cols) * var(--cell-size));
+    border: solid black 2px;
+
     display: grid;
     grid-template-rows: repeat(var(--rows), var(--cell-size));
     grid-template-columns: repeat(var(--cols), var(--cell-size));
@@ -91,25 +93,4 @@
 
 .game-square--known-mine {
     background-color: red;
-}
-
-
-.game-controls {
-    height: 20vh;
-}
-
-.textbox {
-
-}
-
-.textbox--small {
-
-}
-
-.game-button {
-
-}
-
-.restart-button {
-
 }

@@ -41,6 +41,7 @@ export class GameStateIndicator extends PureComponent<GameStateIndicatorProps, G
         if (success) modifiers.push('--success');
         if (failure) modifiers.push('--failure');
         if (gameOver) modifiers.push('--game-over');
+        if (!gameOver) modifiers.push('--game-in-progress');
 
         return modifiers.map(mod => `game-over-indicator${mod}`).join(' ');
     }
@@ -51,7 +52,7 @@ export class GameStateIndicator extends PureComponent<GameStateIndicatorProps, G
         let statusText: string = '';
         if (this.props.success) statusText = 'Congratulations. You win!';
         else if (this.props.failure) statusText = 'Congratulations. You lose!';
-        else statusText = `${minesLeft} unflagged mines remain.`
+        else statusText = `${minesLeft} Unflagged Mines Remain.`
 
         return (
             <div className={'game-state-indicator'}>

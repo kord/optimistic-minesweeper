@@ -1,0 +1,37 @@
+
+.minesweeper-game {
+
+}
+
+.gameplay-elements {
+    display: flex;
+    flex-direction: column;
+    align-content: space-evenly;
+}
+
+.options-groups {
+    display: flex;
+    flex-direction: row;
+
+}
+
+.options-group {
+    padding: 20px;
+}
+
+.textbox {
+
+}
+
+.textbox--small {
+    width: 40px;
+}
+
+.game-button {
+
+}
+
+.restart-button {
+    font-family: 'Roboto Slab', serif;
+    font-size: 20px;
+}
