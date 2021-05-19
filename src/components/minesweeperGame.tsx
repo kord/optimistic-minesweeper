@@ -157,14 +157,17 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
 
         console.log(`Setting gameProvider with ${this.state.userGameType}`);
         console.log(config);
+
+        if (this.nextAutoplay) {
+            clearTimeout(this.nextAutoplay);
+        }
         this.setState({
             gameProvider: providerFn(config),
             flaggedLocs: new Set<string>(),
         });
 
-
         if (this.boardOptions.autoPlay) {
-            setTimeout(this.doAutomaticVisit, 500);
+            this.nextAutoplay = setTimeout(this.doAutomaticVisit, 500);
         }
     }
 
@@ -194,8 +197,13 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
     }
 
     render() {
+        const style = {
+            '--rows': this.state.gameProvider.size.height,
+            '--cols': this.state.gameProvider.size.width,
+        } as React.CSSProperties;
+
         return (
-            <div className={'minesweeper-game'}>
+            <div className={'minesweeper-game'} style={style}>
 
                 <div className={'gameplay-elements'}>
                 <GameStateIndicator totalMines={this.state.gameProvider.totalMines}

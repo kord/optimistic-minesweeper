@@ -170,16 +170,12 @@ class Board extends Component<BoardProps, Boardstate> {
 
     render() {
         const game = this.props.gameProvider;
-        const style = {
-            '--rows': this.props.gameProvider.size.height,
-            '--cols': this.props.gameProvider.size.width,
-        } as React.CSSProperties;
 
         const boardState = game.locations.map(game.lastVisitResult);
 
 
         return (
-            <div className={this.boardClasses()} style={style}>
+            <div className={this.boardClasses()}>
                 <div className={'board__grid'}>
                     {boardState.map(testResultRecord =>
                         <GameSquare key={testResultRecord.locationName}

@@ -61,6 +61,22 @@ class SolutionTracker {
         return ret;
     }
 
+    public unseenVariableSettings() : VariableAssignments {
+        const ret = new VariableAssignments();
+        // If we're not even tracking anything, this is useless knowledge and would contain inconsistencies so
+        // we jump out early..
+        if (this.knownSolutions.size === 0) {
+            return ret;
+        }
+        this.timesEmptyInSolutions.forEach((val, variable) => {
+            if (val === 0) ret.setFalse(variable);
+        })
+        this.timesMineInSolutions.forEach((val, variable) => {
+            if (val === 0) ret.setTrue(variable);
+        })
+        return ret;
+    }
+
     public variablesInOrderOfHeuristicSafety() : number[]{
         const locs = [];
         for (let i = 0; i< this.numVariables;i++) locs.push(i);
@@ -124,8 +140,11 @@ class Watcher implements iWatcher {
             this.constraints.fixedVariables.setFalse(locnum);
             newConstraints.push(new Constraint(neighbours, result.neighboursWithMine));
         }
+        // This generates a whirlwind of inference in this.constraints.
         this.constraints.introduceConstraints(newConstraints);
+
         this.pruneSolutions();
+
         this.findAndStoreContinuations();
         // setImmediate(this.findAndStoreContinuations);
     }
@@ -206,6 +225,10 @@ class Watcher implements iWatcher {
         return this.solutionTracker.variablesInOrderOfHeuristicSafety();
     }
 
+    private testSuspiciousVariables() {
+        const suspicious = this.solutionTracker.unseenVariableSettings();
+        // Don't do anything yet
+    }
 }
 
 export default Watcher;

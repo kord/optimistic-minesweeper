@@ -3,7 +3,11 @@ import {VariableAssignments} from "../types";
 export class Constraint {
 
     constructor(public vars: number[], public trueCount: number) {
-        vars.sort(((a, b) => a-b));
+        vars.sort(((a, b) => a - b));
+    }
+
+    public get falseCount(): number {
+        return this.vars.length - this.trueCount;
     }
 
     public toString(): string {
@@ -22,6 +26,7 @@ export class Constraint {
                 changes += 1;
             }
         }
+        // If something is new, rewrite the variables of this constraint from scratch.
         if (changes > 0) this.vars = this.vars.filter(v => !vars.known(v));
         return changes;
     }
@@ -29,12 +34,16 @@ export class Constraint {
     /**
      * Try to subtract another constraint from ourselves.
      * @param shorterConstraint
+     * @param setTrue
+     * @param setFalse
      */
     public tryEliminate(shorterConstraint: Constraint): number {
         // We try to use the right order, but whatever, this is fine.
         if (this.vars.length < shorterConstraint.vars.length) {
             return shorterConstraint.tryEliminate(this);
         }
+
+
         // Here we try to subtract a constraint out of ourself.
         if (shorterConstraint.vars.every(v => this.vars.includes(v))) {
             // console.log(`REDUCTION ${this}`);
@@ -45,6 +54,88 @@ export class Constraint {
         }
         return 0;
     }
+
+    // /**
+    //  * Try to subtract another constraint from ourselves.
+    //  * @param otherConstraint
+    //  * @param setTrue
+    //  * @param setFalse
+    //  */
+    // public tryToSeparateFrom(otherConstraint: Constraint, setTrue: (loc: number) => void, setFalse: (loc: number) => void): number {
+    //     // We try to use the right order, but whatever, this is fine.
+    //     if (this.vars.length < otherConstraint.vars.length) {
+    //         return otherConstraint.tryToSeparateFrom(this, setTrue, setFalse);
+    //     }
+    //
+    //     let intersectionVars = otherConstraint.vars.filter(v => this.vars.includes(v));
+    //     let thisOnlyVars = this.vars.filter(v => !otherConstraint.vars.includes(v));
+    //     let otherOnlyVars = otherConstraint.vars.filter(v => !this.vars.includes(v));
+    //
+    //
+    //     const intersectionMinTrues = Math.max(
+    //         this.trueCount - thisOnlyVars.length,
+    //         otherConstraint.trueCount - otherOnlyVars.length);
+    //
+    //
+    //     //
+    //     // let intersection: number[] = [];
+    //     // let thisAloneSize = 0;
+    //     // for (let i = 0; i < otherConstraint.vars.length; i++) {
+    //     //     const variable = otherConstraint.vars[i];
+    //     //     if (this.vars.includes(variable)) {
+    //     //         intersection.push(variable);
+    //     //     } else {
+    //     //         thisAloneSize++;
+    //     //     }
+    //     // }
+    //     // // Nothing we can learn if they don't overlap.
+    //     // if (intersection.length === 0) return 0;
+    //     // const shorterOnlySize = otherConstraint.vars.length - intersection.length;
+    //     //
+    //     // // const intersectionMinTrues = Math.max(
+    //     // //     this.trueCount - thisAloneSize,
+    //     // //     otherConstraint.trueCount - shorterOnlySize);
+    //     // //
+    //     // // const intersectionMinFalses = Math.max(
+    //     // //     this.falseCount - thisAloneSize,
+    //     // //     otherConstraint.falseCount - shorterOnlySize);
+    //     //
+    //     // const intersectionMinTrues = this.trueCount - thisAloneSize;
+    //     //
+    //     // const intersectionMinFalses = this.falseCount - thisAloneSize;
+    //     //
+    //     // // If the intersection covers either the falses or trues needed by the shorter constraint, we separate the
+    //     // // constraints and set the shorter's excess variables appropriately.
+    //     // if (otherConstraint.trueCount === intersectionMinTrues) {
+    //     //     console.log(this.toString());
+    //     //     console.log(otherConstraint.toString());
+    //     //
+    //     //     this.removeExact(intersection, intersectionMinTrues);
+    //     //     otherConstraint.vars.forEach(v => {
+    //     //         if (!intersection.includes(v)) {
+    //     //             console.log(`setFalse ${v}`)
+    //     //             setFalse(v);
+    //     //         }
+    //     //     });
+    //     //     return 1 + shorterOnlySize;
+    //     // }
+    //     // // else if (otherConstraint.falseCount === intersectionMinFalses) {
+    //     // //     console.log(this.toString());
+    //     // //     console.log(otherConstraint.toString());
+    //     // //
+    //     // //     const intersectionTrues = intersection.length - otherConstraint.falseCount;
+    //     // //     this.removeExact(intersection, intersectionTrues);
+    //     // //     otherConstraint.vars.forEach(v => {
+    //     // //         if (!intersection.includes(v)) {
+    //     // //             console.log(`setTrue ${v}`)
+    //     // //             setTrue(v);
+    //     // //         }
+    //     // //     });
+    //     // //     return 1 + shorterOnlySize;
+    //     // // }
+    //
+    //     return 0;
+    // }
 
     public isSimple() {
         return this.vars.length === this.trueCount || this.trueCount === 0;
@@ -87,21 +178,23 @@ export class Constraint {
         // Maybe shuffle instead.
         // https://www.codementor.io/@alexanderswilliams/how-to-efficiently-generate-a-random-subset-150hbz3na4
 
-        const ret = new VariableAssignments();
-
         console.assert(!this.isFalse());
         if (this.isFalse()) {
             console.log(this.vars);
             console.log(this.trueCount);
         }
+
         // Pick out the right number of variables.
+        const ret = new VariableAssignments();
         while (ret.trues.size < this.trueCount) {
             const randomIndex = Math.floor(Math.random() * this.vars.length);
             ret.setTrue(this.vars[randomIndex]);
         }
         // Throw in the unassigned variables.
         this.vars.forEach(v => {
-            if (!ret.trues.has(v)) ret.setFalse(v);
+            if (!ret.trues.has(v)) {
+                ret.setFalse(v);
+            }
         })
 
         return ret;
@@ -109,6 +202,15 @@ export class Constraint {
 
     public copy(): Constraint {
         return new Constraint([...this.vars], this.trueCount);
+    }
+
+    private removeExact(vars: number[], trues: number) {
+        const oldVarCount = this.vars.length;
+        this.trueCount -= trues;
+        this.vars = this.vars.filter(v => !vars.includes(v));
+        if (oldVarCount !== this.vars.length + vars.length) {
+            throw new Error(`removeExact told to remove variables not present in constraint`);
+        }
     }
 }
 
@@ -120,6 +222,8 @@ export class ConstraintSet {
     private maxConstraints: number = 0;
 
     private fancyInferenceChangesMade: number = 0;
+    private pigeonHoleTrueInferenceChangesMade: number = 0;
+    private pigeonHoleFalseInferenceChangesMade: number = 0;
     private reWriteChangesMade: number = 0;
     private pruneChangesMade: number = 0;
 
@@ -128,10 +232,16 @@ export class ConstraintSet {
     }
 
     public toString(): string {
+        let shortConstraints = 0;
+        for (let i = 0; i < this.constraints.length; i++) {
+            if (this.constraints[i].vars.length <= 2) shortConstraints++;
+        }
         return `ConstraintSet with ${this.constraints.length} constraints, was max ${this.maxConstraints}. ` +
             `ReWrites: ${this.reWriteChangesMade}, ` +
             `Prunes: ${this.pruneChangesMade}, ` +
-            `Fancy: ${this.fancyInferenceChangesMade}.`;
+            `Fancy: ${this.fancyInferenceChangesMade}, ` +
+            `Pigeon: ${this.pigeonHoleTrueInferenceChangesMade}/${this.pigeonHoleFalseInferenceChangesMade}, \n` +
+            `ShortConstraintCount: ${shortConstraints}`;
     }
 
 
@@ -146,6 +256,7 @@ export class ConstraintSet {
             return undefined;
         }
     }
+
     //
     // public findRandomConsistentPartialAssignment(mustBeSet: Set<number>) {
     //     const toy = this.copy();
@@ -226,6 +337,7 @@ export class ConstraintSet {
         }
         return toy.fixedVariables;
     }
+
     //
     // public consistentWith = (ass: VariableAssignments) => {
     //     let iter = this.fixedVariables.falses.entries();
@@ -269,6 +381,13 @@ export class ConstraintSet {
         }
     };
 
+    allSatisfiedBy(variableAssignments: VariableAssignments): boolean {
+        // We can't already know that some setting was wrong.
+        if (!variableAssignments.mergeFrom(this.fixedVariables)) return false;
+        // Every constraint has to be satisfied exactly.
+        return this.constraints.every(c => c.madeTrueBy(variableAssignments));
+    }
+
     /**
      * Get a random constraint, always preferring not-the-first, which is in practice just the global constraint.
      */
@@ -278,9 +397,10 @@ export class ConstraintSet {
         return this.constraints[index];
     }
 
-
     /**
-     * Attempt to eliminate one small constraint from a larger one.
+     * Attempt to separate a pair of constraints from each other is the smaller one subtracts out.
+     * This is done for all pairs, so it's relatively expensive.
+     * This would be easier to do if we tracked neighbouring constraints.
      */
     private doFancyInference(): number {
         let totalChanges = 0;
@@ -290,6 +410,21 @@ export class ConstraintSet {
             }
         }
         this.fancyInferenceChangesMade += totalChanges;
+        return totalChanges;
+    }
+
+    /**
+     * Attempt to separate a pair of constraints from each other is the smaller one subtracts out.
+     * This is done for all pairs, so it's relatively expensive.
+     * This would be easier to do if we tracked neighbouring constraints.
+     */
+    private doPigeonHoleInference(): number {
+        let totalChanges = 0;
+        for (let i = 0; i < this.constraints.length; i++) {
+            for (let j = i + 1; j < this.constraints.length; j++) {
+                totalChanges += this.pigeonHole(this.constraints[i], this.constraints[j]);
+            }
+        }
         return totalChanges;
     }
 
@@ -333,43 +468,6 @@ export class ConstraintSet {
         return changes;
     }
 
-    private inferenceLoop(useFancyInference : boolean) {
-        let totalChanges = 0;
-        let needsReWrite = true;
-        let needsPrune = true;
-        let needsFancy = true;
-        while (needsPrune || needsReWrite || (useFancyInference && needsFancy)) {
-            if (needsPrune) {
-                const changes = this.pruneTrivialConstraints();
-                needsPrune = false;
-                if (changes > 0) {
-                    totalChanges += changes;
-                    needsFancy = true;
-                    needsReWrite = true;
-                }
-            }
-            if (needsReWrite) {
-                const changes = this.reWriteConstraints();
-                needsReWrite = false;
-                if (changes > 0) {
-                    totalChanges += changes;
-                    needsFancy = true;
-                    needsPrune = true;
-                }
-            }
-            if (useFancyInference && needsFancy) {
-                const changes = this.doFancyInference();
-                needsFancy = false;
-                if (changes > 0) {
-                    totalChanges += changes;
-                    needsPrune = true;
-                    needsReWrite = true;
-                }
-            }
-        }
-        return totalChanges;
-    }
-
     //
     // private doBasicInference(): number {
     //     let totalChanges = 0;
@@ -401,11 +499,55 @@ export class ConstraintSet {
     //     return totalChanges;
     // }
 
-    private copy() {
-        const ret = new ConstraintSet(this.numVars);
-        ret.fixedVariables = this.fixedVariables.copy();
-        ret.constraints = this.constraints.map(c => c.copy());
-        return ret;
+    private inferenceLoop(useFancyInference: boolean) {
+        let totalChanges = 0;
+        let needsReWrite = true;
+        let needsPrune = true;
+        let needsFancy = true;
+        let needsPigeonHole = true;
+        while (needsPrune || needsReWrite || (useFancyInference && needsFancy)) {
+            if (needsPrune) {
+                const changes = this.pruneTrivialConstraints();
+                needsPrune = false;
+                if (changes > 0) {
+                    totalChanges += changes;
+                    needsFancy = true;
+                    needsReWrite = true;
+                    needsPigeonHole = true;
+                }
+            }
+            if (needsReWrite) {
+                const changes = this.reWriteConstraints();
+                needsReWrite = false;
+                if (changes > 0) {
+                    totalChanges += changes;
+                    needsFancy = true;
+                    needsPrune = true;
+                    needsPigeonHole = true;
+                }
+            }
+            if (useFancyInference && needsFancy) {
+                const changes = this.doFancyInference();
+                needsFancy = false;
+                if (changes > 0) {
+                    totalChanges += changes;
+                    needsPrune = true;
+                    needsReWrite = true;
+                    needsPigeonHole = true;
+                }
+            }
+            if (useFancyInference && needsPigeonHole) {
+                const changes = this.doPigeonHoleInference();
+                needsPigeonHole = false;
+                if (changes > 0) {
+                    totalChanges += changes;
+                    needsPrune = true;
+                    needsReWrite = true;
+                    needsFancy = true;
+                }
+            }
+        }
+        return totalChanges;
     }
 
     //
@@ -420,11 +562,48 @@ export class ConstraintSet {
     //     return total;
     // }
 
-    allSatisfiedBy(variableAssignments: VariableAssignments) : boolean {
-        // We can't already know that some setting was wrong.
-        if (!variableAssignments.mergeFrom(this.fixedVariables)) return false;
-        // Every constraint has to be satisfied exactly.
-        return this.constraints.every(c => c.madeTrueBy(variableAssignments));
+    private copy() {
+        const ret = new ConstraintSet(this.numVars);
+        ret.fixedVariables = this.fixedVariables.copy();
+        ret.constraints = this.constraints.map(c => c.copy());
+        return ret;
+    }
+
+    private pigeonHole(x: Constraint, y: Constraint): number {
+        let intersectionVars = x.vars.filter(v => y.vars.includes(v));
+        if (intersectionVars.length == 0) {
+            return 0;
+        }
+        let xOnlyVars = x.vars.filter(v => !y.vars.includes(v));
+        let yOnlyVars = y.vars.filter(v => !x.vars.includes(v));
+
+        let intersectionMinTrues = Math.max(x.trueCount - xOnlyVars.length, y.trueCount - yOnlyVars.length);
+        let intersectionMinFalses = Math.max(x.falseCount - xOnlyVars.length, y.falseCount-yOnlyVars.length);
+
+        let changes = 0;
+        if (intersectionMinTrues === x.trueCount) {
+            xOnlyVars.forEach(this.fixedVariables.setFalse);
+            this.pigeonHoleTrueInferenceChangesMade += xOnlyVars.length;
+            changes += xOnlyVars.length;
+        }
+        if (intersectionMinTrues === y.trueCount) {
+            yOnlyVars.forEach(this.fixedVariables.setFalse);
+            this.pigeonHoleTrueInferenceChangesMade += yOnlyVars.length;
+            changes += yOnlyVars.length;
+        }
+
+        if (intersectionMinFalses === x.falseCount) {
+            xOnlyVars.forEach(this.fixedVariables.setTrue);
+            this.pigeonHoleFalseInferenceChangesMade += xOnlyVars.length;
+            changes += xOnlyVars.length;
+        }
+        if (intersectionMinFalses === y.falseCount) {
+            yOnlyVars.forEach(this.fixedVariables.setTrue);
+            this.pigeonHoleFalseInferenceChangesMade += yOnlyVars.length;
+            changes += yOnlyVars.length;
+        }
+
+        return changes;
     }
 }
 

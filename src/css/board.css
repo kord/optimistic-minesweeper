@@ -1,11 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@900&display=swap');
 
-.board {
-    /* Injected variables */
-    --rows: 'number of rows in the puzzle';
-    --cols: 'number of cols in the puzzle';
-    --cell-size: 40px;
 
+
+.board {
+    --cell-size: 40px;
 }
 
 .board--game-over {

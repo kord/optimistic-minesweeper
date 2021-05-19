@@ -109,6 +109,8 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
         let asYetUnvisited = locs.map(loc => loc.toNumber(this.size))
             .filter(loc => !this.visitResults.has(loc));
 
+        console.log(`BATCH visiting ${asYetUnvisited.length} squares.`);
+
         this.visitAndObserveAll(...asYetUnvisited);
         return this.movesMade - movesBefore;
     }
