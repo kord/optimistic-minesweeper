@@ -1,5 +1,5 @@
 import React, {PureComponent} from "react";
-import './css/gameStateIndicator.css';
+import '../css/gameStateIndicator.css';
 
 interface GameStateIndicatorProps {
     success: boolean,

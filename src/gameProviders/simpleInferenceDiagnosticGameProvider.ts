@@ -1,4 +1,5 @@
 import {
+    iMinesweeperGameProvider,
     MinimalProvider
 } from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
@@ -6,10 +7,9 @@ import {FrontierKnowledge} from "../logic/frontierKnowledge";
 import {
     DiagnosticInfo,
     FactualMineTestResult,
-    FixedBoardMinesweeperConfig,
-    iMinesweeperGameProvider,
     NeighbourhoodReport
 } from "../types";
+import {FixedBoardMinesweeperConfig} from "../constants";
 
 class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private minelocs = new Set<number>();

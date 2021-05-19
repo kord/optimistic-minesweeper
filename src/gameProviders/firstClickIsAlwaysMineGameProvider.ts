@@ -1,9 +1,11 @@
 import {
+    iMinesweeperGameProvider,
     MinimalProvider
 } from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
 import {BoardSize} from "../boardSize";
-import {FactualMineTestResult, FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "../types";
+import {FactualMineTestResult} from "../types";
+import {FixedBoardMinesweeperConfig} from "../constants";
 
 
 class FirstClickIsAlwaysMineGameProvider extends MinimalProvider implements iMinesweeperGameProvider {

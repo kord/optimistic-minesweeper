@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
 import {GameSquare} from "./gameSquare";
-import './css/board.css';
-import {BoardLoc} from "./boardLoc";
-import {BoardOptions} from "./constants";
-import {iMinesweeperGameProvider, MineTestResult} from "./types";
+import '../css/board.css';
+import {BoardLoc} from "../boardLoc";
+import {BoardOptions} from "../constants";
+import {MineTestResult} from "../types";
+import {iMinesweeperGameProvider} from "../gameProviders/gameProvider";
 
 
 interface BoardProps {
@@ -18,6 +19,7 @@ interface Boardstate {
 }
 
 class Board extends Component<BoardProps, Boardstate> {
+
     constructor(props: BoardProps) {
         super(props);
         this.state = {}
@@ -27,11 +29,14 @@ class Board extends Component<BoardProps, Boardstate> {
         const game = this.props.gameProvider;
         this.props.toggleFlagFn(loc);
 
-        return this.doAppropriateAutomaticVisitsRecursively();
+        const visits = this.doAppropriateAutomaticVisitsRecursively();
+        if (visits > 0) this.forceUpdate();
+        return visits;
     }
 
+
     // Ignore the click if the user has clicked on a flagged square.
-    private visitFn = (loc: BoardLoc, allowAutomaticVisits = true) => {
+    public visitFn = (loc: BoardLoc, allowAutomaticVisits = true) => {
         let openedSquares = 0;
         const game = this.props.gameProvider;
         if (game.gameOver) {
@@ -49,7 +54,11 @@ class Board extends Component<BoardProps, Boardstate> {
         const result = this.props.visitFn(loc);
         if (result.everVisited) openedSquares += 1;
 
-        if (allowAutomaticVisits) openedSquares += this.doAppropriateAutomaticVisitsRecursively();
+        if (allowAutomaticVisits) {
+            const visits = this.doAppropriateAutomaticVisitsRecursively();
+            if (visits) this.forceUpdate();
+            openedSquares += visits;
+        }
 
         // console.log(result)
         return openedSquares;
@@ -108,13 +117,13 @@ class Board extends Component<BoardProps, Boardstate> {
         let totalVisits = 0;
         let visitsMade = 1;
         while (visitsMade > 0) {
-            visitsMade = 0;
             const locs = this.appropriateAutomaticVisits();
-            const iter = locs.keys();
-            for (let val = iter.next(); !val.done; val = iter.next()) {
-                const loc = BoardLoc.fromNumber(val.value, game.size);
-                visitsMade += this.visitFn(loc, false);
-            }
+            visitsMade = game.batchVisit(Array.from(locs).map(loc => BoardLoc.fromNumber(loc, game.size)));
+            // const iter = locs.keys();
+            // for (let val = iter.next(); !val.done; val = iter.next()) {
+            //     const loc = BoardLoc.fromNumber(val.value, game.size);
+            //     visitsMade += this.visitFn(loc, false);
+            // }
             totalVisits += visitsMade;
         }
         return totalVisits;
@@ -144,6 +153,8 @@ class Board extends Component<BoardProps, Boardstate> {
                 game.lastVisitResult(loc).diagnostics?.knownNonMine);
             knownNonMines.forEach(nloc => needsOpening.add(nloc.toNumber(game.size)));
         }
+
+        // Prohibit opening of flagged locations, maybe?
 
         return needsOpening;
     }

@@ -1,7 +1,9 @@
 import {BoardLoc} from "../boardLoc";
-import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider, VariableAssignments} from "../types";
+import {VariableAssignments} from "../types";
 import WatchedDiagnosticGameProvider from "./watchedDiagnosticGameProvider";
 import Watcher from "../logic/watcher";
+import {iMinesweeperGameProvider} from "./gameProvider";
+import {FixedBoardMinesweeperConfig} from "../constants";
 
 class GentleKindnessGameProvider extends WatchedDiagnosticGameProvider implements iMinesweeperGameProvider {
     private static maxAttempts = 100;

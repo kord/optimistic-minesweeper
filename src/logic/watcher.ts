@@ -2,11 +2,11 @@ import {BoardLoc} from "../boardLoc";
 import {
     DiagnosticInfo,
     FactualMineTestResult,
-    FixedBoardMinesweeperConfig,
-    iWatcher,
+    iWatcher, Observation,
     VariableAssignments
 } from "../types";
 import {Constraint, ConstraintSet} from "./constraints";
+import {FixedBoardMinesweeperConfig} from "../constants";
 
 class SolutionTracker {
     public knownSolutions: Set<VariableAssignments>;
@@ -53,6 +53,20 @@ class SolutionTracker {
         solution.falses.forEach(loc => this.timesEmptyInSolutions[loc]++);
     }
 
+    public variablesNotKnownConsistentAsMine() : Set<number> {
+        const ret = new Set<number>();
+        this.timesMineInSolutions.forEach((val, variable) => {
+            if (val === 0) ret.add(variable);
+        })
+        return ret;
+    }
+
+    public variablesInOrderOfHeuristicSafety() : number[]{
+        const locs = [];
+        for (let i = 0; i< this.numVariables;i++) locs.push(i);
+        locs.sort((a,b) => (this.mineProbability(a) || 0) - (this.mineProbability(b) || 0))
+        return locs;
+    }
 }
 
 class Watcher implements iWatcher {
@@ -77,34 +91,40 @@ class Watcher implements iWatcher {
         }
 
         // This is the global total mine count constraint.
-        this.constraints.introduceConstraint(new Constraint(nums, config.mineCount));
+        this.constraints.introduceConstraints([new Constraint(nums, config.mineCount)]);
     }
 
-    public observe(loc: BoardLoc, result: FactualMineTestResult) {
-        const locnum = loc.toNumber(this.config.size);
-        this.visited.add(locnum);
-        this.frontier.delete(locnum);
-        const neighbours = loc.neighboursOnBoard(this.config.size).map(loc => loc.toNumber(this.config.size));
-        neighbours.forEach(nloc => {
-            if (!this.visited.has(nloc))
-                this.frontier.add(nloc)
-        });
+    public observe(observations: Observation[]) {
+        let newConstraints : Constraint[] = [];
+        for (let i = 0; i < observations.length; i++) {
+            const loc = observations[i].loc
+            const locnum = loc.toNumber(this.config.size);
+            const result = observations[i].result;
 
-        if (result.explodedMine) {
-            console.log(`Watcher saw a BOOM.`);
-            this.constraints.fixedVariables.setTrue(locnum);
-            return;
+            this.visited.add(locnum);
+            this.frontier.delete(locnum);
+            const neighbours = loc.neighboursOnBoard(this.config.size).map(nloc => nloc.toNumber(this.config.size));
+            neighbours.forEach(nloc => {
+                if (!this.visited.has(nloc))
+                    this.frontier.add(nloc)
+            });
+
+            if (result.explodedMine) {
+                console.log(`Watcher saw a BOOM.`);
+                this.constraints.fixedVariables.setTrue(locnum);
+                return;
+            }
+            if (result.neighboursWithMine === undefined) {
+                console.error(`Invalid FactualMineTestResult ${result}`);
+                return;
+            }
+
+            // When we observe a visit, the first thing we learn is that there was no mine there.
+            // The second thing we learn is a new constraint imposed by the neighbour count.
+            this.constraints.fixedVariables.setFalse(locnum);
+            newConstraints.push(new Constraint(neighbours, result.neighboursWithMine));
         }
-        if (result.neighboursWithMine === undefined) {
-            console.error(`Invalid FactualMineTestResult ${result}`);
-            return;
-        }
-
-        // When we observe a visit, the first thing we learn is that there was no mine there.
-        // The second thing we learn is a new constraint imposed by the neighbour count.
-        this.constraints.fixedVariables.setFalse(locnum);
-        this.constraints.introduceConstraint(new Constraint(neighbours, result.neighboursWithMine));
-
+        this.constraints.introduceConstraints(newConstraints);
         this.pruneSolutions();
         this.findAndStoreContinuations();
         // setImmediate(this.findAndStoreContinuations);
@@ -177,6 +197,14 @@ class Watcher implements iWatcher {
         baddies.forEach(ass => this.solutionTracker.removeSolution(ass));
     }
 
+
+    public knownSafeLocs() :  Set<number> {
+        return this.constraints.fixedVariables.falses;
+    }
+
+    public locationsBySafenessOrder() : number[] {
+        return this.solutionTracker.variablesInOrderOfHeuristicSafety();
+    }
 
 }
 

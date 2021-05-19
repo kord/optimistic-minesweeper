@@ -1,4 +1,3 @@
-import {BoardSize} from "./boardSize";
 import {BoardLoc} from "./boardLoc";
 
 export interface DiagnosticInfo {
@@ -18,14 +17,6 @@ export interface NeighbourhoodReport {
 
     knownMines: BoardLoc[],
     knownNonMines: BoardLoc[],
-}
-
-export interface FixedBoardMinesweeperConfig {
-    size: BoardSize,
-    mineCount: number,
-
-    // This is a hack place to store the callback but I don't care right now.
-    onLearning?: VoidFunction,
 }
 
 export interface MineTestResult {
@@ -56,32 +47,6 @@ export interface FactualMineTestResult {
 
     // Only needs to be provided if the tested location had no mine.
     neighboursWithMine?: number,
-}
-
-export interface iMinesweeperGameProvider {
-    // The dimensions of the board.
-    size: BoardSize,
-    // The number of squares on the board, syntactic sugar for member 'size'.
-    numLocs: number,
-    // The number of trues in the game.
-    totalMines: number,
-    // Visit a location, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
-    visit: (loc: BoardLoc) => MineTestResult,
-    // Check what was the last result of visiting the square. This can be called without changing anything in the
-    // provider's state.
-    lastVisitResult: (loc: BoardLoc) => MineTestResult,
-    // Just to iterate over the places on the board for our view.
-    locations: BoardLoc[],
-    // Convenient to check if a location is on the board.
-    onBoard: (loc: BoardLoc) => boolean,
-    // Game Over
-    gameOver: boolean,
-    // You won
-    success: boolean,
-    // You lost
-    failure: boolean,
-    // Reveal trues, ending the game in the process, if it's not over already.
-    mineLocations: () => BoardLoc[],
 }
 
 export class VariableAssignments {
@@ -143,6 +108,11 @@ export class VariableAssignments {
 }
 
 export interface iWatcher {
-    observe: (loc: BoardLoc, result: FactualMineTestResult) => void,
+    observe: (observations: Observation[]) => void,
     diagnosticInfo: (loc: BoardLoc) => DiagnosticInfo,
+}
+
+export interface Observation {
+    loc: BoardLoc,
+    result: FactualMineTestResult,
 }

@@ -3,7 +3,37 @@ import {BoardSize} from "../boardSize";
 import {FactualMineTestResult, MineTestResult} from "../types";
 
 
-export abstract class MinimalProvider  {
+export interface iMinesweeperGameProvider {
+    // The dimensions of the board.
+    size: BoardSize,
+    // The number of squares on the board, syntactic sugar for member 'size'.
+    numLocs: number,
+    // The number of trues in the game.
+    totalMines: number,
+    // Visit a location, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
+    visit: (loc: BoardLoc) => MineTestResult,
+    // Visit a while bunch of locations, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
+    batchVisit: (locs: BoardLoc[]) => number,
+    // Check what was the last result of visiting the square. This can be called without changing anything in the
+    // provider's state.
+    lastVisitResult: (loc: BoardLoc) => MineTestResult,
+    // Just to iterate over the places on the board for our view.
+    locations: BoardLoc[],
+    // Convenient to check if a location is on the board.
+    onBoard: (loc: BoardLoc) => boolean,
+    // Game Over
+    gameOver: boolean,
+    // You won
+    success: boolean,
+    // You lost
+    failure: boolean,
+    // Reveal the mines, ending the game in the process, if it's not over already.
+    mineLocations: () => BoardLoc[],
+    // Get a move suggestion straight from the horse's mouth. Used for autoplay mode.
+    moveSuggestion: () => BoardLoc | undefined,
+}
+
+export abstract class MinimalProvider {
     public readonly numLocs: number;
 
     /**
@@ -62,6 +92,19 @@ export abstract class MinimalProvider  {
     }
 
     /**
+     * The subclass should reimplement this to use its knowledge to make better move selections.
+     */
+    public moveSuggestion(): BoardLoc | undefined {
+        if (this.gameOver) return undefined;
+        let locnum: number | undefined;
+        while (locnum === undefined || this.visitResults.has(locnum)) {
+            locnum = Math.floor(Math.random() * this.numLocs);
+        }
+        return BoardLoc.fromNumber(locnum, this.size);
+
+    }
+
+    /**
      * This needs to be implemented by any subclass. Test if a mine is present at some location.
      * @param loc Where the user is committing to visit.
      */
@@ -108,6 +151,22 @@ export abstract class MinimalProvider  {
         } as MineTestResult;
     }
 
+    /**
+     * This should be overridden in subclasses that want to be cooler about how they handle batched visits.
+     * @param locs
+     */
+    public batchVisit = (locs: BoardLoc[]) => {
+        let visits = 0;
+        locs.forEach(loc => {
+            const locn = loc.toNumber(this.size);
+            if (!this.visitResults.has(locn)) {
+                this.visit(loc);
+                visits++;
+            }
+        });
+        return visits;
+    }
+
     public visit(loc: BoardLoc): MineTestResult {
         if (this.gameOver) {
             throw new Error(`Game is over. You can't visit anywhere anymore.`);
@@ -126,6 +185,7 @@ export abstract class MinimalProvider  {
             this._failure = true;
         }
 
+        // Sometimes this will be redundant is the subclass does it for us. That's fine.
         this.visitResults.set(lastVisit.locationNum, result);
 
         // Potentially do some work updating a subclass's view of stuff.

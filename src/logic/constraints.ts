@@ -37,8 +37,8 @@ export class Constraint {
         }
         // Here we try to subtract a constraint out of ourself.
         if (shorterConstraint.vars.every(v => this.vars.includes(v))) {
-            console.log(`REDUCTION ${this}`);
-            console.log(`Reducing with ${shorterConstraint}`);
+            // console.log(`REDUCTION ${this}`);
+            // console.log(`Reducing with ${shorterConstraint}`);
             this.vars = this.vars.filter(v => !shorterConstraint.vars.includes(v));
             this.trueCount -= shorterConstraint.trueCount;
             return 1;
@@ -130,7 +130,7 @@ export class ConstraintSet {
     public toString(): string {
         return `ConstraintSet with ${this.constraints.length} constraints, was max ${this.maxConstraints}. ` +
             `ReWrites: ${this.reWriteChangesMade}, ` +
-            `Prunes: ${this.pruneTrivialConstraints()}, ` +
+            `Prunes: ${this.pruneChangesMade}, ` +
             `Fancy: ${this.fancyInferenceChangesMade}.`;
     }
 
@@ -253,12 +253,14 @@ export class ConstraintSet {
     //     return true;
     // }
 
-    public introduceConstraint = (constraint: Constraint) => {
-        constraint.reduce(this.fixedVariables);
-        this.constraints.push(constraint);
+    public introduceConstraints = (constraints: Constraint[]) => {
+        for (let i = 0; i < constraints.length; i++) {
+            constraints[i].reduce(this.fixedVariables);
+        }
+        this.constraints.push(...constraints);
         this.maxConstraints = Math.max(this.maxConstraints, this.constraints.length);
 
-        // See if we can get any juice out of the new constraint.
+        // See if we can get any juice out of the new constraints.
         this.inferenceLoop(true);
 
         // Report on how we're doing.

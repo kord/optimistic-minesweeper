@@ -1,7 +1,7 @@
 import React, {PureComponent} from "react";
-import {BoardLoc} from "./boardLoc";
-import {BoardOptions} from "./constants";
-import {MineTestResult} from "./types";
+import {BoardLoc} from "../boardLoc";
+import {BoardOptions} from "../constants";
+import {MineTestResult} from "../types";
 import ReactTooltip from "react-tooltip";
 
 interface GameSquareProps {

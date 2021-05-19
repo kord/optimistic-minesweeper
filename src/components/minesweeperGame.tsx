@@ -1,17 +1,17 @@
 import React, {Component, createRef} from 'react';
-import BasicGameProvider from "./gameProviders/basicGameProvider";
+import BasicGameProvider from "../gameProviders/basicGameProvider";
 import Board from "./board";
-import {BoardLoc} from "./boardLoc";
-import AlwaysMineGameProvider from "./gameProviders/alwaysMineGameProvider";
-import SimpleInferenceDiagnosticGameProvider from "./gameProviders/simpleInferenceDiagnosticGameProvider";
-import FirstClickIsAlwaysMineGameProvider from "./gameProviders/firstClickIsAlwaysMineGameProvider";
+import {BoardLoc} from "../boardLoc";
+import AlwaysMineGameProvider from "../gameProviders/alwaysMineGameProvider";
+import SimpleInferenceDiagnosticGameProvider from "../gameProviders/simpleInferenceDiagnosticGameProvider";
+import FirstClickIsAlwaysMineGameProvider from "../gameProviders/firstClickIsAlwaysMineGameProvider";
 import {GameStateIndicator} from "./gameStateIndicator";
-import {BoardOptions, Constants} from "./constants";
-import {BoardSize} from "./boardSize";
-import WatchedDiagnosticGameProvider from "./gameProviders/watchedDiagnosticGameProvider";
-import {FixedBoardMinesweeperConfig, iMinesweeperGameProvider} from "./types";
-import RuthlessPersecutionGameProvider from "./gameProviders/ruthlessPersecutionGameProvider";
-import GentleKindnessGameProvider from "./gameProviders/gentleKindnessGameProvider";
+import {BoardOptions, Constants, FixedBoardMinesweeperConfig} from "../constants";
+import {BoardSize} from "../boardSize";
+import WatchedDiagnosticGameProvider from "../gameProviders/watchedDiagnosticGameProvider";
+import RuthlessPersecutionGameProvider from "../gameProviders/ruthlessPersecutionGameProvider";
+import GentleKindnessGameProvider from "../gameProviders/gentleKindnessGameProvider";
+import {iMinesweeperGameProvider} from "../gameProviders/gameProvider";
 
 interface MinesweeperGameProps {
 }
@@ -21,6 +21,8 @@ interface MinesweeperGameState {
     flaggedLocs: Set<string>,
 
     /* User input values, options. */
+    firstMoveAlwaysZero: boolean,
+    firstMoveNeverMined: boolean,
     userHeight: string,
     userWidth: string,
     userMineCount: string,
@@ -28,6 +30,7 @@ interface MinesweeperGameState {
 
     // The BoardOptions, unpacked
     displayZeroNumber: boolean,
+    autoPlay: boolean,
     autoVisitNeighboursOfZeros: boolean,
     autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
     showBasicInferenceTips: boolean,
@@ -60,12 +63,13 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
 
     public get boardOptions(): BoardOptions {
         return {
-            displayNumberZeroWhenNoMinesAdjacent: this.state.displayZeroNumber,
             autoVisitNeighboursOfZeros: this.state.autoVisitNeighboursOfZeros,
-            autoVisitNeighboursOfFlagSatisfiedNumbers: this.state.autoVisitNeighboursOfFlagSatisfiedNumbers,
-            showBasicInferenceTips: this.state.showBasicInferenceTips,
-            showMineProbabilities: this.state.showMineProbabilities,
             autoVisitDiagnosticKnownNonMines: this.state.autoVisitDiagnosticKnownNonMines,
+            autoVisitNeighboursOfFlagSatisfiedNumbers: this.state.autoVisitNeighboursOfFlagSatisfiedNumbers,
+            autoPlay: this.state.autoPlay,
+            showBasicInferenceTips: this.state.showBasicInferenceTips,
+            displayNumberZeroWhenNoMinesAdjacent: this.state.displayZeroNumber,
+            showMineProbabilities: this.state.showMineProbabilities,
             decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
         } as BoardOptions;
@@ -75,15 +79,18 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         super(props);
 
         this.state = {
-            gameProvider: new GentleKindnessGameProvider({
+            gameProvider: new WatchedDiagnosticGameProvider({
                 ...Constants.defaultGameConfig,
-                onLearning: () => this.boardRef.current?.forceUpdate()
+                // onLearning: () => this.boardRef.current?.forceUpdate()
             }),
-            userGameType: 'GentleKindnessGameProvider',
+            userGameType: 'WatchedDiagnosticGameProvider',
+            firstMoveAlwaysZero: Constants.defaultGameConfig.firstMoveAlwaysZero,
+            firstMoveNeverMined: Constants.defaultGameConfig.firstMoveNeverMined,
             userHeight: Constants.defaultGameConfig.size.height.toString(),
             userWidth: Constants.defaultGameConfig.size.width.toString(),
             userMineCount: Constants.defaultGameConfig.mineCount.toString(),
             displayZeroNumber: Constants.defaultBoardOptions.displayNumberZeroWhenNoMinesAdjacent,
+            autoPlay: Constants.defaultBoardOptions.autoPlay,
             autoVisitNeighboursOfZeros: Constants.defaultBoardOptions.autoVisitNeighboursOfZeros,
             autoVisitNeighboursOfFlagSatisfiedNumbers: Constants.defaultBoardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers,
             showBasicInferenceTips: Constants.defaultBoardOptions.showBasicInferenceTips,
@@ -136,7 +143,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         const config = {
             size: boardSize,
             mineCount: +this.state.userMineCount,
-            onLearning: () => this.boardRef.current?.forceUpdate(),
+            firstMoveNeverMined: this.state.firstMoveNeverMined,
+            firstMoveAlwaysZero: this.state.firstMoveAlwaysZero,
+            // onLearning: () => this.boardRef.current?.forceUpdate(),
         } as FixedBoardMinesweeperConfig;
 
         const providerFn = gameTypes.get(this.state.userGameType);
@@ -151,6 +160,36 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             gameProvider: providerFn(config),
             flaggedLocs: new Set<string>(),
         });
+
+
+        if (this.boardOptions.autoPlay) {
+            setTimeout(this.doAutomaticVisit, 500);
+        }
+    }
+
+    componentWillUnmount(): void {
+        if (this.nextAutoplay) {
+            clearTimeout(this.nextAutoplay);
+        }
+    }
+
+    private nextAutoplay?: NodeJS.Timeout;
+
+    private doAutomaticVisit = () => {
+        console.log(`Running doAutomaticVisit`);
+        const game = this.state.gameProvider;
+        if (game.gameOver) {
+            this.nextAutoplay = setTimeout(this.restart, 3000);
+        }
+        if (!this.boardOptions.autoPlay) return;
+        const loc = game.moveSuggestion();
+        if (loc === undefined) return;
+
+        this.boardRef.current?.visitFn(loc, true);
+
+        if (this.boardOptions.autoPlay) {
+            this.nextAutoplay = setTimeout(this.doAutomaticVisit, 350);
+        }
     }
 
     render() {
@@ -194,6 +233,24 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                             </option>
                         )}
                     </select>
+                    <br/>
+                    <label>
+                        firstMoveAlwaysZero:
+                        <input type="checkbox"
+                               key={'firstMoveAlwaysZero'}
+                               checked={this.state.firstMoveAlwaysZero}
+                               name={'firstMoveAlwaysZero'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        firstMoveNeverMined:
+                        <input type="checkbox"
+                               key={'firstMoveNeverMined'}
+                               checked={this.state.firstMoveNeverMined}
+                               name={'firstMoveNeverMined'}
+                               onChange={this.handleInputChange}/>
+                    </label>
                     <br/>
                     <label>
                         Height:
@@ -251,6 +308,15 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                key={'showMineProbabilities'}
                                checked={this.state.showMineProbabilities}
                                name={'showMineProbabilities'}
+                               onChange={this.handleInputChange}/>
+                    </label>
+                    <br/>
+                    <label>
+                        autoPlay:
+                        <input type="checkbox"
+                               key={'autoPlay'}
+                               checked={this.state.autoPlay}
+                               name={'autoPlay'}
                                onChange={this.handleInputChange}/>
                     </label>
                     <br/>
