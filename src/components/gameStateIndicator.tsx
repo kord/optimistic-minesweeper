@@ -1,5 +1,6 @@
 import React, {PureComponent} from "react";
 import '../css/gameStateIndicator.css';
+import {WinLossRecord} from "../types";
 
 interface GameStateIndicatorProps {
     success: boolean,
@@ -7,6 +8,7 @@ interface GameStateIndicatorProps {
     gameOver: boolean,
     totalMines: number,
     flaggedCount: number,
+    winLossRecord: WinLossRecord,
     restartFn: VoidFunction,
 }
 
@@ -54,6 +56,11 @@ export class GameStateIndicator extends PureComponent<GameStateIndicatorProps, G
         else if (this.props.failure) statusText = 'Congratulations. You lose!';
         else statusText = `${minesLeft} Unflagged Mines Remain.`
 
+        const recordString = `Record: ` +
+            `${this.props.winLossRecord.incomplete} Incomplete, ` +
+            `${this.props.winLossRecord.wins} Wins, ` +
+            `${this.props.winLossRecord.losses} Losses`;
+
         return (
             <div className={'game-state-indicator'}>
                 <button className={this.buttonClasses()}
@@ -61,6 +68,9 @@ export class GameStateIndicator extends PureComponent<GameStateIndicatorProps, G
                 />
                 <p className={'game-status-text'}>
                     {statusText}
+                </p>
+                <p className={'game-status-text'}>
+                    {recordString}
                 </p>
             </div>
         );

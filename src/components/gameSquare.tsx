@@ -55,7 +55,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             if (diagnostics?.knownMine) modifiers.push('--known-mine');
             if (diagnostics?.knownNonMine) modifiers.push('--known-non-mine');
         }
-        if (this.props.boardOptions.showMineProbabilities &&
+        if (this.props.boardOptions.showObserversMineProbabilities &&
             // this.props.lastResult.diagnostics?.onFrontierAndUnknown &&
             this.props.lastResult.diagnostics?.mineProbability !== undefined) {
             modifiers.push('--has-known-probability');
@@ -88,7 +88,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             <></> :
             <>{neighboursWithMine}</>
 
-        const showTooltip = this.props.boardOptions.showMineProbabilities &&
+        const showTooltip = this.props.boardOptions.showObserversMineProbabilities &&
             this.props.lastResult.diagnostics?.mineProbability;
         return (
             <div data-tip data-for={this.props.lastResult.locationName}
@@ -113,7 +113,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
     }
 
     private style() {
-        if (!this.props.boardOptions.showMineProbabilities) return undefined;
+        if (!this.props.boardOptions.showObserversMineProbabilities) return undefined;
         if (!this.props.lastResult.diagnostics) return undefined;
         // if (!this.props.lastResult.diagnostics.onFrontierAndUnknown) return undefined;
         if (this.props.lastResult.diagnostics.mineProbability === undefined) return undefined;

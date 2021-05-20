@@ -8,28 +8,31 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
     private movesMade: number = 0;
     private mineVisited: Boolean = false;
     private firstMoveMade = false;
+    private get mineCount() : number {
+        return this.config.dimensions.mineCount;
+    }
 
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
-        super(config.size);
+        super(config.dimensions.size);
 
-        console.assert(this.config.mineCount > 0,
+        console.assert(this.mineCount > 0,
             'The game is boring without any mines.');
         if (config.firstMoveAlwaysZero) {
-            console.assert(this.numLocs - this.config.mineCount > 9,
+            console.assert(this.numLocs - this.mineCount > 9,
                 'There needs to be space for a first move and neighbours. Use fewer mines.');
         }
         if (config.firstMoveNeverMined) {
-            console.assert(this.numLocs > this.config.mineCount,
+            console.assert(this.numLocs > this.mineCount,
                 'There needs to be space for a first move. Use fewer mines.');
         }
     }
 
     public get totalMines(): number {
-        return this.config.mineCount;
+        return this.mineCount;
     }
 
     get success(): boolean {
-        return !this.mineVisited && this.config.mineCount + this.movesMade === this.numLocs;
+        return !this.mineVisited && this.mineCount + this.movesMade === this.numLocs;
     }
 
     hasMine = (loc: BoardLoc) => {
@@ -40,18 +43,18 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
     rewriteStaticMineLocationsAsNeededByConfig = (loc: BoardLoc) => {
         this.mineField.clear();
 
-        if (this.config.mineCount < 0 || this.config.mineCount > this.numLocs) {
-            console.error(`Bad minecount. You tried to put ${this.config.mineCount} mines in a playing area of size ${this.numLocs}`);
+        if (this.mineCount < 0 || this.mineCount > this.numLocs) {
+            console.error(`Bad minecount. You tried to put ${this.mineCount} mines in a playing area of size ${this.numLocs}`);
             return;
         }
         if (this.config.firstMoveAlwaysZero) {
-            if (this.numLocs - this.config.mineCount < 9) {
+            if (this.numLocs - this.mineCount < 9) {
                 console.error('There needs to be space for a first move and neighbours. Use fewer mines.');
                 return;
             }
         }
         if (this.config.firstMoveNeverMined) {
-            if (this.config.mineCount >= this.numLocs) {
+            if (this.mineCount >= this.numLocs) {
                 console.error('There needs to be space for a first move. Use fewer mines.');
                 return;
             }
@@ -66,8 +69,8 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
         }
 
         let iterationCount = 0;
-        while (this.mineField.size < this.config.mineCount) {
-            while (this.mineField.size < this.config.mineCount) {
+        while (this.mineField.size < this.mineCount) {
+            while (this.mineField.size < this.mineCount) {
                 this.mineField.add(Math.floor(Math.random() * this.numLocs));
             }
             prohibitedLocs.forEach(loc => this.mineField.delete(loc.toNumber(this.size)));
@@ -79,7 +82,7 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
 
     // rewriteStaticMineLocations = () => {
     //     this.mineField.clear();
-    //     while (this.mineField.size < this.config.mineCount) {
+    //     while (this.mineField.size < this.mineCount) {
     //         this.mineField.add(Math.floor(Math.random() * this.numLocs));
     //     }
     //     console.log(`mineField.size ${this.mineField.size}`)

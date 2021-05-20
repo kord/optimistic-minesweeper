@@ -3,13 +3,12 @@ import {GameSquare} from "./gameSquare";
 import '../css/board.css';
 import {BoardLoc} from "../boardLoc";
 import {BoardOptions} from "../constants";
-import {MineTestResult} from "../types";
 import {iMinesweeperGameProvider} from "../gameProviders/gameProvider";
 
 
 interface BoardProps {
     gameProvider: iMinesweeperGameProvider,
-    visitFn: (loc: BoardLoc) => MineTestResult,
+    visitFn: (locs: BoardLoc[]) => number,
     toggleFlagFn: (loc: BoardLoc) => void,
     flaggedLocs: Set<string>,
     boardOptions: BoardOptions,
@@ -51,8 +50,8 @@ class Board extends Component<BoardProps, Boardstate> {
         if (!lastVisitResult.onBoard || lastVisitResult.everVisited) return 0;
 
         // console.log(`visiting ${loc.toString()}`);
-        const result = this.props.visitFn(loc);
-        if (result.everVisited) openedSquares += 1;
+        const result = this.props.visitFn([loc]);
+        openedSquares += result;
 
         if (allowAutomaticVisits) {
             const visits = this.doAppropriateAutomaticVisitsRecursively();
@@ -118,15 +117,24 @@ class Board extends Component<BoardProps, Boardstate> {
         let visitsMade = 1;
         while (visitsMade > 0) {
             const locs = this.appropriateAutomaticVisits();
-            visitsMade = game.batchVisit(Array.from(locs).map(loc => BoardLoc.fromNumber(loc, game.size)));
-            // const iter = locs.keys();
-            // for (let val = iter.next(); !val.done; val = iter.next()) {
-            //     const loc = BoardLoc.fromNumber(val.value, game.size);
-            //     visitsMade += this.visitFn(loc, false);
-            // }
+            visitsMade = this.props.visitFn(Array.from(locs).map(loc => BoardLoc.fromNumber(loc, game.size)));
             totalVisits += visitsMade;
         }
         return totalVisits;
+
+        // const size = this.props.gameProvider.size;
+        // const locs = this.appropriateAutomaticVisits();
+        // const visitsMade = this.props.visitFn(Array.from(locs).map(loc => BoardLoc.fromNumber(loc, size)));
+        // if (visitsMade === 0) return 0;
+        //
+        // // If we have to do a recursive call, do it in this weird way so the board can refresh in the meantime.
+        // const p = new Promise<number>((resolve, reject) => {
+        //     setImmediate(() => {
+        //         resolve(this.doAppropriateAutomaticVisitsRecursively());
+        //     });
+        // });
+        //
+        // return visitsMade + await p;
     }
 
     private appropriateAutomaticVisits(): Set<number> {
@@ -154,7 +162,11 @@ class Board extends Component<BoardProps, Boardstate> {
             knownNonMines.forEach(nloc => needsOpening.add(nloc.toNumber(game.size)));
         }
 
-        // Prohibit opening of flagged locations, maybe?
+        // Prohibit opening of flagged locations.
+        game.locations.forEach(loc => {
+            if (this.isFlagged(loc))
+                needsOpening.delete(loc.toNumber(game.size));
+        });
 
         return needsOpening;
     }

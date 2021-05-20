@@ -3,6 +3,8 @@
     /* Injected variables */
     --rows: 'overwritten in js: number of rows in the puzzle';
     --cols: 'overwritten in js: number of cols in the puzzle';
+    --cell-size: 40px;
+    --game-border-size: 2px;
 
 }
 
@@ -10,6 +12,8 @@
     display: flex;
     flex-direction: column;
     align-content: space-evenly;
+    margin-left: 20px;
+    width: calc(var(--cols) * var(--cell-size) + 2 * var(--game-border-size));
 }
 
 .options-groups {
@@ -20,6 +24,10 @@
 
 .options-group {
     padding: 20px;
+}
+
+.options-dropdown {
+
 }
 
 .textbox {

@@ -1,32 +1,33 @@
 import {iMinesweeperGameProvider, MinimalProvider} from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
-import Watcher from "../logic/watcher";
+import Watcher, {WatcherConfig} from "../logic/watcher";
 import {DiagnosticInfo, FactualMineTestResult, Observation} from "../types";
 import {FixedBoardMinesweeperConfig} from "../constants";
 
-class WatchedDiagnosticGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
-    protected watcher: Watcher;
+class WatchedGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
+
     private mineField = new Set<number>();
     private movesMade: number = 0;
     private mineVisited: boolean = false;
 
-    constructor(public readonly config: FixedBoardMinesweeperConfig) {
-        super(config.size);
-        this.watcher = new Watcher(config, 500, 100);
+    constructor(
+        public readonly config: FixedBoardMinesweeperConfig,
+        protected watcher: Watcher = new Watcher(config)) {
+        super(config.dimensions.size);
     }
 
     /**
      * Required by superclass.
      */
     public get totalMines(): number {
-        return this.config.mineCount;
+        return this.config.dimensions.mineCount;
     }
 
     /**
      * Required by superclass.
      */
-    get success(): boolean {
-        return this.config.mineCount + this.movesMade === this.numLocs && !this.mineVisited;
+    public get success(): boolean {
+        return this.totalMines + this.movesMade === this.numLocs && !this.mineVisited;
     }
 
     hasMine = (loc: BoardLoc) => {
@@ -38,18 +39,18 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
     rewriteStaticMineLocationsAsNeededByConfig = (loc: BoardLoc) => {
         this.mineField.clear();
 
-        if (this.config.mineCount < 0 || this.config.mineCount > this.numLocs) {
-            console.error(`Bad minecount. You tried to put ${this.config.mineCount} mines in a playing area of size ${this.numLocs}`);
+        if (this.totalMines < 0 || this.totalMines > this.numLocs) {
+            console.error(`Bad minecount. You tried to put ${this.totalMines} mines in a playing area of size ${this.numLocs}`);
             return;
         }
         if (this.config.firstMoveAlwaysZero) {
-            if (this.numLocs - this.config.mineCount < 9) {
+            if (this.numLocs - this.totalMines < 9) {
                 console.error('There needs to be space for a first move and neighbours. Use fewer mines.');
                 return;
             }
         }
         if (this.config.firstMoveNeverMined) {
-            if (this.config.mineCount >= this.numLocs) {
+            if (this.totalMines >= this.numLocs) {
                 console.error('There needs to be space for a first move. Use fewer mines.');
                 return;
             }
@@ -64,8 +65,8 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
         }
 
         let iterationCount = 0;
-        while (this.mineField.size < this.config.mineCount) {
-            while (this.mineField.size < this.config.mineCount) {
+        while (this.mineField.size < this.totalMines) {
+            while (this.mineField.size < this.totalMines) {
                 this.mineField.add(Math.floor(Math.random() * this.numLocs));
             }
             prohibitedLocs.forEach(loc => this.mineField.delete(loc.toNumber(this.size)));
@@ -101,6 +102,10 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
      * @param locs
      */
     public batchVisit = (locs: BoardLoc[]) => {
+        if (locs.length === 1) {
+            this.visit(locs[0]);
+            return 1;
+        }
         if (this.movesMade === 0) {
             throw new Error(`You should make some moves normally before doing a batch visit.`);
         }
@@ -148,13 +153,13 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
         for (let i = 0; i < safenessOrder.length; i++) {
             const loc = safenessOrder[i];
             if (!this.visitResults.has(loc)) {
-                console.log('WatchedDiagnosticGameProvider is issuing a possibly unsafe moveSuggestion.');
+                console.log('WatchedGameProvider is issuing a possibly unsafe moveSuggestion.');
                 return BoardLoc.fromNumber(loc, this.size);
             }
         }
 
         // Hmm. Nothing in there either. Just return something random.
-        console.log('WatchedDiagnosticGameProvider is issuing a braindead moveSuggestion.');
+        console.log('WatchedGameProvider is issuing a braindead moveSuggestion.');
         return super.moveSuggestion();
     }
 
@@ -175,7 +180,7 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
     }
 
     /**
-     * We do no error checking here, just observe everything at once.
+     * We do eh, some error checking here, just observe everything at once.
      * @param locs
      */
     private visitAndObserveAll(...locs: number[]) {
@@ -194,7 +199,10 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
             loc.neighboursOnBoard(this.size)
                 .forEach(nloc => neighboursWithMine += this.hasMine(nloc) ? 1 : 0);
 
-            if (isMine) this.mineVisited = true;
+            // Don't even report the mine to the watcher.
+            if (isMine) {
+                this.mineVisited = true;
+            }
 
             const result = {
                 explodedMine: isMine,
@@ -210,4 +218,4 @@ class WatchedDiagnosticGameProvider extends MinimalProvider implements iMineswee
 }
 
 
-export default WatchedDiagnosticGameProvider;
+export default WatchedGameProvider;

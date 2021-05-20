@@ -1,16 +1,24 @@
 import {BoardLoc} from "../boardLoc";
 import {VariableAssignments} from "../types";
-import WatchedDiagnosticGameProvider from "./watchedDiagnosticGameProvider";
+import WatchedGameProvider from "./watchedGameProvider";
 import Watcher from "../logic/watcher";
 import {iMinesweeperGameProvider} from "./gameProvider";
 import {FixedBoardMinesweeperConfig} from "../constants";
 
-class RuthlessPersecutionGameProvider extends WatchedDiagnosticGameProvider implements iMinesweeperGameProvider {
+class ViciousPersecutionGameProvider extends WatchedGameProvider implements iMinesweeperGameProvider {
     private static maxAttempts = 100;
     constructor(config: FixedBoardMinesweeperConfig) {
-        super(config);
+        // This watcher will always know *some* future.
+        const watcherConfig = {
+            maintainedFutures: 1,
+            futureReadsPerMove: 0,
+            alwaysKnowSomeConsistentMinefield: true
+        };
+        const watcher = new Watcher(config, watcherConfig);
+
+        super(config, watcher);
         // Don't bother doing any complex inference with the incoming clicks.
-        this.watcher = new Watcher(config, 0, 0);
+
     }
 
     protected changedMinefieldInResponseToNextVisit(loc: BoardLoc): Set<number> | undefined {
@@ -19,14 +27,14 @@ class RuthlessPersecutionGameProvider extends WatchedDiagnosticGameProvider impl
         if (diagnosticInfo.knownMine || diagnosticInfo.knownNonMine) return undefined;
 
         if (!this.hasMine(loc)) {
-            const nloc = loc.toNumber(this.config.size);
+            const nloc = loc.toNumber(this.size);
             const mines = new Set<number>([nloc]);
 
             // Try to find a minefield consistent with our current knowledge but also with a mine where you just
             // clicked.
             const va = new VariableAssignments();
             va.setTrue(nloc);
-            for (let i = 0; i < RuthlessPersecutionGameProvider.maxAttempts; i++) {
+            for (let i = 0; i < ViciousPersecutionGameProvider.maxAttempts; i++) {
                 const assignment = this.watcher.findGameExtension(va);
                 if (assignment) {
                     console.log(`RuthlessPersecutionGameProvider changing the future. It took me ${i+1} attempts.`);
@@ -39,4 +47,4 @@ class RuthlessPersecutionGameProvider extends WatchedDiagnosticGameProvider impl
 }
 
 
-export default RuthlessPersecutionGameProvider;
+export default ViciousPersecutionGameProvider;

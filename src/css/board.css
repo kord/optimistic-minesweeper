@@ -3,7 +3,7 @@
 
 
 .board {
-    --cell-size: 40px;
+    border: solid black var(--game-border-size);
 }
 
 .board--game-over {
@@ -13,9 +13,6 @@
 }
 
 .board__grid {
-    margin: 20px;
-    width: calc(var(--cols) * var(--cell-size));
-    border: solid black 2px;
 
     display: grid;
     grid-template-rows: repeat(var(--rows), var(--cell-size));

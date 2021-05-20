@@ -53,6 +53,10 @@ export class VariableAssignments {
     public trues = new Set<number>();
     public falses = new Set<number>();
 
+    public get count(): number {
+        return this.trues.size + this.falses.size;
+    };
+
     public known = (variable: number) => this.trues.has(variable) || this.falses.has(variable);
 
     public setTrue = (variable: number) => {
@@ -82,26 +86,32 @@ export class VariableAssignments {
      * @param other
      */
     public mergeFrom(other: VariableAssignments): boolean {
-        let iter = other.falses.entries();
-        let next = iter.next();
-        while (!next.done) {
-            const variable = next.value[0];
-            if (this.trues.has(variable)) {
-                return false;
-            }
-            this.falses.add(variable)
-            next = iter.next();
+        if (!this.consistentWith(other)) return false;
+
+        let iter = other.falses.keys();
+        for (let i = iter.next(); !i.done; i = iter.next()) {
+            this.falses.add(i.value);
+        }
+        iter = other.trues.keys();
+        for (let i = iter.next(); !i.done; i = iter.next()) {
+            this.trues.add(i.value);
         }
 
-        iter = other.trues.entries();
-        next = iter.next();
-        while (!next.done) {
-            const variable = next.value[0];
-            if (this.falses.has(variable)) {
+        return true;
+    }
+
+    public consistentWith(requirements: VariableAssignments) {
+        let iter = requirements.falses.keys();
+        for (let i = iter.next(); !i.done; i = iter.next()) {
+            if (this.trues.has(i.value)) {
                 return false;
             }
-            this.trues.add(variable)
-            next = iter.next();
+        }
+        iter = requirements.trues.keys();
+        for (let i = iter.next(); !i.done; i = iter.next()) {
+            if (this.falses.has(i.value)) {
+                return false;
+            }
         }
         return true;
     }
@@ -115,4 +125,10 @@ export interface iWatcher {
 export interface Observation {
     loc: BoardLoc,
     result: FactualMineTestResult,
+}
+
+export interface WinLossRecord {
+    incomplete: number,
+    wins: number,
+    losses: number,
 }

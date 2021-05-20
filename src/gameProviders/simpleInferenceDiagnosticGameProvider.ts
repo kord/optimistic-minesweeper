@@ -17,16 +17,19 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
     private firstMoveMade = false;
     private movesMade: number = 0;
     private mineVisited: boolean = false;
+    private get mineCount() : number {
+        return this.config.dimensions.mineCount;
+    }
 
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
-        super(config.size);
+        super(config.dimensions.size);
         this.frontierKnowledge = new FrontierKnowledge(this.size);
         // this.rewriteStaticMineLocations();
-        // console.assert(this.config.mineCount && this.config.mineCount > 0 && this.config.mineCount < this.numLocs);
+        // console.assert(this.mineCount && this.mineCount > 0 && this.mineCount < this.numLocs);
 
-        console.assert(this.config.mineCount > 0,
+        console.assert(this.mineCount > 0,
             'The game is boring without any trues.');
-        console.assert(this.config.mineCount - this.numLocs > 9,
+        console.assert(this.mineCount - this.numLocs > 9,
             'There needs to be space for a first move. Use fewer trues.');
     }
 
@@ -34,14 +37,14 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
      * Required by superclass.
      */
     public get totalMines(): number {
-        return this.config.mineCount;
+        return this.mineCount;
     }
 
     /**
      * Required by superclass.
      */
     get success(): boolean {
-        return this.config.mineCount + this.movesMade === this.numLocs && !this.mineVisited;
+        return this.mineCount + this.movesMade === this.numLocs && !this.mineVisited;
     }
 
     hasMine = (loc: BoardLoc) => {
@@ -52,7 +55,7 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
 
     // rewriteStaticMineLocations = () => {
     //     this.minelocs.clear();
-    //     while (this.minelocs.size < this.config.mineCount) {
+    //     while (this.minelocs.size < this.mineCount) {
     //         this.minelocs.add(Math.floor(Math.random() * this.numLocs));
     //     }
     // }
@@ -60,7 +63,7 @@ class SimpleInferenceDiagnosticGameProvider extends MinimalProvider implements i
     rewriteStaticMineLocationsToExcludeNeighbourhood = (loc: BoardLoc) => {
         this.minelocs.clear();
         let iterationcount = 0;
-        while (this.minelocs.size < this.config.mineCount) {
+        while (this.minelocs.size < this.mineCount) {
             this.minelocs.add(Math.floor(Math.random() * this.numLocs));
             loc.neighbourhoodIncludingSelf(this.size).forEach(loc => this.minelocs.delete(loc.toNumber(this.size)));
             iterationcount++;

@@ -1,12 +1,8 @@
 import {BoardLoc} from "../boardLoc";
-import {
-    DiagnosticInfo,
-    FactualMineTestResult,
-    iWatcher, Observation,
-    VariableAssignments
-} from "../types";
+import {DiagnosticInfo, iWatcher, Observation, VariableAssignments} from "../types";
 import {Constraint, ConstraintSet} from "./constraints";
 import {FixedBoardMinesweeperConfig} from "../constants";
+import {BoardSize} from "../boardSize";
 
 class SolutionTracker {
     public knownSolutions: Set<VariableAssignments>;
@@ -34,10 +30,9 @@ class SolutionTracker {
         }
     }
 
-    public locationKnownToBeFlexible(loc : number) {
+    public locationKnownToBeFlexible(loc: number) {
         return this.timesEmptyInSolutions[loc] > 0 && this.timesMineInSolutions[loc] > 0;
     }
-
 
 
     public removeSolution(solution: VariableAssignments) {
@@ -53,7 +48,7 @@ class SolutionTracker {
         solution.falses.forEach(loc => this.timesEmptyInSolutions[loc]++);
     }
 
-    public variablesNotKnownConsistentAsMine() : Set<number> {
+    public variablesNotKnownConsistentAsMine(): Set<number> {
         const ret = new Set<number>();
         this.timesMineInSolutions.forEach((val, variable) => {
             if (val === 0) ret.add(variable);
@@ -61,7 +56,7 @@ class SolutionTracker {
         return ret;
     }
 
-    public unseenVariableSettings() : VariableAssignments {
+    public unseenVariableSettings(): VariableAssignments {
         const ret = new VariableAssignments();
         // If we're not even tracking anything, this is useless knowledge and would contain inconsistencies so
         // we jump out early..
@@ -77,12 +72,26 @@ class SolutionTracker {
         return ret;
     }
 
-    public variablesInOrderOfHeuristicSafety() : number[]{
+    public variablesInOrderOfHeuristicSafety(): number[] {
         const locs = [];
-        for (let i = 0; i< this.numVariables;i++) locs.push(i);
-        locs.sort((a,b) => (this.mineProbability(a) || 0) - (this.mineProbability(b) || 0))
+        for (let i = 0; i < this.numVariables; i++) locs.push(i);
+        locs.sort((a, b) => (this.mineProbability(a) || 0) - (this.mineProbability(b) || 0))
         return locs;
     }
+
+    findConsistentWith(requirements: VariableAssignments) : VariableAssignments | undefined {
+        const iter = this.knownSolutions.keys();
+        for (let ass = iter.next(); !ass.done; ass = iter.next()) {
+            const assignment = ass.value;
+            if (assignment.consistentWith(requirements)) return assignment;
+        }
+    }
+}
+
+export interface WatcherConfig {
+    maintainedFutures: number,
+    futureReadsPerMove: number,
+    alwaysKnowSomeConsistentMinefield: boolean,
 }
 
 class Watcher implements iWatcher {
@@ -93,11 +102,16 @@ class Watcher implements iWatcher {
     private successRandomSatisfyingAssignment: number = 0;
     private attemptedRandomSatisfyingAssignment: number = 0;
 
-    constructor(public readonly config: FixedBoardMinesweeperConfig,
-                public readonly maintainedFutures = 0,
-                public readonly futureReadsPerMove = 0
+    private static defaultWatcherConfig: WatcherConfig = {
+        maintainedFutures: 500,
+        futureReadsPerMove: 50,
+        alwaysKnowSomeConsistentMinefield: true,
+    };
+
+    constructor(public readonly boardConfig: FixedBoardMinesweeperConfig,
+                public readonly config: WatcherConfig = Watcher.defaultWatcherConfig,
     ) {
-        const numVariables = config.size.height * config.size.width;
+        const numVariables = boardConfig.dimensions.size.height * boardConfig.dimensions.size.width;
         this.constraints = new ConstraintSet(numVariables);
         this.solutionTracker = new SolutionTracker(numVariables);
 
@@ -107,19 +121,23 @@ class Watcher implements iWatcher {
         }
 
         // This is the global total mine count constraint.
-        this.constraints.introduceConstraints([new Constraint(nums, config.mineCount)]);
+        this.constraints.introduceConstraints([new Constraint(nums, boardConfig.dimensions.mineCount)]);
+    }
+
+    private get size(): BoardSize {
+        return this.boardConfig.dimensions.size;
     }
 
     public observe(observations: Observation[]) {
-        let newConstraints : Constraint[] = [];
+        let newConstraints: Constraint[] = [];
         for (let i = 0; i < observations.length; i++) {
             const loc = observations[i].loc
-            const locnum = loc.toNumber(this.config.size);
+            const locnum = loc.toNumber(this.size);
             const result = observations[i].result;
 
             this.visited.add(locnum);
             this.frontier.delete(locnum);
-            const neighbours = loc.neighboursOnBoard(this.config.size).map(nloc => nloc.toNumber(this.config.size));
+            const neighbours = loc.neighboursOnBoard(this.size).map(nloc => nloc.toNumber(this.size));
             neighbours.forEach(nloc => {
                 if (!this.visited.has(nloc))
                     this.frontier.add(nloc)
@@ -127,7 +145,7 @@ class Watcher implements iWatcher {
 
             if (result.explodedMine) {
                 console.log(`Watcher saw a BOOM.`);
-                this.constraints.fixedVariables.setTrue(locnum);
+                // this.constraints.fixedVariables.setTrue(locnum);
                 return;
             }
             if (result.neighboursWithMine === undefined) {
@@ -150,7 +168,7 @@ class Watcher implements iWatcher {
     }
 
     public diagnosticInfo(loc: BoardLoc): DiagnosticInfo {
-        const locnum = loc.toNumber(this.config.size);
+        const locnum = loc.toNumber(this.size);
         const prob = this.solutionTracker.mineProbability(locnum);
         return {
             onFrontierAndUnknown: this.frontier.has(locnum),
@@ -177,27 +195,41 @@ class Watcher implements iWatcher {
     }
 
     findGameExtension(requirements: VariableAssignments): VariableAssignments | undefined {
-        return this.constraints.tryToFindExtension(requirements);
+        const knownExtension = this.solutionTracker.findConsistentWith(requirements);
+        if (knownExtension) return knownExtension;
+        return this.constraints.tryToBuildExtension(requirements);
+    }
+
+    public knownSafeLocs(): Set<number> {
+        return this.constraints.fixedVariables.falses;
+    }
+
+    public locationsBySafenessOrder(): number[] {
+        return this.solutionTracker.variablesInOrderOfHeuristicSafety();
     }
 
     private findAndStoreContinuations = () => {
         let learnedSomething = false;
 
-        if (this.solutionTracker.size >= this.maintainedFutures) return;
+        if (this.solutionTracker.size >= this.config.maintainedFutures) return;
 
-        let i = 0
-        for (i = 0; i < this.futureReadsPerMove && this.solutionTracker.size < this.maintainedFutures; i++) {
+        const enoughContinuations = () => {
+            if (this.config.alwaysKnowSomeConsistentMinefield && this.solutionTracker.size === 0) {
+                return false;
+            }
+            return this.solutionTracker.size >= this.config.maintainedFutures;
+        }
+
+        for (let i = 0; !enoughContinuations() || i < this.config.futureReadsPerMove; i++) {
             this.attemptedRandomSatisfyingAssignment++;
             // let ass = this.constraints.findRandomConsistentPartialAssignment(this.frontier);
             let ass = this.constraints.findRandomCompleteAssignment();
             if (ass) {
                 this.solutionTracker.addSolution(ass);
-                learnedSomething = true;
                 this.successRandomSatisfyingAssignment++;
             }
         }
 
-        // setImmediate(this.findAndStoreContinuations);
     }
 
     private pruneSolutions() {
@@ -211,18 +243,9 @@ class Watcher implements iWatcher {
         }
 
         if (baddies.length > 0) {
-            console.log(`Removing ${baddies.length} assignments.`);
+            console.log(`Pruning ${baddies.length} minefields. ${this.solutionTracker.knownSolutions.size - baddies.length} remain.`);
         }
         baddies.forEach(ass => this.solutionTracker.removeSolution(ass));
-    }
-
-
-    public knownSafeLocs() :  Set<number> {
-        return this.constraints.fixedVariables.falses;
-    }
-
-    public locationsBySafenessOrder() : number[] {
-        return this.solutionTracker.variablesInOrderOfHeuristicSafety();
     }
 
     private testSuspiciousVariables() {

@@ -10,7 +10,7 @@ import {FixedBoardMinesweeperConfig} from "../constants";
 
 class AlwaysMineGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
-        super(config.size);
+        super(config.dimensions.size);
     }
 
     public performVisit(loc: BoardLoc): FactualMineTestResult {

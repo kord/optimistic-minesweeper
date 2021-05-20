@@ -7,12 +7,12 @@ import SimpleInferenceDiagnosticGameProvider from "../gameProviders/simpleInfere
 import FirstClickIsAlwaysMineGameProvider from "../gameProviders/firstClickIsAlwaysMineGameProvider";
 import {GameStateIndicator} from "./gameStateIndicator";
 import {BoardOptions, Constants, FixedBoardMinesweeperConfig} from "../constants";
-import {BoardSize} from "../boardSize";
-import WatchedDiagnosticGameProvider from "../gameProviders/watchedDiagnosticGameProvider";
-import RuthlessPersecutionGameProvider from "../gameProviders/ruthlessPersecutionGameProvider";
+import WatchedGameProvider from "../gameProviders/watchedGameProvider";
+import ViciousPersecutionGameProvider from "../gameProviders/viciousPersecutionGameProvider";
 import GentleKindnessGameProvider from "../gameProviders/gentleKindnessGameProvider";
 import {iMinesweeperGameProvider} from "../gameProviders/gameProvider";
 import "../css/minesweeperGame.css";
+import {WinLossRecord} from "../types";
 
 interface MinesweeperGameProps {
 }
@@ -24,10 +24,11 @@ interface MinesweeperGameState {
     /* User input values, options. */
     firstMoveAlwaysZero: boolean,
     firstMoveNeverMined: boolean,
-    userHeight: string,
-    userWidth: string,
-    userMineCount: string,
+    // userHeight: string,
+    // userWidth: string,
+    // userMineCount: string,
     userGameType: string,
+    boardSizeOptionName: string,
 
     // The BoardOptions, unpacked
     displayZeroNumber: boolean,
@@ -35,10 +36,11 @@ interface MinesweeperGameState {
     autoVisitNeighboursOfZeros: boolean,
     autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
     showBasicInferenceTips: boolean,
-    showMineProbabilities: boolean,
+    showObserversMineProbabilities: boolean,
     autoVisitDiagnosticKnownNonMines: boolean,
     decrementVisibleNumberByAdjacentFlags: boolean,
     decrementVisibleNumberByAdjacentInferredMines: boolean,
+    winLossRecord: WinLossRecord,
 }
 
 
@@ -51,10 +53,10 @@ let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeper
         (config) => new AlwaysMineGameProvider(config)],
     ['SimpleInferenceDiagnosticGameProvider',
         (config) => new SimpleInferenceDiagnosticGameProvider(config)],
-    ['WatchedDiagnosticGameProvider',
-        (config) => new WatchedDiagnosticGameProvider(config)],
-    ['RuthlessPersecutionGameProvider',
-        (config) => new RuthlessPersecutionGameProvider(config)],
+    ['WatchedGameProvider',
+        (config) => new WatchedGameProvider(config)],
+    ['ViciousPersecutionGameProvider',
+        (config) => new ViciousPersecutionGameProvider(config)],
     ['GentleKindnessGameProvider',
         (config) => new GentleKindnessGameProvider(config)],
 ]);
@@ -70,7 +72,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             autoPlay: this.state.autoPlay,
             showBasicInferenceTips: this.state.showBasicInferenceTips,
             displayNumberZeroWhenNoMinesAdjacent: this.state.displayZeroNumber,
-            showMineProbabilities: this.state.showMineProbabilities,
+            showObserversMineProbabilities: this.state.showObserversMineProbabilities,
             decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
         } as BoardOptions;
@@ -80,26 +82,28 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         super(props);
 
         this.state = {
-            gameProvider: new WatchedDiagnosticGameProvider({
+            gameProvider: new WatchedGameProvider({
                 ...Constants.defaultGameConfig,
                 // onLearning: () => this.boardRef.current?.forceUpdate()
             }),
-            userGameType: 'WatchedDiagnosticGameProvider',
+            userGameType: 'WatchedGameProvider',
+            boardSizeOptionName: 'Intermediate',
             firstMoveAlwaysZero: Constants.defaultGameConfig.firstMoveAlwaysZero,
             firstMoveNeverMined: Constants.defaultGameConfig.firstMoveNeverMined,
-            userHeight: Constants.defaultGameConfig.size.height.toString(),
-            userWidth: Constants.defaultGameConfig.size.width.toString(),
-            userMineCount: Constants.defaultGameConfig.mineCount.toString(),
+            // userHeight: Constants.defaultGameConfig.size.height.toString(),
+            // userWidth: Constants.defaultGameConfig.size.width.toString(),
+            // userMineCount: Constants.defaultGameConfig.mineCount.toString(),
             displayZeroNumber: Constants.defaultBoardOptions.displayNumberZeroWhenNoMinesAdjacent,
             autoPlay: Constants.defaultBoardOptions.autoPlay,
             autoVisitNeighboursOfZeros: Constants.defaultBoardOptions.autoVisitNeighboursOfZeros,
             autoVisitNeighboursOfFlagSatisfiedNumbers: Constants.defaultBoardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers,
             showBasicInferenceTips: Constants.defaultBoardOptions.showBasicInferenceTips,
-            showMineProbabilities: Constants.defaultBoardOptions.showMineProbabilities,
+            showObserversMineProbabilities: Constants.defaultBoardOptions.showObserversMineProbabilities,
             autoVisitDiagnosticKnownNonMines: Constants.defaultBoardOptions.autoVisitDiagnosticKnownNonMines,
             decrementVisibleNumberByAdjacentFlags: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentInferredMines,
             flaggedLocs: new Set<string>(),
+            winLossRecord: {incomplete: 0, losses: 0, wins: 0},
         }
     }
 
@@ -114,8 +118,8 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         });
     }
 
-    visit = (loc: BoardLoc) => {
-        const result = this.state.gameProvider.visit(loc);
+    visit = (locs: BoardLoc[]) => {
+        const result = this.state.gameProvider.batchVisit(locs);
         this.forceUpdate();
         return result;
     }
@@ -140,10 +144,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             return;
         }
 
-        const boardSize = new BoardSize(+this.state.userHeight, +this.state.userWidth);
+        const dimensionsFn = Constants.boardSizeOptions.get(this.state.boardSizeOptionName)!;
         const config = {
-            size: boardSize,
-            mineCount: +this.state.userMineCount,
+            dimensions: dimensionsFn(),
             firstMoveNeverMined: this.state.firstMoveNeverMined,
             firstMoveAlwaysZero: this.state.firstMoveAlwaysZero,
             // onLearning: () => this.boardRef.current?.forceUpdate(),
@@ -158,13 +161,20 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         console.log(`Setting gameProvider with ${this.state.userGameType}`);
         console.log(config);
 
+
+
         if (this.nextAutoplay) {
             clearTimeout(this.nextAutoplay);
         }
-        this.setState({
+        this.setState(prev => ({
             gameProvider: providerFn(config),
             flaggedLocs: new Set<string>(),
-        });
+            winLossRecord: {
+                wins: prev.winLossRecord.wins+ (prev.gameProvider.success ? 1 : 0),
+                losses: prev.winLossRecord.losses + (prev.gameProvider.failure ? 1 : 0),
+                incomplete: prev.winLossRecord.incomplete + (prev.gameProvider.gameOver ? 0 : 1),
+            }
+        }));
 
         if (this.boardOptions.autoPlay) {
             this.nextAutoplay = setTimeout(this.doAutomaticVisit, 500);
@@ -211,7 +221,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                     success={this.state.gameProvider.success}
                                     gameOver={this.state.gameProvider.gameOver}
                                     flaggedCount={this.state.flaggedLocs.size}
-                                    restartFn={this.restart}/>
+                                    winLossRecord={this.state.winLossRecord}
+                                    restartFn={this.restart}
+                />
 
                 <Board ref={this.boardRef}
                        gameProvider={this.state.gameProvider}
@@ -224,9 +236,8 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 <div className={'options-groups'}>
                     <div className={'options-group'}>
                         <select name={"gameType"}
-                                className={"gametype-dropdown"}
+                                className={"options-dropdown"}
                                 value={this.state.userGameType}
-                            // size={this.props.solutionsHeight}
                                 onChange={(e) => {
                                     this.setState({userGameType: e.target.value});
                                 }}>
@@ -235,6 +246,21 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                         key={gameTypeName}
                                         value={gameTypeName}>
                                     {gameTypeName}
+                                </option>
+                            )}
+                        </select>
+                        <br/>
+                        <select name={"boardConfig"}
+                                className={"gametype-dropdown"}
+                                value={this.state.boardSizeOptionName}
+                                onChange={(e) => {
+                                    this.setState({boardSizeOptionName: e.target.value});
+                                }}>
+                            {Array.from(Constants.boardSizeOptions.keys()).map((sizeOptionsName) =>
+                                <option className={'level-list__level'}
+                                        key={sizeOptionsName}
+                                        value={sizeOptionsName}>
+                                    {sizeOptionsName}
                                 </option>
                             )}
                         </select>
@@ -256,33 +282,33 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                    onChange={this.handleInputChange}/>
                             firstMoveNeverMined
                         </label>
-                        <br/>
-                        <label>
-                            Height:&nbsp;
-                            <input type={'text'}
-                                   name={'userHeight'}
-                                   className={'textbox textbox--small'}
-                                   value={this.state.userHeight}
-                                   onChange={this.handleInputChange}/>
-                        </label>
-                        <br/>
-                        <label>
-                            Width:&nbsp;
-                            <input type={'text'}
-                                   name={'userWidth'}
-                                   className={'textbox textbox--small'}
-                                   value={this.state.userWidth}
-                                   onChange={this.handleInputChange}/>
-                        </label>
-                        <br/>
-                        <label>
-                            Mines:&nbsp;
-                            <input type={'text'}
-                                   name={'userMineCount'}
-                                   className={'textbox textbox--small'}
-                                   value={this.state.userMineCount}
-                                   onChange={this.handleInputChange}/>
-                        </label>
+                        {/*<br/>*/}
+                        {/*<label>*/}
+                        {/*    Height:&nbsp;*/}
+                        {/*    <input type={'text'}*/}
+                        {/*           name={'userHeight'}*/}
+                        {/*           className={'textbox textbox--small'}*/}
+                        {/*           value={this.state.userHeight}*/}
+                        {/*           onChange={this.handleInputChange}/>*/}
+                        {/*</label>*/}
+                        {/*<br/>*/}
+                        {/*<label>*/}
+                        {/*    Width:&nbsp;*/}
+                        {/*    <input type={'text'}*/}
+                        {/*           name={'userWidth'}*/}
+                        {/*           className={'textbox textbox--small'}*/}
+                        {/*           value={this.state.userWidth}*/}
+                        {/*           onChange={this.handleInputChange}/>*/}
+                        {/*</label>*/}
+                        {/*<br/>*/}
+                        {/*<label>*/}
+                        {/*    Mines:&nbsp;*/}
+                        {/*    <input type={'text'}*/}
+                        {/*           name={'userMineCount'}*/}
+                        {/*           className={'textbox textbox--small'}*/}
+                        {/*           value={this.state.userMineCount}*/}
+                        {/*           onChange={this.handleInputChange}/>*/}
+                        {/*</label>*/}
                         <br/>
                         <input type="submit"
                                className={'game-button restart-button'}
@@ -311,11 +337,11 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                         <br/>
                         <label>
                             <input type="checkbox"
-                                   key={'showMineProbabilities'}
-                                   checked={this.state.showMineProbabilities}
-                                   name={'showMineProbabilities'}
+                                   key={'showObserversMineProbabilities'}
+                                   checked={this.state.showObserversMineProbabilities}
+                                   name={'showObserversMineProbabilities'}
                                    onChange={this.handleInputChange}/>
-                            showMineProbabilities
+                            showObserversMineProbabilities
                         </label>
                         <br/>
                         <label>
