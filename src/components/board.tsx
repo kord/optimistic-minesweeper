@@ -156,7 +156,7 @@ class Board extends Component<BoardProps, Boardstate> {
             );
         }
 
-        if (this.props.boardOptions.autoVisitDiagnosticKnownNonMines) {
+        if (this.props.boardOptions.autoVisitWatcherKnownNonMines) {
             const knownNonMines = game.locations.filter(loc =>
                 game.lastVisitResult(loc).diagnostics?.knownNonMine);
             knownNonMines.forEach(nloc => needsOpening.add(nloc.toNumber(game.size)));

@@ -13,6 +13,7 @@ import GentleKindnessGameProvider from "../gameProviders/gentleKindnessGameProvi
 import {iMinesweeperGameProvider} from "../gameProviders/gameProvider";
 import "../css/minesweeperGame.css";
 import {WinLossRecord} from "../types";
+import ForcedGuessesAlwaysSucceedGameProvider from "../gameProviders/forcedGuessesAlwaysSucceedGameProvider";
 
 interface MinesweeperGameProps {
 }
@@ -31,13 +32,13 @@ interface MinesweeperGameState {
     boardSizeOptionName: string,
 
     // The BoardOptions, unpacked
-    displayZeroNumber: boolean,
+    displayNumberZeroWhenNoMinesAdjacent: boolean,
     autoPlay: boolean,
     autoVisitNeighboursOfZeros: boolean,
     autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
-    showBasicInferenceTips: boolean,
-    showObserversMineProbabilities: boolean,
-    autoVisitDiagnosticKnownNonMines: boolean,
+    showWatcherKnowledge: boolean,
+    showWatcherMineProbabilities: boolean,
+    autoVisitWatcherKnownNonMines: boolean,
     decrementVisibleNumberByAdjacentFlags: boolean,
     decrementVisibleNumberByAdjacentInferredMines: boolean,
     winLossRecord: WinLossRecord,
@@ -59,6 +60,8 @@ let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeper
         (config) => new ViciousPersecutionGameProvider(config)],
     ['GentleKindnessGameProvider',
         (config) => new GentleKindnessGameProvider(config)],
+    ['ForcedGuessesAlwaysSucceedGameProvider',
+        (config) => new ForcedGuessesAlwaysSucceedGameProvider(config)],
 ]);
 
 class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameState> {
@@ -67,12 +70,12 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
     public get boardOptions(): BoardOptions {
         return {
             autoVisitNeighboursOfZeros: this.state.autoVisitNeighboursOfZeros,
-            autoVisitDiagnosticKnownNonMines: this.state.autoVisitDiagnosticKnownNonMines,
+            autoVisitWatcherKnownNonMines: this.state.autoVisitWatcherKnownNonMines,
             autoVisitNeighboursOfFlagSatisfiedNumbers: this.state.autoVisitNeighboursOfFlagSatisfiedNumbers,
             autoPlay: this.state.autoPlay,
-            showBasicInferenceTips: this.state.showBasicInferenceTips,
-            displayNumberZeroWhenNoMinesAdjacent: this.state.displayZeroNumber,
-            showObserversMineProbabilities: this.state.showObserversMineProbabilities,
+            showWatcherKnowledge: this.state.showWatcherKnowledge,
+            displayNumberZeroWhenNoMinesAdjacent: this.state.displayNumberZeroWhenNoMinesAdjacent,
+            showWatcherMineProbabilities: this.state.showWatcherMineProbabilities,
             decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
         } as BoardOptions;
@@ -86,20 +89,20 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 ...Constants.defaultGameConfig,
                 // onLearning: () => this.boardRef.current?.forceUpdate()
             }),
-            userGameType: 'WatchedGameProvider',
+            userGameType: 'ForcedGuessesAlwaysSucceedGameProvider',
             boardSizeOptionName: 'Intermediate',
             firstMoveAlwaysZero: Constants.defaultGameConfig.firstMoveAlwaysZero,
             firstMoveNeverMined: Constants.defaultGameConfig.firstMoveNeverMined,
             // userHeight: Constants.defaultGameConfig.size.height.toString(),
             // userWidth: Constants.defaultGameConfig.size.width.toString(),
             // userMineCount: Constants.defaultGameConfig.mineCount.toString(),
-            displayZeroNumber: Constants.defaultBoardOptions.displayNumberZeroWhenNoMinesAdjacent,
             autoPlay: Constants.defaultBoardOptions.autoPlay,
+            displayNumberZeroWhenNoMinesAdjacent: Constants.defaultBoardOptions.displayNumberZeroWhenNoMinesAdjacent,
+            showWatcherKnowledge: Constants.defaultBoardOptions.showWatcherKnowledge,
+            showWatcherMineProbabilities: Constants.defaultBoardOptions.showWatcherMineProbabilities,
             autoVisitNeighboursOfZeros: Constants.defaultBoardOptions.autoVisitNeighboursOfZeros,
             autoVisitNeighboursOfFlagSatisfiedNumbers: Constants.defaultBoardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers,
-            showBasicInferenceTips: Constants.defaultBoardOptions.showBasicInferenceTips,
-            showObserversMineProbabilities: Constants.defaultBoardOptions.showObserversMineProbabilities,
-            autoVisitDiagnosticKnownNonMines: Constants.defaultBoardOptions.autoVisitDiagnosticKnownNonMines,
+            autoVisitWatcherKnownNonMines: Constants.defaultBoardOptions.autoVisitWatcherKnownNonMines,
             decrementVisibleNumberByAdjacentFlags: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentFlags,
             decrementVisibleNumberByAdjacentInferredMines: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentInferredMines,
             flaggedLocs: new Set<string>(),
@@ -319,38 +322,29 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                     <div className={'options-group'}>
                         <label>
                             <input type="checkbox"
-                                   key={'displayZeroNumber'}
-                                   checked={this.state.displayZeroNumber}
-                                   name={'displayZeroNumber'}
-                                   onChange={this.handleInputChange}/>
-                            displayZeroNumber
-                        </label>
-                        <br/>
-                        <label>
-                            <input type="checkbox"
-                                   key={'showBasicInferenceTips'}
-                                   checked={this.state.showBasicInferenceTips}
-                                   name={'showBasicInferenceTips'}
-                                   onChange={this.handleInputChange}/>
-                            showBasicInferenceTips
-                        </label>
-                        <br/>
-                        <label>
-                            <input type="checkbox"
-                                   key={'showObserversMineProbabilities'}
-                                   checked={this.state.showObserversMineProbabilities}
-                                   name={'showObserversMineProbabilities'}
-                                   onChange={this.handleInputChange}/>
-                            showObserversMineProbabilities
-                        </label>
-                        <br/>
-                        <label>
-                            <input type="checkbox"
                                    key={'autoPlay'}
                                    checked={this.state.autoPlay}
                                    name={'autoPlay'}
                                    onChange={this.handleInputChange}/>
                             autoPlay
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'showWatcherKnowledge'}
+                                   checked={this.state.showWatcherKnowledge}
+                                   name={'showWatcherKnowledge'}
+                                   onChange={this.handleInputChange}/>
+                            showWatcherKnowledge
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'showWatcherMineProbabilities'}
+                                   checked={this.state.showWatcherMineProbabilities}
+                                   name={'showWatcherMineProbabilities'}
+                                   onChange={this.handleInputChange}/>
+                            showWatcherMineProbabilities
                         </label>
                         <br/>
                         <label>
@@ -373,11 +367,20 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                         <br/>
                         <label>
                             <input type="checkbox"
-                                   key={'autoVisitDiagnosticKnownNonMines'}
-                                   checked={this.state.autoVisitDiagnosticKnownNonMines}
-                                   name={'autoVisitDiagnosticKnownNonMines'}
+                                   key={'autoVisitWatcherKnownNonMines'}
+                                   checked={this.state.autoVisitWatcherKnownNonMines}
+                                   name={'autoVisitWatcherKnownNonMines'}
                                    onChange={this.handleInputChange}/>
-                            autoVisitDiagnosticKnownNonMines
+                            autoVisitWatcherKnownNonMines
+                        </label>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'displayNumberZeroWhenNoMinesAdjacent'}
+                                   checked={this.state.displayNumberZeroWhenNoMinesAdjacent}
+                                   name={'displayNumberZeroWhenNoMinesAdjacent'}
+                                   onChange={this.handleInputChange}/>
+                            displayNumberZeroWhenNoMinesAdjacent
                         </label>
                         <br/>
                         <label>

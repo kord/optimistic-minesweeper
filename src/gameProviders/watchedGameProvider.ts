@@ -8,7 +8,6 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
 
     private mineField = new Set<number>();
     private movesMade: number = 0;
-    private mineVisited: boolean = false;
 
     constructor(
         public readonly config: FixedBoardMinesweeperConfig,
@@ -27,7 +26,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
      * Required by superclass.
      */
     public get success(): boolean {
-        return this.totalMines + this.movesMade === this.numLocs && !this.mineVisited;
+        return this.totalMines + this.movesMade === this.numLocs && !this.failure;
     }
 
     hasMine = (loc: BoardLoc) => {
@@ -187,11 +186,11 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
         const observations: Observation[] = [];
 
         for (let i = 0; i < locs.length; i++) {
+            if (this.gameOver) break;
             const locn = locs[i];
             const loc = BoardLoc.fromNumber(locn, this.size);
 
             // A couple reasons why we might not want to register this loc.
-            if (this.mineVisited) break;
             if (this.visitResults.has(locn)) continue;
 
             const isMine = this.mineField.has(locn);
@@ -199,9 +198,8 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
             loc.neighboursOnBoard(this.size)
                 .forEach(nloc => neighboursWithMine += this.hasMine(nloc) ? 1 : 0);
 
-            // Don't even report the mine to the watcher.
             if (isMine) {
-                this.mineVisited = true;
+                this._failure = true;
             }
 
             const result = {

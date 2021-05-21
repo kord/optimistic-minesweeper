@@ -49,13 +49,13 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
         if (containedMine) modifiers.push('--mined');
         if (explodedMine) modifiers.push('--killer-mine');
 
-        if (this.props.boardOptions.showBasicInferenceTips) {
+        if (this.props.boardOptions.showWatcherKnowledge) {
             // Diagnostics
             if (diagnostics?.onFrontierAndUnknown) modifiers.push('--on-frontier-and-unknown');
             if (diagnostics?.knownMine) modifiers.push('--known-mine');
             if (diagnostics?.knownNonMine) modifiers.push('--known-non-mine');
         }
-        if (this.props.boardOptions.showObserversMineProbabilities &&
+        if (this.props.boardOptions.showWatcherMineProbabilities &&
             // this.props.lastResult.diagnostics?.onFrontierAndUnknown &&
             this.props.lastResult.diagnostics?.mineProbability !== undefined) {
             modifiers.push('--has-known-probability');
@@ -88,7 +88,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
             <></> :
             <>{neighboursWithMine}</>
 
-        const showTooltip = this.props.boardOptions.showObserversMineProbabilities &&
+        const showTooltip = this.props.boardOptions.showWatcherMineProbabilities &&
             this.props.lastResult.diagnostics?.mineProbability;
         return (
             <div data-tip data-for={this.props.lastResult.locationName}
@@ -113,7 +113,7 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
     }
 
     private style() {
-        if (!this.props.boardOptions.showObserversMineProbabilities) return undefined;
+        if (!this.props.boardOptions.showWatcherMineProbabilities) return undefined;
         if (!this.props.lastResult.diagnostics) return undefined;
         // if (!this.props.lastResult.diagnostics.onFrontierAndUnknown) return undefined;
         if (this.props.lastResult.diagnostics.mineProbability === undefined) return undefined;

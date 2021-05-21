@@ -51,7 +51,7 @@ export abstract class MinimalProvider {
         this._failure = false;
     }
 
-    private _failure: boolean;
+    protected _failure: boolean;
 
     get failure(): boolean {
         return this._failure;

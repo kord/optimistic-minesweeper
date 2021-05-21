@@ -63,12 +63,12 @@ export class GameStateIndicator extends PureComponent<GameStateIndicatorProps, G
 
         return (
             <div className={'game-state-indicator'}>
-                <button className={this.buttonClasses()}
-                        onClick={this.onClick}
-                />
                 <p className={'game-status-text'}>
                     {statusText}
                 </p>
+                <button className={this.buttonClasses()}
+                        onClick={this.onClick}
+                />
                 <p className={'game-status-text'}>
                     {recordString}
                 </p>

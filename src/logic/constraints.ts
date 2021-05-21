@@ -112,12 +112,14 @@ export class Constraint {
             const randomIndex = Math.floor(Math.random() * this.size);
             ret.setTrue(this.vars[randomIndex]);
         }
+
         // Throw in the unassigned variables.
-        this.vars.forEach(v => {
+        for (let i = 0; i < this.size; i++) {
+            const v = this.vars[i];
             if (!ret.trues.has(v)) {
                 ret.setFalse(v);
             }
-        })
+        }
 
         return ret;
     }
@@ -152,7 +154,9 @@ export class ConstraintSet {
     public toString(): string {
         let shortConstraints = 0;
         for (let i = 0; i < this.size; i++) {
-            if (this.constraints[i].size <= 2) shortConstraints++;
+            if (this.constraints[i].size <= 2) {
+                shortConstraints++;
+            }
         }
         return `ConstraintSet with ${this.size} constraints, was max ${this.maxSize}. ` +
             `ReWrites: ${this.reWriteChangesMade}, ` +
@@ -237,7 +241,6 @@ export class ConstraintSet {
             iterCount += 1;
             if (iterCount > this.numVars + 10) {
                 console.error(`Breaking out early from bad loop.`);
-                // console.log(toy.constraints);
                 return undefined;
             }
 
@@ -283,6 +286,10 @@ export class ConstraintSet {
     //     return true;
     // }
 
+    /**
+     * Add new constraints and propagate some inferences into our fixedVariables
+     * @param constraints
+     */
     public introduceConstraints = (constraints: Constraint[]) => {
         for (let i = 0; i < constraints.length; i++) {
             constraints[i].reduce(this.fixedVariables);
@@ -299,7 +306,11 @@ export class ConstraintSet {
         }
     };
 
-    allSatisfiedBy(variableAssignments: VariableAssignments): boolean {
+    /**
+     * Is the set of constraints represented by this consistent with the proposed variable assignments?
+     * @param variableAssignments
+     */
+    public allSatisfiedBy(variableAssignments: VariableAssignments): boolean {
         // We can't already know that some setting was wrong.
         if (!variableAssignments.mergeFrom(this.fixedVariables)) return false;
         // Every constraint has to be satisfied exactly.

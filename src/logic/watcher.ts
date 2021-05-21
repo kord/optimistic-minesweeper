@@ -79,7 +79,7 @@ class SolutionTracker {
         return locs;
     }
 
-    findConsistentWith(requirements: VariableAssignments) : VariableAssignments | undefined {
+    findConsistentWith(requirements: VariableAssignments): VariableAssignments | undefined {
         const iter = this.knownSolutions.keys();
         for (let ass = iter.next(); !ass.done; ass = iter.next()) {
             const assignment = ass.value;
@@ -95,18 +95,17 @@ export interface WatcherConfig {
 }
 
 class Watcher implements iWatcher {
+    private static defaultWatcherConfig: WatcherConfig = {
+        maintainedFutures: 500,
+        futureReadsPerMove: 50,
+        alwaysKnowSomeConsistentMinefield: true,
+    };
     private constraints: ConstraintSet;
     private solutionTracker: SolutionTracker;
     private visited = new Set<number>();
     private frontier = new Set<number>();
     private successRandomSatisfyingAssignment: number = 0;
     private attemptedRandomSatisfyingAssignment: number = 0;
-
-    private static defaultWatcherConfig: WatcherConfig = {
-        maintainedFutures: 500,
-        futureReadsPerMove: 50,
-        alwaysKnowSomeConsistentMinefield: true,
-    };
 
     constructor(public readonly boardConfig: FixedBoardMinesweeperConfig,
                 public readonly config: WatcherConfig = Watcher.defaultWatcherConfig,
@@ -194,7 +193,7 @@ class Watcher implements iWatcher {
         return undefined;
     }
 
-    findGameExtension(requirements: VariableAssignments): VariableAssignments | undefined {
+    public findGameExtension(requirements: VariableAssignments): VariableAssignments | undefined {
         const knownExtension = this.solutionTracker.findConsistentWith(requirements);
         if (knownExtension) return knownExtension;
         return this.constraints.tryToBuildExtension(requirements);
@@ -206,6 +205,10 @@ class Watcher implements iWatcher {
 
     public locationsBySafenessOrder(): number[] {
         return this.solutionTracker.variablesInOrderOfHeuristicSafety();
+    }
+
+    public neverSeenAsMineLocs() {
+        return this.solutionTracker.variablesNotKnownConsistentAsMine();
     }
 
     private findAndStoreContinuations = () => {

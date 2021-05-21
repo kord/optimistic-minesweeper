@@ -1,13 +1,13 @@
 import {BoardSize} from "./boardSize";
 
 export interface BoardOptions {
-    autoVisitNeighboursOfZeros: boolean,
-    autoVisitDiagnosticKnownNonMines: boolean,
-    autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
     autoPlay: boolean,
+    showWatcherKnowledge: boolean,
+    showWatcherMineProbabilities: boolean,
+    autoVisitNeighboursOfZeros: boolean,
+    autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
+    autoVisitWatcherKnownNonMines: boolean,
     displayNumberZeroWhenNoMinesAdjacent: boolean,
-    showBasicInferenceTips: boolean,
-    showObserversMineProbabilities: boolean,
     decrementVisibleNumberByAdjacentFlags: boolean,
     decrementVisibleNumberByAdjacentInferredMines: boolean,
 }
@@ -37,13 +37,13 @@ export class Constants {
     };
 
     static defaultBoardOptions: BoardOptions = {
-        autoVisitNeighboursOfZeros: true,
-        autoVisitDiagnosticKnownNonMines: false,
-        autoVisitNeighboursOfFlagSatisfiedNumbers: false,
         autoPlay: false,
+        showWatcherKnowledge: false,
+        showWatcherMineProbabilities: true,
+        autoVisitNeighboursOfZeros: true,
+        autoVisitWatcherKnownNonMines: false,
+        autoVisitNeighboursOfFlagSatisfiedNumbers: false,
         displayNumberZeroWhenNoMinesAdjacent: false,
-        showBasicInferenceTips: false,
-        showObserversMineProbabilities: true,
         decrementVisibleNumberByAdjacentFlags: false,
         decrementVisibleNumberByAdjacentInferredMines: false,
     };
