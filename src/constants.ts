@@ -39,7 +39,7 @@ export class Constants {
     static defaultBoardOptions: BoardOptions = {
         autoPlay: false,
         showWatcherKnowledge: false,
-        showWatcherMineProbabilities: true,
+        showWatcherMineProbabilities: false,
         autoVisitNeighboursOfZeros: true,
         autoVisitWatcherKnownNonMines: false,
         autoVisitNeighboursOfFlagSatisfiedNumbers: false,
