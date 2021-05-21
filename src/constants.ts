@@ -27,29 +27,6 @@ export interface FixedBoardMinesweeperConfig {
 }
 
 export class Constants {
-    static defaultGameConfig: FixedBoardMinesweeperConfig = {
-        firstMoveNeverMined: true,
-        firstMoveAlwaysZero: true,
-        dimensions: {
-            size: new BoardSize(16, 20),
-            mineCount: 66,
-        },
-    };
-
-    static defaultBoardOptions: BoardOptions = {
-        autoPlay: false,
-        showWatcherKnowledge: false,
-        showWatcherMineProbabilities: false,
-        autoVisitNeighboursOfZeros: true,
-        autoVisitWatcherKnownNonMines: false,
-        autoVisitNeighboursOfFlagSatisfiedNumbers: false,
-        displayNumberZeroWhenNoMinesAdjacent: false,
-        decrementVisibleNumberByAdjacentFlags: false,
-        decrementVisibleNumberByAdjacentInferredMines: false,
-    };
-
-    static squareSizePx: number = 40;
-
     static boardSizeOptions: Map<string, () => ExplicitMinefieldDimensions> =
         new Map<string, () => ExplicitMinefieldDimensions>(
             [
@@ -75,6 +52,30 @@ export class Constants {
                 }],
             ]
         );
+
+    static defaultGameConfig: FixedBoardMinesweeperConfig = {
+        firstMoveNeverMined: true,
+        firstMoveAlwaysZero: true,
+        // Same as intermediate
+        dimensions: {
+            size: new BoardSize(16, 16),
+            mineCount: 40,
+        },
+    };
+
+    static defaultBoardOptions: BoardOptions = {
+        autoPlay: false,
+        showWatcherKnowledge: false,
+        showWatcherMineProbabilities: false,
+        autoVisitNeighboursOfZeros: true,
+        autoVisitWatcherKnownNonMines: false,
+        autoVisitNeighboursOfFlagSatisfiedNumbers: false,
+        displayNumberZeroWhenNoMinesAdjacent: false,
+        decrementVisibleNumberByAdjacentFlags: false,
+        decrementVisibleNumberByAdjacentInferredMines: false,
+    };
+
+    static squareSizePx: number = 40;
 
 
 }
