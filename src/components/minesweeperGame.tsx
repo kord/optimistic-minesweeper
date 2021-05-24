@@ -13,6 +13,7 @@ import {iMinesweeperGameProvider} from "../gameProviders/gameProvider";
 import "../css/minesweeperGame.css";
 import {WinLossRecord} from "../types";
 import ForcedGuessesAlwaysSucceedGameProvider from "../gameProviders/forcedGuessesAlwaysSucceedGameProvider";
+import {analyticsReportRestart} from "../analytics/analytics";
 
 interface MinesweeperGameProps {
     defaultBoardOptions: BoardOptions,
@@ -129,6 +130,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             console.error(`userGameType invalidly set to ${this.state.userGameType}`);
             return;
         }
+
+        // Report analytics for this restart.
+        analyticsReportRestart(this.state.gameProvider.success, this.state.gameProvider.failure);
 
         const dimensionsFn = Constants.boardSizeOptions.get(this.state.boardSizeOptionName)!;
         const config = {
