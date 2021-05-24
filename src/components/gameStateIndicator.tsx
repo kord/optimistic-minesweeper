@@ -1,12 +1,14 @@
 import React, {PureComponent} from "react";
 import '../css/gameStateIndicator.css';
 import {WinLossRecord} from "../types";
+import {BoardSize} from "../boardSize";
 
 interface GameStateIndicatorProps {
     success: boolean,
     failure: boolean,
     gameOver: boolean,
     totalMines: number,
+    size: BoardSize,
     flaggedCount: number,
     winLossRecord: WinLossRecord,
     restartFn: VoidFunction,
@@ -50,14 +52,15 @@ export class GameStateIndicator extends PureComponent<GameStateIndicatorProps, G
 
 
     render() {
+        const size = this.props.size;
         const minesLeft = this.props.totalMines - this.props.flaggedCount;
         let statusText: string = '';
         if (this.props.success) statusText = 'Congratulations. You win!';
         else if (this.props.failure) statusText = 'Congratulations. You lose!';
-        else statusText = `${minesLeft} Unflagged Mines Remain.`
+        else statusText = `(${size.height}x${size.width}) ${minesLeft} Unflagged Mines Remain.`
 
         const recordString = `Record: ` +
-            `${this.props.winLossRecord.incomplete} Incomplete, ` +
+            `${this.props.winLossRecord.starts} Starts, ` +
             `${this.props.winLossRecord.wins} Wins, ` +
             `${this.props.winLossRecord.losses} Losses`;
 

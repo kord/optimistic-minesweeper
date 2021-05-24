@@ -61,12 +61,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         super(props);
 
         this.state = {
-            gameProvider: new ForcedGuessesAlwaysSucceedGameProvider({
-                ...Constants.defaultGameConfig,
-                // onLearning: () => this.boardRef.current?.forceUpdate()
-            }),
+            gameProvider: new ForcedGuessesAlwaysSucceedGameProvider(Constants.defaultGameConfig),
             userGameType: 'ForcedGuessesAlwaysSucceedGameProvider',
-            boardSizeOptionName: 'Expert',
+            boardSizeOptionName: Constants.defaultGameSizeOption,
             firstMoveAlwaysZero: Constants.defaultGameConfig.firstMoveAlwaysZero,
             firstMoveNeverMined: Constants.defaultGameConfig.firstMoveNeverMined,
             // userHeight: Constants.defaultGameConfig.size.height.toString(),
@@ -74,7 +71,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             // userMineCount: Constants.defaultGameConfig.mineCount.toString(),
             boardOptions: this.props.defaultBoardOptions,
             flaggedLocs: new Set<string>(),
-            winLossRecord: {incomplete: 0, losses: 0, wins: 0},
+            winLossRecord: {starts: 1, losses: 0, wins: 0},
         }
     }
 
@@ -160,7 +157,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             winLossRecord: {
                 wins: prev.winLossRecord.wins + (prev.gameProvider.success ? 1 : 0),
                 losses: prev.winLossRecord.losses + (prev.gameProvider.failure ? 1 : 0),
-                incomplete: prev.winLossRecord.incomplete + (prev.gameProvider.gameOver ? 0 : 1),
+                starts: prev.winLossRecord.starts + 1,
             }
         }));
 
@@ -208,6 +205,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                         failure={this.state.gameProvider.failure}
                                         success={this.state.gameProvider.success}
                                         gameOver={this.state.gameProvider.gameOver}
+                                        size={this.state.gameProvider.size}
                                         flaggedCount={this.state.flaggedLocs.size}
                                         winLossRecord={this.state.winLossRecord}
                                         restartFn={this.restart}
@@ -306,7 +304,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
 
                     <div className={'options-group'}>
                         <label>
-                            handleBoardOptionsChange:&nbsp;
+                            autoPlayDelayMs:&nbsp;
                             <input type={'text'}
                                    name={'autoPlayDelayMs'}
                                    className={'textbox textbox--small'}
@@ -395,6 +393,48 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                             decrementVisibleNumberByAdjacentInferredMines
                         </label>
 
+                    </div>
+
+                    <div className={'options-group'}>
+                        <input type="submit"
+                               className={'game-button restart-button'}
+                               value="Autoplay Expert"
+                               onClick={() => {
+                                   this.setState({
+                                       boardOptions: Constants.autoplayNiceBoardOptions,
+                                       winLossRecord: {starts: 0, losses: 0, wins: 0},
+                                       boardSizeOptionName: 'Expert',
+                                       firstMoveNeverMined: true,
+                                       firstMoveAlwaysZero: false,
+                                       userGameType: 'WatchedGameProvider',
+                                   }, this.restart)
+                               }}/>
+                        <br/>
+                        <input type="submit"
+                               className={'game-button restart-button'}
+                               value="Autoplay Expert Show Knowledge"
+                               onClick={() => {
+                                   this.setState({
+                                       boardOptions: Constants.autoplayShowProbabilityBoardOptions,
+                                       winLossRecord: {starts: 0, losses: 0, wins: 0},
+                                       boardSizeOptionName: 'Expert',
+                                       firstMoveNeverMined: true,
+                                       firstMoveAlwaysZero: true,
+                                       userGameType: 'WatchedGameProvider',
+                                   }, this.restart)
+                               }}/>
+                        <br/>
+                        <input type="submit"
+                               className={'game-button restart-button'}
+                               value="User Play Forced Guesses Succeed!"
+                               onClick={() => {
+                                   this.setState({
+                                       boardOptions: Constants.defaultBoardOptions,
+                                       firstMoveNeverMined: true,
+                                       firstMoveAlwaysZero: true,
+                                       userGameType: 'ForcedGuessesAlwaysSucceedGameProvider',
+                                   }, this.restart)
+                               }}/>
                     </div>
                 </div>
             </div>

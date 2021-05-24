@@ -54,14 +54,12 @@ export class Constants {
             ]
         );
 
+    static defaultGameSizeOption : string = 'Expert';
+
     static defaultGameConfig: FixedBoardMinesweeperConfig = {
         firstMoveNeverMined: true,
         firstMoveAlwaysZero: true,
-        // Same as intermediate
-        dimensions: {
-            size: new BoardSize(16, 16),
-            mineCount: 40,
-        },
+        dimensions: Constants.boardSizeOptions.get(Constants.defaultGameSizeOption)!(),
     };
 
     static defaultBoardOptions: BoardOptions = {
@@ -78,6 +76,31 @@ export class Constants {
     };
 
     static squareSizePx: number = 40;
+
+    static autoplayNiceBoardOptions: BoardOptions = {
+        autoPlay: true,
+        autoPlayDelayMs: 100,
+        showWatcherKnowledge: true,
+        showWatcherMineProbabilities: false,
+        autoVisitNeighboursOfZeros: true,
+        autoVisitWatcherKnownNonMines: true,
+        autoVisitNeighboursOfFlagSatisfiedNumbers: false,
+        displayNumberZeroWhenNoMinesAdjacent: false,
+        decrementVisibleNumberByAdjacentFlags: false,
+        decrementVisibleNumberByAdjacentInferredMines: false,
+    };
+    static autoplayShowProbabilityBoardOptions: BoardOptions = {
+        autoPlay: true,
+        autoPlayDelayMs: 100,
+        showWatcherKnowledge: false,
+        showWatcherMineProbabilities: true,
+        autoVisitNeighboursOfZeros: true,
+        autoVisitWatcherKnownNonMines: false,
+        autoVisitNeighboursOfFlagSatisfiedNumbers: false,
+        displayNumberZeroWhenNoMinesAdjacent: false,
+        decrementVisibleNumberByAdjacentFlags: false,
+        decrementVisibleNumberByAdjacentInferredMines: true,
+    };
 
 
 }

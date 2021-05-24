@@ -105,14 +105,21 @@ class Board extends Component<BoardProps, Boardstate> {
         }
     }
 
-    private doAppropriateAutomaticVisitsRecursively(maxRounds: number = 10): number {
+    private doAppropriateAutomaticVisitsRecursively(maxRounds: number = 100): number {
         const game = this.props.gameProvider;
         let totalVisits = 0;
         let visitsMade = 1;
         let roundsMade = 0;
         while (visitsMade > 0 && roundsMade < maxRounds) {
+            visitsMade = 0;
             const locs = this.appropriateAutomaticVisits();
-            locs.forEach(loc => this.props.visitFn(BoardLoc.fromNumber(loc, game.size)));
+            const iter = locs.keys();
+            for (let i = iter.next(); !i.done; i=iter.next()) {
+                if (game.gameOver) break;
+                const loc = BoardLoc.fromNumber(i.value, game.size);
+                this.props.visitFn(loc);
+                visitsMade++;
+            }
             // visitsMade = this.props.visitFn(Array.from(locs).map(loc => BoardLoc.fromNumber(loc, game.size)));
             totalVisits += visitsMade;
             roundsMade++;

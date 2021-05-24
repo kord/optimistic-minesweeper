@@ -357,8 +357,10 @@ export class ConstraintSet {
             for (let j = i + 1; j < this.size; j++) {
                 const c1 = this.constraints[i];
                 const c2 = this.constraints[j];
+                // We store the location with the constraints just so we can do this shortcutting step.
+                // Here we don't bother investigating constraint pairs that have no chance of having a common variable.
                 if (!c1.location || !c2.location || c2.location.near(c2.location))
-                totalChanges += this.tryPigeonHole(c1, c2);
+                    totalChanges += this.tryPigeonHole(c1, c2);
             }
         }
         return totalChanges;

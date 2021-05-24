@@ -128,7 +128,7 @@ export interface Observation {
 }
 
 export interface WinLossRecord {
-    incomplete: number,
+    starts: number,
     wins: number,
     losses: number,
 }
