@@ -36,71 +36,22 @@ class Board extends Component<BoardProps, Boardstate> {
 
     // Ignore the click if the user has clicked on a flagged square.
     public visitFn = (loc: BoardLoc) => {
-
         const game = this.props.gameProvider;
         if (game.gameOver) {
             console.error(`Game is over, dummy.`);
             return;
         }
+
         // Don't visit a flagged spot, even if we have the information to know full well it's safe.
         if (this.isFlagged(loc)) return;
+        if (game.alreadyVisited(loc)) return;
+        if (!game.size.onBoard(loc)) return;
 
-        let lastVisitResult = game.lastVisitResult(loc);
-        // No need to revisit, ever.
-        if (!lastVisitResult.onBoard || lastVisitResult.everVisited) return;
-
-        // console.log(`visiting ${loc.toString()}`);
         this.props.visitFn(loc);
 
         if (this.props.boardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers) {
             const visits = this.doAppropriateAutomaticVisitsRecursively();
             if (visits) this.forceUpdate();
-        }
-
-        // console.log(result)
-    }
-
-    private visitNeighboursOfSatisfiedLocs(seed?: BoardLoc) {
-        const game = this.props.gameProvider;
-        // Drop out early if there's nothing we can possibly do in here.
-        if (game.gameOver) return 0;
-
-        // If we're given a seed to start with, we can drop out if there's no progress made by trying its neighbours.
-        // Otherwise, who knows, we might have to visit everything on the board!
-        const placesToTry = (seed === undefined) ? game.locations : seed.neighboursOnBoard(game.size);
-
-        let visitCount = 0;
-        placesToTry.forEach(loc => {
-            this.visitNeighboursIfSatisfiedByFlags(loc);
-        });
-
-        console.log(`visitAllSatisfiedLocs round caused ${visitCount} visits...`);
-
-        // Do this recursively until nothing changes.
-        if (visitCount > 0) {
-            visitCount += this.visitNeighboursOfSatisfiedLocs();
-        }
-
-        return visitCount;
-    }
-
-    private visitNeighboursIfSatisfiedByFlags(loc: BoardLoc) {
-        const game = this.props.gameProvider;
-        const flagsNeeded = game.lastVisitResult(loc).neighboursWithMine;
-        // Ignore if loc has not already been visited.
-        if (flagsNeeded === undefined) return 0;
-
-        if (this.flaggedNeighbours(loc) === flagsNeeded) {
-            const unvisitedNeighbours = loc.neighboursOnBoard(game.size)
-                .filter(nloc => !game.lastVisitResult(nloc).everVisited && !this.isFlagged(nloc));
-            if (unvisitedNeighbours.length === 0) {
-            }
-            // unvisitedNeighbours.forEach(loc => console.log(`unvisitedNeighbours has ${loc.toString()}`))
-            unvisitedNeighbours.forEach(loc => {
-                if (!game.gameOver) {
-                }
-            });
-
         }
     }
 
