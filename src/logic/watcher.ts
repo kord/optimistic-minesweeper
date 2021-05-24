@@ -3,95 +3,7 @@ import {DiagnosticInfo, iWatcher, Observation, VariableAssignments} from "../typ
 import {Constraint, ConstraintSet} from "./constraints";
 import {FixedBoardMinesweeperConfig} from "../constants";
 import {BoardSize} from "../boardSize";
-
-class SolutionTracker {
-    public knownSolutions: Set<VariableAssignments>;
-    private timesMineInSolutions: number[];
-    private timesEmptyInSolutions: number[];
-
-    constructor(private numVariables: number) {
-        this.knownSolutions = new Set<VariableAssignments>();
-        this.timesMineInSolutions = new Array(numVariables);
-        this.timesEmptyInSolutions = new Array(numVariables);
-        for (let i = 0; i < numVariables; i++) {
-            this.timesMineInSolutions[i] = 0;
-            this.timesEmptyInSolutions[i] = 0;
-        }
-    }
-
-    public get size(): number {
-        return this.knownSolutions.size;
-    }
-
-    public mineProbability(locnum: number) {
-        const involvedCount = this.timesMineInSolutions[locnum] + this.timesEmptyInSolutions[locnum];
-        if (involvedCount > 0) {
-            return this.timesMineInSolutions[locnum] / involvedCount;
-        }
-    }
-
-    public locationKnownToBeFlexible(loc: number) {
-        return this.timesEmptyInSolutions[loc] > 0 && this.timesMineInSolutions[loc] > 0;
-    }
-
-
-    public removeSolutions(baddies: VariableAssignments[]) {
-        baddies.forEach(this.removeSolution);
-    }
-
-    public addSolution(solution: VariableAssignments) {
-        this.knownSolutions.add(solution);
-        solution.trues.forEach(loc => this.timesMineInSolutions[loc]++);
-        solution.falses.forEach(loc => this.timesEmptyInSolutions[loc]++);
-    }
-
-    public variablesNotKnownConsistentAsMine(): Set<number> {
-        const ret = new Set<number>();
-        this.timesMineInSolutions.forEach((val, variable) => {
-            if (val === 0) ret.add(variable);
-        })
-        return ret;
-    }
-
-    public unseenVariableSettings(): VariableAssignments {
-        const ret = new VariableAssignments();
-        // If we're not even tracking anything, this is useless knowledge and would contain inconsistencies so
-        // we jump out early..
-        if (this.knownSolutions.size === 0) {
-            return ret;
-        }
-        this.timesEmptyInSolutions.forEach((val, variable) => {
-            if (val === 0) ret.setFalse(variable);
-        })
-        this.timesMineInSolutions.forEach((val, variable) => {
-            if (val === 0) ret.setTrue(variable);
-        })
-        return ret;
-    }
-
-    public variablesInOrderOfHeuristicSafety(): number[] {
-        const locs = [];
-        for (let i = 0; i < this.numVariables; i++) locs.push(i);
-        locs.sort((a, b) => (this.mineProbability(a) || 0) - (this.mineProbability(b) || 0))
-        return locs;
-    }
-
-    findConsistentWith(requirements: VariableAssignments): VariableAssignments | undefined {
-        const iter = this.knownSolutions.keys();
-        for (let ass = iter.next(); !ass.done; ass = iter.next()) {
-            const assignment = ass.value;
-            if (assignment.consistentWith(requirements)) return assignment;
-        }
-    }
-
-    private removeSolution = (solution: VariableAssignments) => {
-        console.assert(this.knownSolutions.has(solution));
-        this.knownSolutions.delete(solution);
-        solution.trues.forEach(loc => this.timesMineInSolutions[loc]--);
-        solution.falses.forEach(loc => this.timesEmptyInSolutions[loc]--);
-    }
-
-}
+import {SolutionTracker} from "./solutionTracker";
 
 export interface WatcherConfig {
     maintainedFutures: number,
@@ -107,8 +19,6 @@ class Watcher implements iWatcher {
     };
     private constraints: ConstraintSet;
     private solutionTracker: SolutionTracker;
-    private visited = new Set<number>();
-    private frontier = new Set<number>();
     private successRandomSatisfyingAssignment: number = 0;
     private attemptedRandomSatisfyingAssignment: number = 0;
 
@@ -128,6 +38,18 @@ class Watcher implements iWatcher {
         this.constraints.introduceConstraints([new Constraint(nums, boardConfig.dimensions.mineCount)]);
     }
 
+    private _visited = new Set<number>();
+
+    get visited(): Set<number> {
+        return this._visited;
+    }
+
+    private _frontier = new Set<number>();
+
+    get frontier(): Set<number> {
+        return this._frontier;
+    }
+
     private get size(): BoardSize {
         return this.boardConfig.dimensions.size;
     }
@@ -139,12 +61,12 @@ class Watcher implements iWatcher {
             const locnum = loc.toNumber(this.size);
             const result = observations[i].result;
 
-            this.visited.add(locnum);
-            this.frontier.delete(locnum);
+            this._visited.add(locnum);
+            this._frontier.delete(locnum);
             const neighbours = loc.neighboursOnBoard(this.size).map(nloc => nloc.toNumber(this.size));
             neighbours.forEach(nloc => {
-                if (!this.visited.has(nloc))
-                    this.frontier.add(nloc)
+                if (!this._visited.has(nloc))
+                    this._frontier.add(nloc)
             });
 
             if (result.explodedMine) {
@@ -175,7 +97,7 @@ class Watcher implements iWatcher {
         const locnum = loc.toNumber(this.size);
         const prob = this.solutionTracker.mineProbability(locnum);
         return {
-            onFrontierAndUnknown: this.frontier.has(locnum),
+            onFrontierAndUnknown: this._frontier.has(locnum),
             // onFrontierAndUnknown: this.constraints.unknown.has(locnum),
             knownNonMine: this.constraints.fixedVariables.falses.has(locnum),
             knownMine: this.constraints.fixedVariables.trues.has(locnum),
@@ -198,10 +120,17 @@ class Watcher implements iWatcher {
         return undefined;
     }
 
-    public findGameExtension(requirements: VariableAssignments): VariableAssignments | undefined {
-        const knownExtension = this.solutionTracker.findConsistentWith(requirements);
+    public searchKnownGameExtensions(requirements: VariableAssignments, attempts: number): VariableAssignments | undefined {
+        const knownExtension = this.solutionTracker.findKnownSolutionConsistentWith(requirements);
         if (knownExtension) return knownExtension;
-        return this.constraints.tryToBuildExtension(requirements);
+
+        for (let i = 0; i < attempts; i++) {
+            const ass = this.constraints.tryToBuildExtension(requirements);
+            if (ass) {
+                console.log(`Found game extension. It took me ${i + 1} attempts.`);
+                return ass;
+            }
+        }
     }
 
     public knownSafeLocs(): Set<number> {
@@ -213,10 +142,27 @@ class Watcher implements iWatcher {
     }
 
     public neverSeenAsMineLocs() {
-        return this.solutionTracker.variablesNotKnownConsistentAsMine();
+        const ret = this.solutionTracker.variablesNotKnownConsistentAsMine();
+
+        function setIntersection(a: Set<number>, b: Set<number>) {
+            const ret = new Set<number>();
+            a.forEach(n1 => {
+                if (b.has(n1)) ret.add(n1);
+            });
+            return ret;
+        }
+
+        // We intersect this with the frontier so fluctuations in our guesses don't poison ForcedGuessesAlwaysSucceedGameProvider
+        return setIntersection(this.frontier, ret);
     }
 
-    private findAndStoreContinuations = () => {
+    /**
+     * Try to find some full-board configurations that respect everything we know and all of the constraints we know.
+     * Normally this is called internally when an observation is made and some of our continuations are evicted, but
+     * we can also call it manually for replenishment before an important decision has to be made based on our
+     * knowledge.
+     */
+    public findAndStoreContinuations = () => {
         const oldSizeKnowns = this.solutionTracker.size;
         let learnedSomething = false;
 

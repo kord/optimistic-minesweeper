@@ -1,4 +1,5 @@
 import {BoardSize} from "./boardSize";
+import {WatcherConfig} from "./logic/watcher";
 
 export interface BoardOptions {
     autoPlay: boolean,
@@ -54,14 +55,12 @@ export class Constants {
             ]
         );
 
-    static defaultGameSizeOption : string = 'Expert';
-
+    static defaultGameSizeOption: string = 'Expert';
     static defaultGameConfig: FixedBoardMinesweeperConfig = {
         firstMoveNeverMined: true,
         firstMoveAlwaysZero: true,
         dimensions: Constants.boardSizeOptions.get(Constants.defaultGameSizeOption)!(),
     };
-
     static defaultBoardOptions: BoardOptions = {
         autoPlay: false,
         autoPlayDelayMs: 200,
@@ -74,9 +73,7 @@ export class Constants {
         decrementVisibleNumberByAdjacentFlags: false,
         decrementVisibleNumberByAdjacentKnownMines: false,
     };
-
     static squareSizePx: number = 40;
-
     static autoplayNiceBoardOptions: BoardOptions = {
         autoPlay: true,
         autoPlayDelayMs: 500,
@@ -100,6 +97,12 @@ export class Constants {
         displayNumberZeroWhenNoMinesAdjacent: false,
         decrementVisibleNumberByAdjacentFlags: false,
         decrementVisibleNumberByAdjacentKnownMines: true,
+    };
+
+    static defaultGameChangingWatcherConfig: WatcherConfig = {
+        maintainedFutures: 200,
+        futureReadsPerMove: 50,
+        alwaysKnowSomeConsistentMinefield: true
     };
 
 

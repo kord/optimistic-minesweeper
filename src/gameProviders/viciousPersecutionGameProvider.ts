@@ -34,12 +34,11 @@ class ViciousPersecutionGameProvider extends WatchedGameProvider implements iMin
         // clicked.
         const va = new VariableAssignments();
         va.setTrue(locn);
-        for (let i = 0; i < ViciousPersecutionGameProvider.maxAttempts; i++) {
-            const assignment = this.watcher.findGameExtension(va);
-            if (assignment) {
-                console.log(`ViciousPersecutionGameProvider changed the future. It took me ${i + 1} attempts.`);
-                return assignment.trues;
-            }
+
+        const assignment = this.watcher.searchKnownGameExtensions(va, ViciousPersecutionGameProvider.maxAttempts);
+        if (assignment) {
+            console.log(`ViciousPersecutionGameProvider changed the future.`);
+            return assignment.trues;
         }
     }
 

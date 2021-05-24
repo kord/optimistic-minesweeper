@@ -10,16 +10,18 @@ I build a web-based Minesweeper clone.
 
 ## Reddit post:
 
-For a while I've wanted to be able to play Minesweeper without the problem of having to guess at the end of the game. I've seen the versions where no guesses are required, but I built mine a little differently. Instead, here you are guaranteed to succeed on your next click if you're in a position where there is no safe move available (and you click in a place where it's possible that there is no mine given the currently revealed knowledge.)  This is why I'm calling it [Optimistic Minesweeper](https://minesweeper.therestinmotion.com/).
+For a while I've wanted to be able to play Minesweeper without the problem of having to guess at the end of the game. I've seen the versions where no guesses are required, but I built mine a little differently. Instead, here you are guaranteed to open a non-mine on your next click if you're in a position where there is no safe move available (and you click in a place where it's possible that there is no mine given the currently revealed knowledge.)  This is why I'm calling it [Optimistic Minesweeper](https://minesweeper.therestinmotion.com/). If you *really* have to guess, you'll succeed.
+
+In order to introduce this functionality I also effectively built a Minesweeper solver and automatic player.
 
 There are a bunch of potentially interesting options, but I recommend you try the three buttons in the bottom left.
 * **Expert Autoplay**: Every tick, the internal "Watcher" reveals all of the squares where it has deduced there can be no mine or makes a guess if it has no useful knowledge to work with. The known mines are red and the known non-mines are green.
-* **Expert Autoplay Show Knowledge**: A slightly different view on the internal workings of the watcher. Here the numbers show the number of neighboring mines that it has *not definitively placed* and the unvisited squares all show a colour indicating the calculated probability that they contain a mine. The mine probabilities are used for selecting automatic moves, but are not known with absolute certainty. 
-* **User Play Forced Guesses Succeed!**: You get to play a version of minesweeper where any time you're forced to guess, you will always succeed. Note that there have to be absolutely zero provably non-mine squares on the board for this to work. If you found a corner that requires a guess but you can still make progress elsewhere on the board you cannot yet safely make the corner guess. I might change this. :) 
+* **Expert Autoplay Show Knowledge**: A slightly different view on the internal workings of the watcher. Here the *numbers* show the quantity of neighboring mines that it has *not definitively placed* and the unvisited squares all show a shade of red indicating the calculated probability that they contain a mine. The mine probabilities are used for selecting automatic moves, but are not known with absolute certainty. 
+* **User Play Forced Guesses Succeed!**: You get to play a version of minesweeper where any time you're forced to guess, you will always succeed. Note that there have to be absolutely zero provably non-mine squares on the board for this to work. If you found a corner that requires a guess but you can still make progress elsewhere on the board you cannot yet safely make the corner guess. I might change this to be more lenient. :) 
  
-Beyond that, feel free to monkey around with the checkboxes providing some (hopefully sufficiently intuitively named) options for board construction and visual behaviour. 
+Beyond that, feel free to monkey around with the checkboxes and dropdowns providing some (hopefully sufficiently intuitively named) options for board construction and visual behaviour. 
 
-One nice feature is called *autoVisitNeighboursOfFlagSatisfiedNumbers*, and automatically runs chords on the whole board. It gives a slightly different feel compared to normal play and allows one to open up wide swaths of board by doing nothing more than flagging mines.
+One nice feature is called *autoVisitNeighboursOfFlagSatisfiedNumbers* and automatically runs chords on the whole board after you flag or reveal something. It allows one to open up wide swaths of board by doing nothing more than flagging mines. It gives a slightly different feel compared to normal play and it makes laying down flags feel as powerful as opening up 0s.
 
 Another is *firstMoveAlwaysZero* which just reduces some of the drudgery of handling poor starts.
 
