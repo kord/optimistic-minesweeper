@@ -12,9 +12,14 @@ I build a web-based Minesweeper clone.
 
 For a while I've wanted to be able to play Minesweeper without the problem of having to guess at the end of the game. I've seen the versions where no guesses are required, but I built mine a little differently. In this, you instead are guaranteed to succeed on your next click if you're in a position where there is no safe move available (and you click in a place where it's possible that there is no mine given the currently revealed knowledge.)  This is why I'm calling it [Optimistic Minesweeper](https://minesweeper.therestinmotion.com/).
 
-It also features an autoplay mode, where the mine locations given the state of revealed knowledge can be seen in an overlay and another where the probabilities of mine placement are shown, again given the state of revealed knowledge.
+There are a bunch of potentially interesting options, but I recommend you try clicking the three buttons in the bottom left.
+* **Expert Autoplay**: Every tick, the internal "Watcher" reveals all of the squares where it has deduced there can be no mine or makes a guess if it has no useful knowledge to work with. The known mines are red and the known non-mines are green.
+* **Expert Autoplay Show Knowledge**: A different view on the internal workings of the watcher. Here the numbers show the number of neighboring mines that it has *not definitively placed* and the unvisited squares all show a colour indicating the calculated probability that they contain a mine.
+* **User Play Forced Guesses Succeed!**: You get to play a version of minesweeper where any time you're forced to guess, you will always succeed. Note that there have to be absolutely zero provably non-mine squares on the board for this to work. If you found a corner that requires a guess but you can still make progress elsewhere on the board you cannot yet safely make the corner guess. I might change this. :) 
+ 
+If you've tried those out, you can try to monkey around with the checkboxes providing some (hopefully sufficiently intuitively named) options for board construction and visual behaviour. 
 
-One more nice feature is labelled *autoVisitNeighboursOfFlagSatisfiedNumbers*, and automatically runs chords on the whole board. It gives a slightly different feel and allows one to open up wide swaths of board by nothing more than flagging mines.
+One nice feature is labelled *autoVisitNeighboursOfFlagSatisfiedNumbers*, and automatically runs chords on the whole board. It gives a slightly different feel compared to normal play and allows one to open up wide swaths of board by doing nothing more than flagging mines.
 
 Another is *firstMoveAlwaysZero* which just reduces some of the drudgery of handling poor starts.
 
@@ -28,7 +33,7 @@ Here's what it looks like in action, displaying what can be inferred from the re
 The overlaid red and green squares correspond to known mines and empties. These constitute most of the normal inferences a player will make while playing Minesweeper. 
 
 ![alt text][screenshot2]
-The overlaid red heatmap shows mine probability as evaluated from stochastically generated possible full-board mine configurations. Mine probabilities can be seen by hovering over a square. (The possibility of these being randomly generated with a huge accidental bias can lead to false info.)
+The overlaid red heatmap shows mine probability as evaluated from stochastically generated possible full-board mine configurations. Mine probabilities can be seen by hovering over a square. (The possibility of these being randomly generated with a huge accidental bias can lead to false info but in practice rarely does.)
 
 [screenshot1]: https://minesweeper.therestinmotion.com/screenshot-frontier-deductions.png "Autoplay Making Deductions"
 [screenshot2]: https://minesweeper.therestinmotion.com/screenshot-frontier-probabilities.png "Autoplay Inferring Mine Probabilities"
