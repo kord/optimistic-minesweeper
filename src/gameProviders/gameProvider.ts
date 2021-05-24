@@ -1,6 +1,7 @@
 import {BoardLoc} from "../boardLoc";
 import {BoardSize} from "../boardSize";
 import {FactualMineTestResult, MineTestResult} from "../types";
+import {BoardOptions} from "../constants";
 
 
 export interface iMinesweeperGameProvider {
@@ -11,9 +12,11 @@ export interface iMinesweeperGameProvider {
     // The number of trues in the game.
     totalMines: number,
     // Visit a location, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
-    visit: (loc: BoardLoc) => MineTestResult,
-    // Visit a while bunch of locations, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
-    batchVisit: (locs: BoardLoc[]) => number,
+    visit: (loc: BoardLoc,
+            autoVisitNeighboursOfZeros?: boolean,
+            autoVisitWatcherKnownNonMines?: boolean) => void,
+    // // Visit a while bunch of locations, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
+    // batchVisit: (locs: BoardLoc[]) => number,
     // Check what was the last result of visiting the square. This can be called without changing anything in the
     // provider's state.
     lastVisitResult: (loc: BoardLoc) => MineTestResult,
@@ -108,7 +111,9 @@ export abstract class MinimalProvider {
      * This needs to be implemented by any subclass. Test if a mine is present at some location.
      * @param loc Where the user is committing to visit.
      */
-    public abstract performVisit(loc: BoardLoc): FactualMineTestResult;
+    public abstract performVisit(loc: BoardLoc,
+                                 autoVisitNeighboursOfZeros: boolean ,
+                                 autoVisitWatcherKnownNonMines: boolean): FactualMineTestResult;
 
     /**
      * Return a board state consistent with the results of performVisit calls made before this was requested.
@@ -151,33 +156,35 @@ export abstract class MinimalProvider {
         } as MineTestResult;
     }
 
-    /**
-     * This should be overridden in subclasses that want to be cooler about how they handle batched visits.
-     * @param locs
-     */
-    public batchVisit = (locs: BoardLoc[]) => {
-        let visits = 0;
-        locs.forEach(loc => {
-            const locn = loc.toNumber(this.size);
-            if (!this.visitResults.has(locn)) {
-                this.visit(loc);
-                visits++;
-            }
-        });
-        return visits;
-    }
+    // /**
+    //  * This should be overridden in subclasses that want to be cooler about how they handle batched visits.
+    //  * @param locs
+    //  */
+    // public batchVisit = (locs: BoardLoc[]) => {
+    //     let visits = 0;
+    //     locs.forEach(loc => {
+    //         const locn = loc.toNumber(this.size);
+    //         if (!this.visitResults.has(locn)) {
+    //             this.visit(loc);
+    //             visits++;
+    //         }
+    //     });
+    //     return visits;
+    // }
 
-    public visit(loc: BoardLoc): MineTestResult {
+    public visit(loc: BoardLoc,
+                 autoVisitNeighboursOfZeros: boolean = false,
+                 autoVisitWatcherKnownNonMines: boolean = false) {
         if (this.gameOver) {
             throw new Error(`Game is over. You can't visit anywhere anymore.`);
         }
 
         // Check if this has been visited before, in which case we can just return the result of that visit.
         const lastVisit = this.lastVisitResult(loc);
-        if (lastVisit?.everVisited) return lastVisit;
+        if (lastVisit?.everVisited) return ;
 
         // Actually do the visit in the gameProvider that extends this class.
-        const result = this.performVisit(loc);
+        const result = this.performVisit(loc, autoVisitNeighboursOfZeros, autoVisitWatcherKnownNonMines);
 
         // Permanantly mark the game as done when we've visited a mine, refusing all future visits.
         if (result.explodedMine) {
@@ -190,8 +197,6 @@ export abstract class MinimalProvider {
 
         // Potentially do some work updating a subclass's view of stuff.
         this.runAfterVisit();
-
-        return this.lastVisitResult(loc);
     }
 
     // Is a given location even on the board.

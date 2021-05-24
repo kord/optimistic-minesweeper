@@ -42,4 +42,11 @@ export class BoardLoc {
 
     public neighbourhoodIncludingSelf = (boardSize: BoardSize) => [...this.neighbours, this].filter(boardSize.onBoard);
 
+    /**
+     * Is this near enough to another location that they share a neighbour or more?
+     * @param other
+     */
+    public near(other: BoardLoc) : boolean {
+        return Math.abs(this.col - other.col) <= 2 && Math.abs(this.row - other.row) <= 2;
+    }
 }

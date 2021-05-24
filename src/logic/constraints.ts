@@ -1,8 +1,9 @@
 import {VariableAssignments} from "../types";
+import {BoardLoc} from "../boardLoc";
 
 export class Constraint {
 
-    constructor(public vars: number[], public trueCount: number) {
+    constructor(public vars: number[], public trueCount: number, public location: BoardLoc | undefined = undefined) {
         vars.sort(((a, b) => a - b));
     }
 
@@ -125,7 +126,7 @@ export class Constraint {
     }
 
     public copy(): Constraint {
-        return new Constraint([...this.vars], this.trueCount);
+        return new Constraint([...this.vars], this.trueCount, this.location);
     }
 
 }
@@ -298,7 +299,9 @@ export class ConstraintSet {
         this.maxSize = Math.max(this.maxSize, this.size);
 
         // See if we can get any juice out of the new constraints.
-        this.inferenceLoop(true);
+        this.inferenceLoop(false);
+        this.doPigeonHoleInference();
+        this.inferenceLoop(false);
 
         // Report on how we're doing.
         if (ConstraintSet.logSelfAfterConstraintIntro) {
@@ -352,7 +355,10 @@ export class ConstraintSet {
         let totalChanges = 0;
         for (let i = 0; i < this.size; i++) {
             for (let j = i + 1; j < this.size; j++) {
-                totalChanges += this.pigeonHole(this.constraints[i], this.constraints[j]);
+                const c1 = this.constraints[i];
+                const c2 = this.constraints[j];
+                if (!c1.location || !c2.location || c2.location.near(c2.location))
+                totalChanges += this.tryPigeonHole(c1, c2);
             }
         }
         return totalChanges;
@@ -501,7 +507,7 @@ export class ConstraintSet {
         return ret;
     }
 
-    private pigeonHole(x: Constraint, y: Constraint): number {
+    private tryPigeonHole(x: Constraint, y: Constraint): number {
         let intersectionVars = x.vars.filter(v => y.vars.includes(v));
         if (intersectionVars.length === 0) {
             return 0;

@@ -3,7 +3,6 @@ import BasicGameProvider from "../gameProviders/basicGameProvider";
 import Board from "./board";
 import {BoardLoc} from "../boardLoc";
 import AlwaysMineGameProvider from "../gameProviders/alwaysMineGameProvider";
-import SimpleInferenceDiagnosticGameProvider from "../gameProviders/simpleInferenceDiagnosticGameProvider";
 import FirstClickIsAlwaysMineGameProvider from "../gameProviders/firstClickIsAlwaysMineGameProvider";
 import {GameStateIndicator} from "./gameStateIndicator";
 import {BoardOptions, Constants, FixedBoardMinesweeperConfig} from "../constants";
@@ -16,6 +15,7 @@ import {WinLossRecord} from "../types";
 import ForcedGuessesAlwaysSucceedGameProvider from "../gameProviders/forcedGuessesAlwaysSucceedGameProvider";
 
 interface MinesweeperGameProps {
+    defaultBoardOptions: BoardOptions,
 }
 
 interface MinesweeperGameState {
@@ -32,15 +32,7 @@ interface MinesweeperGameState {
     boardSizeOptionName: string,
 
     // The BoardOptions, unpacked
-    displayNumberZeroWhenNoMinesAdjacent: boolean,
-    autoPlay: boolean,
-    autoVisitNeighboursOfZeros: boolean,
-    autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
-    showWatcherKnowledge: boolean,
-    showWatcherMineProbabilities: boolean,
-    autoVisitWatcherKnownNonMines: boolean,
-    decrementVisibleNumberByAdjacentFlags: boolean,
-    decrementVisibleNumberByAdjacentInferredMines: boolean,
+    boardOptions: BoardOptions,
     winLossRecord: WinLossRecord,
 }
 
@@ -52,8 +44,6 @@ let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeper
         (config) => new FirstClickIsAlwaysMineGameProvider(config)],
     ['AlwaysMineGameProvider',
         (config) => new AlwaysMineGameProvider(config)],
-    ['SimpleInferenceDiagnosticGameProvider',
-        (config) => new SimpleInferenceDiagnosticGameProvider(config)],
     ['WatchedGameProvider',
         (config) => new WatchedGameProvider(config)],
     ['ViciousPersecutionGameProvider',
@@ -67,44 +57,22 @@ let gameTypes: Map<string, (config: FixedBoardMinesweeperConfig) => iMinesweeper
 class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameState> {
     private boardRef = createRef<Board>();
 
-    public get boardOptions(): BoardOptions {
-        return {
-            autoVisitNeighboursOfZeros: this.state.autoVisitNeighboursOfZeros,
-            autoVisitWatcherKnownNonMines: this.state.autoVisitWatcherKnownNonMines,
-            autoVisitNeighboursOfFlagSatisfiedNumbers: this.state.autoVisitNeighboursOfFlagSatisfiedNumbers,
-            autoPlay: this.state.autoPlay,
-            showWatcherKnowledge: this.state.showWatcherKnowledge,
-            displayNumberZeroWhenNoMinesAdjacent: this.state.displayNumberZeroWhenNoMinesAdjacent,
-            showWatcherMineProbabilities: this.state.showWatcherMineProbabilities,
-            decrementVisibleNumberByAdjacentFlags: this.state.decrementVisibleNumberByAdjacentFlags,
-            decrementVisibleNumberByAdjacentInferredMines: this.state.decrementVisibleNumberByAdjacentInferredMines,
-        } as BoardOptions;
-    };
-
     constructor(props: MinesweeperGameProps) {
         super(props);
 
         this.state = {
-            gameProvider: new WatchedGameProvider({
+            gameProvider: new ForcedGuessesAlwaysSucceedGameProvider({
                 ...Constants.defaultGameConfig,
                 // onLearning: () => this.boardRef.current?.forceUpdate()
             }),
             userGameType: 'ForcedGuessesAlwaysSucceedGameProvider',
-            boardSizeOptionName: 'Intermediate',
+            boardSizeOptionName: 'Expert',
             firstMoveAlwaysZero: Constants.defaultGameConfig.firstMoveAlwaysZero,
             firstMoveNeverMined: Constants.defaultGameConfig.firstMoveNeverMined,
             // userHeight: Constants.defaultGameConfig.size.height.toString(),
             // userWidth: Constants.defaultGameConfig.size.width.toString(),
             // userMineCount: Constants.defaultGameConfig.mineCount.toString(),
-            autoPlay: Constants.defaultBoardOptions.autoPlay,
-            displayNumberZeroWhenNoMinesAdjacent: Constants.defaultBoardOptions.displayNumberZeroWhenNoMinesAdjacent,
-            showWatcherKnowledge: Constants.defaultBoardOptions.showWatcherKnowledge,
-            showWatcherMineProbabilities: Constants.defaultBoardOptions.showWatcherMineProbabilities,
-            autoVisitNeighboursOfZeros: Constants.defaultBoardOptions.autoVisitNeighboursOfZeros,
-            autoVisitNeighboursOfFlagSatisfiedNumbers: Constants.defaultBoardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers,
-            autoVisitWatcherKnownNonMines: Constants.defaultBoardOptions.autoVisitWatcherKnownNonMines,
-            decrementVisibleNumberByAdjacentFlags: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentFlags,
-            decrementVisibleNumberByAdjacentInferredMines: Constants.defaultBoardOptions.decrementVisibleNumberByAdjacentInferredMines,
+            boardOptions: this.props.defaultBoardOptions,
             flaggedLocs: new Set<string>(),
             winLossRecord: {incomplete: 0, losses: 0, wins: 0},
         }
@@ -121,10 +89,28 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         });
     }
 
-    visit = (locs: BoardLoc[]) => {
-        const result = this.state.gameProvider.batchVisit(locs);
+    // This works when the underlying input has name="<name of state variable tracking the content>"
+    private handleBoardOptionsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const target = event.target;
+        let value: string | boolean | number = target.type === 'checkbox' ? target.checked : target.value;
+        const name = target.name;
+        if (name === 'autoPlayDelayMs') value = +value;
+        // @ts-ignore
+        this.setState(prev => ({
+            boardOptions: {
+                ...prev.boardOptions,
+                [name]: value,
+            }
+        }));
+    }
+
+    public get boardOptions(): BoardOptions {
+        return this.state.boardOptions;
+    };
+
+    visit = (loc: BoardLoc) => {
+        this.state.gameProvider.visit(loc, this.boardOptions.autoVisitNeighboursOfZeros, this.boardOptions.autoVisitWatcherKnownNonMines);
         this.forceUpdate();
-        return result;
     }
 
     toggleFlag = (loc: BoardLoc) => {
@@ -165,7 +151,6 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         console.log(config);
 
 
-
         if (this.nextAutoplay) {
             clearTimeout(this.nextAutoplay);
         }
@@ -173,14 +158,14 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             gameProvider: providerFn(config),
             flaggedLocs: new Set<string>(),
             winLossRecord: {
-                wins: prev.winLossRecord.wins+ (prev.gameProvider.success ? 1 : 0),
+                wins: prev.winLossRecord.wins + (prev.gameProvider.success ? 1 : 0),
                 losses: prev.winLossRecord.losses + (prev.gameProvider.failure ? 1 : 0),
                 incomplete: prev.winLossRecord.incomplete + (prev.gameProvider.gameOver ? 0 : 1),
             }
         }));
 
         if (this.boardOptions.autoPlay) {
-            this.nextAutoplay = setTimeout(this.doAutomaticVisit, 500);
+            this.nextAutoplay = setTimeout(this.doAutomaticVisit, 2 * this.boardOptions.autoPlayDelayMs);
         }
     }
 
@@ -196,16 +181,16 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         console.log(`Running doAutomaticVisit`);
         const game = this.state.gameProvider;
         if (game.gameOver) {
-            this.nextAutoplay = setTimeout(this.restart, 3000);
+            this.nextAutoplay = setTimeout(this.restart, 5 * this.boardOptions.autoPlayDelayMs);
         }
         if (!this.boardOptions.autoPlay) return;
         const loc = game.moveSuggestion();
         if (loc === undefined) return;
 
-        this.boardRef.current?.visitFn(loc, true);
+        this.boardRef.current?.visitFn(loc);
 
         if (this.boardOptions.autoPlay) {
-            this.nextAutoplay = setTimeout(this.doAutomaticVisit, 350);
+            this.nextAutoplay = setTimeout(this.doAutomaticVisit, this.boardOptions.autoPlayDelayMs);
         }
     }
 
@@ -219,22 +204,22 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             <div className={'minesweeper-game'} style={style}>
 
                 <div className={'gameplay-elements'}>
-                <GameStateIndicator totalMines={this.state.gameProvider.totalMines}
-                                    failure={this.state.gameProvider.failure}
-                                    success={this.state.gameProvider.success}
-                                    gameOver={this.state.gameProvider.gameOver}
-                                    flaggedCount={this.state.flaggedLocs.size}
-                                    winLossRecord={this.state.winLossRecord}
-                                    restartFn={this.restart}
-                />
+                    <GameStateIndicator totalMines={this.state.gameProvider.totalMines}
+                                        failure={this.state.gameProvider.failure}
+                                        success={this.state.gameProvider.success}
+                                        gameOver={this.state.gameProvider.gameOver}
+                                        flaggedCount={this.state.flaggedLocs.size}
+                                        winLossRecord={this.state.winLossRecord}
+                                        restartFn={this.restart}
+                    />
 
-                <Board ref={this.boardRef}
-                       gameProvider={this.state.gameProvider}
-                       flaggedLocs={this.state.flaggedLocs}
-                       visitFn={this.visit}
-                       toggleFlagFn={this.toggleFlag}
-                       boardOptions={this.boardOptions}
-                />
+                    <Board ref={this.boardRef}
+                           gameProvider={this.state.gameProvider}
+                           flaggedLocs={this.state.flaggedLocs}
+                           visitFn={this.visit}
+                           toggleFlagFn={this.toggleFlag}
+                           boardOptions={this.boardOptions}
+                    />
                 </div>
                 <div className={'options-groups'}>
                     <div className={'options-group'}>
@@ -321,83 +306,92 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
 
                     <div className={'options-group'}>
                         <label>
+                            handleBoardOptionsChange:&nbsp;
+                            <input type={'text'}
+                                   name={'autoPlayDelayMs'}
+                                   className={'textbox textbox--small'}
+                                   value={this.boardOptions.autoPlayDelayMs.toFixed(0)}
+                                   onChange={this.handleBoardOptionsChange}/>
+                        </label>
+                        <br/>
+                        <label>
                             <input type="checkbox"
                                    key={'autoPlay'}
-                                   checked={this.state.autoPlay}
+                                   checked={this.boardOptions.autoPlay}
                                    name={'autoPlay'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             autoPlay
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
                                    key={'showWatcherKnowledge'}
-                                   checked={this.state.showWatcherKnowledge}
+                                   checked={this.boardOptions.showWatcherKnowledge}
                                    name={'showWatcherKnowledge'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             showWatcherKnowledge
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
                                    key={'showWatcherMineProbabilities'}
-                                   checked={this.state.showWatcherMineProbabilities}
+                                   checked={this.boardOptions.showWatcherMineProbabilities}
                                    name={'showWatcherMineProbabilities'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             showWatcherMineProbabilities
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
                                    key={'autoVisitNeighboursOfZeros'}
-                                   checked={this.state.autoVisitNeighboursOfZeros}
+                                   checked={this.boardOptions.autoVisitNeighboursOfZeros}
                                    name={'autoVisitNeighboursOfZeros'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             autoVisitNeighboursOfZeros
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
                                    key={'autoVisitNeighboursOfFlagSatisfiedNumbers'}
-                                   checked={this.state.autoVisitNeighboursOfFlagSatisfiedNumbers}
+                                   checked={this.boardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers}
                                    name={'autoVisitNeighboursOfFlagSatisfiedNumbers'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             autoVisitNeighboursOfFlagSatisfiedNumbers
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
                                    key={'autoVisitWatcherKnownNonMines'}
-                                   checked={this.state.autoVisitWatcherKnownNonMines}
+                                   checked={this.boardOptions.autoVisitWatcherKnownNonMines}
                                    name={'autoVisitWatcherKnownNonMines'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             autoVisitWatcherKnownNonMines
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
                                    key={'displayNumberZeroWhenNoMinesAdjacent'}
-                                   checked={this.state.displayNumberZeroWhenNoMinesAdjacent}
+                                   checked={this.boardOptions.displayNumberZeroWhenNoMinesAdjacent}
                                    name={'displayNumberZeroWhenNoMinesAdjacent'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             displayNumberZeroWhenNoMinesAdjacent
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
                                    key={'decrementVisibleNumberByAdjacentFlags'}
-                                   checked={this.state.decrementVisibleNumberByAdjacentFlags}
+                                   checked={this.boardOptions.decrementVisibleNumberByAdjacentFlags}
                                    name={'decrementVisibleNumberByAdjacentFlags'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             decrementVisibleNumberByAdjacentFlags
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
                                    key={'decrementVisibleNumberByAdjacentInferredMines'}
-                                   checked={this.state.decrementVisibleNumberByAdjacentInferredMines}
+                                   checked={this.boardOptions.decrementVisibleNumberByAdjacentInferredMines}
                                    name={'decrementVisibleNumberByAdjacentInferredMines'}
-                                   onChange={this.handleInputChange}/>
+                                   onChange={this.handleBoardOptionsChange}/>
                             decrementVisibleNumberByAdjacentInferredMines
                         </label>
 

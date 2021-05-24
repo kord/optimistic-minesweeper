@@ -8,9 +8,6 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
     private movesMade: number = 0;
     private mineVisited: Boolean = false;
     private firstMoveMade = false;
-    private get mineCount() : number {
-        return this.config.dimensions.mineCount;
-    }
 
     constructor(public readonly config: FixedBoardMinesweeperConfig) {
         super(config.dimensions.size);
@@ -33,6 +30,10 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
 
     get success(): boolean {
         return !this.mineVisited && this.mineCount + this.movesMade === this.numLocs;
+    }
+
+    private get mineCount(): number {
+        return this.config.dimensions.mineCount;
     }
 
     hasMine = (loc: BoardLoc) => {
@@ -88,7 +89,9 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
     //     console.log(`mineField.size ${this.mineField.size}`)
     // }
 
-    public performVisit(loc: BoardLoc): FactualMineTestResult {
+    public performVisit(loc: BoardLoc,
+                        autoVisitNeighboursOfZeros: boolean = false,
+                        autoVisitWatcherKnownNonMines: boolean = false): FactualMineTestResult {
         // while (!this.firstMoveMade && (this.hasMine(loc)) || loc.neighboursOnBoard(this.size).some(this.hasMine)) {
         //     this.rewriteStaticMineLocations();
         // }
@@ -96,11 +99,18 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
         this.firstMoveMade = true;
         this.movesMade++;
 
-        let neighboursWithMine = 0;
-        loc.neighbours.forEach(nloc => neighboursWithMine += this.hasMine(nloc) ? 1 : 0);
+        let neighboursWithMine = loc.neighboursOnBoard(this.size).filter(this.hasMine).length;
 
         const isMine = this.hasMine(loc);
         if (isMine) this.mineVisited = true;
+
+        if (neighboursWithMine === 0 && autoVisitNeighboursOfZeros) {
+            this.performRecursiveNeighbourhoodZeroVisits(loc);
+        }
+
+        if (autoVisitWatcherKnownNonMines) {
+            // Do nothing since we don't have a watcher.
+        }
 
         return {
             explodedMine: isMine,
@@ -112,6 +122,25 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
         return this.locations.filter(this.hasMine);
     }
 
+
+    private addLocAndZeroNeighbours = (loc: BoardLoc, neededVisits: Set<number>) => {
+        const locn = loc.toNumber(this.size);
+        if (neededVisits.has(locn)) return;
+        neededVisits.add(locn);
+
+        const neighbours = loc.neighboursOnBoard(this.size);
+        if (neighbours.filter(this.hasMine).length === 0) {
+            neighbours.forEach(loc => this.addLocAndZeroNeighbours(loc, neededVisits));
+        }
+    }
+
+
+    private performRecursiveNeighbourhoodZeroVisits(loc: BoardLoc) {
+        let neededVisits = new Set<number>();
+        this.addLocAndZeroNeighbours(loc, neededVisits);
+        // This will not trigger recursive visits ever.
+        neededVisits.forEach(loc => this.visit(BoardLoc.fromNumber(loc, this.size)));
+    }
 }
 
 export default BasicGameProvider;

@@ -2,6 +2,7 @@ import {BoardSize} from "./boardSize";
 
 export interface BoardOptions {
     autoPlay: boolean,
+    autoPlayDelayMs: number,
     showWatcherKnowledge: boolean,
     showWatcherMineProbabilities: boolean,
     autoVisitNeighboursOfZeros: boolean,
@@ -65,6 +66,7 @@ export class Constants {
 
     static defaultBoardOptions: BoardOptions = {
         autoPlay: false,
+        autoPlayDelayMs: 200,
         showWatcherKnowledge: false,
         showWatcherMineProbabilities: false,
         autoVisitNeighboursOfZeros: true,

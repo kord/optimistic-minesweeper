@@ -75,10 +75,23 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
         console.log(`minelocs.size ${this.mineField.size}`)
     }
 
+    private addLocAndZeroNeighbours = (loc: BoardLoc, neededVisits: Set<number>) => {
+        const locn = loc.toNumber(this.size);
+        if (neededVisits.has(locn)) return;
+        neededVisits.add(locn);
+
+        const neighbours = loc.neighboursOnBoard(this.size);
+        if (neighbours.filter(this.hasMine).length === 0) {
+            neighbours.forEach(loc => this.addLocAndZeroNeighbours(loc, neededVisits));
+        }
+    }
+
     /**
      * Required by superclass.
      */
-    public performVisit(loc: BoardLoc): FactualMineTestResult {
+    public performVisit(loc: BoardLoc,
+                        autoVisitNeighboursOfZeros: boolean = false,
+                        autoVisitWatcherKnownNonMines: boolean = false): FactualMineTestResult {
         // Rewrite the board so the first move is nice.
         if (this.movesMade === 0) {
             this.rewriteStaticMineLocationsAsNeededByConfig(loc);
@@ -91,33 +104,53 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
         }
 
         const locn = loc.toNumber(this.size);
-        this.visitAndObserveAll(locn);
+
+        let additionalVisits = new Set<number>();
+        const include = autoVisitNeighboursOfZeros ?
+            ((loc: BoardLoc) => this.addLocAndZeroNeighbours(loc, additionalVisits)) :
+            ((loc: BoardLoc) => additionalVisits.add(loc.toNumber(this.size)));
+
+        if (autoVisitNeighboursOfZeros) {
+            include(loc);
+        }
+
+        if (autoVisitWatcherKnownNonMines) {
+            const iter = this.watcher.knownSafeLocs().keys();
+            for (let i = iter.next(); !i.done; i = iter.next()) {
+                const locn = i.value;
+                const loc = BoardLoc.fromNumber(locn, this.size);
+                if (!this.visitResults.has(locn))
+                    include(loc);
+            }
+        }
+
+        this.visitAndObserveAll(Array.from(additionalVisits));
 
         return this.visitResults.get(locn)!;
     }
 
-    /**
-     * This should be overridden in subclasses that want to be cooler about how they handle batched visits.
-     * @param locs
-     */
-    public batchVisit = (locs: BoardLoc[]) => {
-        if (locs.length === 1) {
-            this.visit(locs[0]);
-            return 1;
-        }
-        if (this.movesMade === 0) {
-            throw new Error(`You should make some moves normally before doing a batch visit.`);
-        }
-        const movesBefore = this.movesMade;
-
-        let asYetUnvisited = locs.map(loc => loc.toNumber(this.size))
-            .filter(loc => !this.visitResults.has(loc));
-
-        console.log(`BATCH visiting ${asYetUnvisited.length} squares.`);
-
-        this.visitAndObserveAll(...asYetUnvisited);
-        return this.movesMade - movesBefore;
-    }
+    // /**
+    //  * This should be overridden in subclasses that want to be cooler about how they handle batched visits.
+    //  * @param locs
+    //  */
+    // public batchVisit = (locs: BoardLoc[]) => {
+    //     if (locs.length === 1) {
+    //         this.visit(locs[0]);
+    //         return 1;
+    //     }
+    //     if (this.movesMade === 0) {
+    //         throw new Error(`You should make some moves normally before doing a batch visit.`);
+    //     }
+    //     const movesBefore = this.movesMade;
+    //
+    //     let asYetUnvisited = locs.map(loc => loc.toNumber(this.size))
+    //         .filter(loc => !this.visitResults.has(loc));
+    //
+    //     console.log(`BATCH visiting ${asYetUnvisited.length} squares.`);
+    //
+    //     this.visitAndObserveAll(asYetUnvisited);
+    //     return this.movesMade - movesBefore;
+    // }
 
     /**
      * Required by superclass.
@@ -182,7 +215,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
      * We do eh, some error checking here, just observe everything at once.
      * @param locs
      */
-    private visitAndObserveAll(...locs: number[]) {
+    private visitAndObserveAll(locs: number[]) {
         const observations: Observation[] = [];
 
         for (let i = 0; i < locs.length; i++) {

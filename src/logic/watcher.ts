@@ -35,11 +35,8 @@ class SolutionTracker {
     }
 
 
-    public removeSolution(solution: VariableAssignments) {
-        console.assert(this.knownSolutions.has(solution));
-        this.knownSolutions.delete(solution);
-        solution.trues.forEach(loc => this.timesMineInSolutions[loc]--);
-        solution.falses.forEach(loc => this.timesEmptyInSolutions[loc]--);
+    public removeSolutions(baddies: VariableAssignments[]) {
+        baddies.forEach(this.removeSolution);
     }
 
     public addSolution(solution: VariableAssignments) {
@@ -86,6 +83,14 @@ class SolutionTracker {
             if (assignment.consistentWith(requirements)) return assignment;
         }
     }
+
+    private removeSolution = (solution: VariableAssignments) => {
+        console.assert(this.knownSolutions.has(solution));
+        this.knownSolutions.delete(solution);
+        solution.trues.forEach(loc => this.timesMineInSolutions[loc]--);
+        solution.falses.forEach(loc => this.timesEmptyInSolutions[loc]--);
+    }
+
 }
 
 export interface WatcherConfig {
@@ -155,7 +160,7 @@ class Watcher implements iWatcher {
             // When we observe a visit, the first thing we learn is that there was no mine there.
             // The second thing we learn is a new constraint imposed by the neighbour count.
             this.constraints.fixedVariables.setFalse(locnum);
-            newConstraints.push(new Constraint(neighbours, result.neighboursWithMine));
+            newConstraints.push(new Constraint(neighbours, result.neighboursWithMine, loc));
         }
         // This generates a whirlwind of inference in this.constraints.
         this.constraints.introduceConstraints(newConstraints);
@@ -212,6 +217,7 @@ class Watcher implements iWatcher {
     }
 
     private findAndStoreContinuations = () => {
+        const oldSizeKnowns = this.solutionTracker.size;
         let learnedSomething = false;
 
         if (this.solutionTracker.size >= this.config.maintainedFutures) return;
@@ -223,7 +229,8 @@ class Watcher implements iWatcher {
             return this.solutionTracker.size >= this.config.maintainedFutures;
         }
 
-        for (let i = 0; !enoughContinuations() || i < this.config.futureReadsPerMove; i++) {
+        let i = 0;
+        for (i = 0; !enoughContinuations() || i < this.config.futureReadsPerMove; i++) {
             this.attemptedRandomSatisfyingAssignment++;
             // let ass = this.constraints.findRandomConsistentPartialAssignment(this.frontier);
             let ass = this.constraints.findRandomCompleteAssignment();
@@ -233,22 +240,27 @@ class Watcher implements iWatcher {
             }
         }
 
+        const sizeDiff = this.solutionTracker.size - oldSizeKnowns;
+
+        console.log(`KnownSolutions ${oldSizeKnowns} +${sizeDiff} in ${i} attempts.`)
+
     }
 
     private pruneSolutions() {
         // this.knownSolutions.forEach(ass => this.removeSatisfyingAssignment(ass));
         // return;
 
-        const baddies = [];
+        const baddies: VariableAssignments[] = [];
         const iter = this.solutionTracker.knownSolutions.keys();
         for (let ass = iter.next(); !ass.done; ass = iter.next()) {
             if (!this.constraints.allSatisfiedBy(ass.value)) baddies.push(ass.value);
         }
 
-        if (baddies.length > 0) {
-            console.log(`Pruning ${baddies.length} minefields. ${this.solutionTracker.knownSolutions.size - baddies.length} remain.`);
-        }
-        baddies.forEach(ass => this.solutionTracker.removeSolution(ass));
+        // if (baddies.length > 0) {
+        //     console.log(`Pruning ${baddies.length} minefields. ${this.solutionTracker.knownSolutions.size - baddies.length} remain.`);
+        // }
+        this.solutionTracker.removeSolutions(baddies);
+        // baddies.forEach(ass => this.solutionTracker.removeSolution(ass));
     }
 
     private testSuspiciousVariables() {

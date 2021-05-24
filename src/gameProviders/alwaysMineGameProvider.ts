@@ -1,9 +1,5 @@
-import {
-    iMinesweeperGameProvider,
-    MinimalProvider
-} from "./gameProvider";
+import {iMinesweeperGameProvider, MinimalProvider} from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
-import {BoardSize} from "../boardSize";
 import {FactualMineTestResult} from "../types";
 import {FixedBoardMinesweeperConfig} from "../constants";
 
@@ -13,7 +9,17 @@ class AlwaysMineGameProvider extends MinimalProvider implements iMinesweeperGame
         super(config.dimensions.size);
     }
 
-    public performVisit(loc: BoardLoc): FactualMineTestResult {
+    get success(): boolean {
+        return false;
+    }
+
+    public get totalMines(): number {
+        return this.numLocs;
+    }
+
+    public performVisit(loc: BoardLoc,
+                        autoVisitNeighboursOfZeros: boolean = false,
+                        autoVisitWatcherKnownNonMines: boolean = false): FactualMineTestResult {
         return {
             explodedMine: true,
         }
@@ -21,14 +27,6 @@ class AlwaysMineGameProvider extends MinimalProvider implements iMinesweeperGame
 
     mineLocations(): BoardLoc[] {
         return this.locations;
-    }
-
-    get success(): boolean {
-        return false;
-    }
-
-    public get totalMines(): number {
-        return this.numLocs;
     }
 }
 
