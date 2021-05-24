@@ -13,7 +13,7 @@ export interface iMinesweeperGameProvider {
     // Visit a location, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
     visit: (loc: BoardLoc,
             autoVisitNeighboursOfZeros?: boolean,
-            autoVisitWatcherKnownNonMines?: boolean) => void,
+            autoVisitKnownNonMines?: boolean) => void,
     // // Visit a while bunch of locations, possibly blowing up on a mine, making possibly unfixable changes to the provider's state.
     // batchVisit: (locs: BoardLoc[]) => number,
     // Check what was the last result of visiting the square. This can be called without changing anything in the
@@ -114,7 +114,7 @@ export abstract class MinimalProvider {
      */
     public abstract performVisit(loc: BoardLoc,
                                  autoVisitNeighboursOfZeros: boolean,
-                                 autoVisitWatcherKnownNonMines: boolean): FactualMineTestResult;
+                                 autoVisitKnownNonMines: boolean): FactualMineTestResult;
 
     /**
      * Return a board state consistent with the results of performVisit calls made before this was requested.
@@ -181,7 +181,7 @@ export abstract class MinimalProvider {
 
     public visit(loc: BoardLoc,
                  autoVisitNeighboursOfZeros: boolean = false,
-                 autoVisitWatcherKnownNonMines: boolean = false) {
+                 autoVisitKnownNonMines: boolean = false) {
         if (this.gameOver) {
             throw new Error(`Game is over. You can't visit anywhere anymore.`);
         }
@@ -191,7 +191,7 @@ export abstract class MinimalProvider {
         if (lastVisit?.everVisited) return;
 
         // Actually do the visit in the gameProvider that extends this class.
-        const result = this.performVisit(loc, autoVisitNeighboursOfZeros, autoVisitWatcherKnownNonMines);
+        const result = this.performVisit(loc, autoVisitNeighboursOfZeros, autoVisitKnownNonMines);
 
         // Permanantly mark the game as done when we've visited a mine, refusing all future visits.
         if (result.explodedMine) {

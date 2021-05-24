@@ -91,7 +91,7 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
 
     public performVisit(loc: BoardLoc,
                         autoVisitNeighboursOfZeros: boolean = false,
-                        autoVisitWatcherKnownNonMines: boolean = false): FactualMineTestResult {
+                        autoVisitKnownNonMines: boolean = false): FactualMineTestResult {
         // while (!this.firstMoveMade && (this.hasMine(loc)) || loc.neighboursOnBoard(this.size).some(this.hasMine)) {
         //     this.rewriteStaticMineLocations();
         // }
@@ -108,7 +108,7 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
             this.performRecursiveNeighbourhoodZeroVisits(loc);
         }
 
-        if (autoVisitWatcherKnownNonMines) {
+        if (autoVisitKnownNonMines) {
             // Do nothing since we don't have a watcher.
         }
 

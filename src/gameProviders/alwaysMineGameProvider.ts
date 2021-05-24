@@ -19,7 +19,7 @@ class AlwaysMineGameProvider extends MinimalProvider implements iMinesweeperGame
 
     public performVisit(loc: BoardLoc,
                         autoVisitNeighboursOfZeros: boolean = false,
-                        autoVisitWatcherKnownNonMines: boolean = false): FactualMineTestResult {
+                        autoVisitKnownNonMines: boolean = false): FactualMineTestResult {
         return {
             explodedMine: true,
         }

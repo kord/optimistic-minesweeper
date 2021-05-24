@@ -3,14 +3,14 @@ import {BoardSize} from "./boardSize";
 export interface BoardOptions {
     autoPlay: boolean,
     autoPlayDelayMs: number,
-    showWatcherKnowledge: boolean,
-    showWatcherMineProbabilities: boolean,
+    showKnowledgeOverlay: boolean,
+    showProbabilityOverlay: boolean,
     autoVisitNeighboursOfZeros: boolean,
     autoVisitNeighboursOfFlagSatisfiedNumbers: boolean,
-    autoVisitWatcherKnownNonMines: boolean,
+    autoVisitKnownNonMines: boolean,
     displayNumberZeroWhenNoMinesAdjacent: boolean,
     decrementVisibleNumberByAdjacentFlags: boolean,
-    decrementVisibleNumberByAdjacentInferredMines: boolean,
+    decrementVisibleNumberByAdjacentKnownMines: boolean,
 }
 
 export interface ExplicitMinefieldDimensions {
@@ -65,14 +65,14 @@ export class Constants {
     static defaultBoardOptions: BoardOptions = {
         autoPlay: false,
         autoPlayDelayMs: 200,
-        showWatcherKnowledge: false,
-        showWatcherMineProbabilities: false,
+        showKnowledgeOverlay: false,
+        showProbabilityOverlay: false,
         autoVisitNeighboursOfZeros: true,
-        autoVisitWatcherKnownNonMines: false,
+        autoVisitKnownNonMines: false,
         autoVisitNeighboursOfFlagSatisfiedNumbers: false,
         displayNumberZeroWhenNoMinesAdjacent: false,
         decrementVisibleNumberByAdjacentFlags: false,
-        decrementVisibleNumberByAdjacentInferredMines: false,
+        decrementVisibleNumberByAdjacentKnownMines: false,
     };
 
     static squareSizePx: number = 40;
@@ -80,26 +80,26 @@ export class Constants {
     static autoplayNiceBoardOptions: BoardOptions = {
         autoPlay: true,
         autoPlayDelayMs: 500,
-        showWatcherKnowledge: true,
-        showWatcherMineProbabilities: false,
+        showKnowledgeOverlay: true,
+        showProbabilityOverlay: false,
         autoVisitNeighboursOfZeros: true,
-        autoVisitWatcherKnownNonMines: true,
+        autoVisitKnownNonMines: true,
         autoVisitNeighboursOfFlagSatisfiedNumbers: false,
         displayNumberZeroWhenNoMinesAdjacent: false,
         decrementVisibleNumberByAdjacentFlags: false,
-        decrementVisibleNumberByAdjacentInferredMines: false,
+        decrementVisibleNumberByAdjacentKnownMines: false,
     };
     static autoplayShowProbabilityBoardOptions: BoardOptions = {
         autoPlay: true,
         autoPlayDelayMs: 500,
-        showWatcherKnowledge: false,
-        showWatcherMineProbabilities: true,
+        showKnowledgeOverlay: true,
+        showProbabilityOverlay: true,
         autoVisitNeighboursOfZeros: true,
-        autoVisitWatcherKnownNonMines: false,
+        autoVisitKnownNonMines: false,
         autoVisitNeighboursOfFlagSatisfiedNumbers: false,
         displayNumberZeroWhenNoMinesAdjacent: false,
         decrementVisibleNumberByAdjacentFlags: false,
-        decrementVisibleNumberByAdjacentInferredMines: true,
+        decrementVisibleNumberByAdjacentKnownMines: true,
     };
 
 

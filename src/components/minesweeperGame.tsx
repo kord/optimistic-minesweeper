@@ -107,7 +107,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
     };
 
     visit = (loc: BoardLoc) => {
-        this.state.gameProvider.visit(loc, this.boardOptions.autoVisitNeighboursOfZeros, this.boardOptions.autoVisitWatcherKnownNonMines);
+        this.state.gameProvider.visit(loc, this.boardOptions.autoVisitNeighboursOfZeros, this.boardOptions.autoVisitKnownNonMines);
         this.forceUpdate();
     }
 
@@ -368,20 +368,20 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                         <br/>
                         <label>
                             <input type="checkbox"
-                                   key={'showWatcherKnowledge'}
-                                   checked={this.boardOptions.showWatcherKnowledge}
-                                   name={'showWatcherKnowledge'}
+                                   key={'showKnowledgeOverlay'}
+                                   checked={this.boardOptions.showKnowledgeOverlay}
+                                   name={'showKnowledgeOverlay'}
                                    onChange={this.handleBoardOptionsChange}/>
-                            showWatcherKnowledge
+                            showKnowledgeOverlay
                         </label>
                         <br/>
                         <label>
                             <input type="checkbox"
-                                   key={'showWatcherMineProbabilities'}
-                                   checked={this.boardOptions.showWatcherMineProbabilities}
-                                   name={'showWatcherMineProbabilities'}
+                                   key={'showProbabilityOverlay'}
+                                   checked={this.boardOptions.showProbabilityOverlay}
+                                   name={'showProbabilityOverlay'}
                                    onChange={this.handleBoardOptionsChange}/>
-                            showWatcherMineProbabilities
+                            showProbabilityOverlay
                         </label>
                         <br/>
                         <label>
@@ -404,11 +404,11 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                         <br/>
                         <label>
                             <input type="checkbox"
-                                   key={'autoVisitWatcherKnownNonMines'}
-                                   checked={this.boardOptions.autoVisitWatcherKnownNonMines}
-                                   name={'autoVisitWatcherKnownNonMines'}
+                                   key={'autoVisitKnownNonMines'}
+                                   checked={this.boardOptions.autoVisitKnownNonMines}
+                                   name={'autoVisitKnownNonMines'}
                                    onChange={this.handleBoardOptionsChange}/>
-                            autoVisitWatcherKnownNonMines
+                            autoVisitKnownNonMines
                         </label>
                         <br/>
                         <label>
@@ -431,11 +431,11 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                         <br/>
                         <label>
                             <input type="checkbox"
-                                   key={'decrementVisibleNumberByAdjacentInferredMines'}
-                                   checked={this.boardOptions.decrementVisibleNumberByAdjacentInferredMines}
-                                   name={'decrementVisibleNumberByAdjacentInferredMines'}
+                                   key={'decrementVisibleNumberByAdjacentKnownMines'}
+                                   checked={this.boardOptions.decrementVisibleNumberByAdjacentKnownMines}
+                                   name={'decrementVisibleNumberByAdjacentKnownMines'}
                                    onChange={this.handleBoardOptionsChange}/>
-                            decrementVisibleNumberByAdjacentInferredMines
+                            decrementVisibleNumberByAdjacentKnownMines
                         </label>
 
                     </div>

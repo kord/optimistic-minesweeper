@@ -91,7 +91,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
      */
     public performVisit(loc: BoardLoc,
                         autoVisitNeighboursOfZeros: boolean = false,
-                        autoVisitWatcherKnownNonMines: boolean = false): FactualMineTestResult {
+                        autoVisitKnownNonMines: boolean = false): FactualMineTestResult {
         // Rewrite the board so the first move is nice.
         if (this.movesMade === 0) {
             this.rewriteStaticMineLocationsAsNeededByConfig(loc);
@@ -114,7 +114,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
             include(loc);
         }
 
-        if (autoVisitWatcherKnownNonMines) {
+        if (autoVisitKnownNonMines) {
             const iter = this.watcher.knownSafeLocs().keys();
             for (let i = iter.next(); !i.done; i = iter.next()) {
                 const locn = i.value;
