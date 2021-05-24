@@ -1,6 +1,6 @@
 {
   "short_name": "Minesweeper",
-  "name": "Simple Minesweeper Clone Tiny Project",
+  "name": "Simple Minesweeper Clone Project",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -10,6 +10,18 @@
     {
       "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots" : [
+    {
+      "src": "screenshot-frontier-deductions.png",
+      "sizes": "1234x949",
+      "type": "image/png"
+    },
+    {
+      "src": "screenshot-frontier-probabilities.png",
+      "sizes": "1231x941",
       "type": "image/png"
     }
   ],

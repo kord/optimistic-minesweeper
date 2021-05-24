@@ -221,6 +221,47 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 </div>
                 <div className={'options-groups'}>
                     <div className={'options-group'}>
+                        <input type="submit"
+                               className={'game-button restart-button'}
+                               value="Expert Autoplay"
+                               onClick={() => {
+                                   this.setState({
+                                       boardOptions: Constants.autoplayNiceBoardOptions,
+                                       winLossRecord: {starts: 0, losses: 0, wins: 0},
+                                       boardSizeOptionName: 'Expert',
+                                       firstMoveNeverMined: true,
+                                       firstMoveAlwaysZero: false,
+                                       userGameType: 'WatchedGameProvider',
+                                   }, this.restart)
+                               }}/>
+                        <br/>
+                        <input type="submit"
+                               className={'game-button restart-button'}
+                               value="Expert Autoplay Show Knowledge"
+                               onClick={() => {
+                                   this.setState({
+                                       boardOptions: Constants.autoplayShowProbabilityBoardOptions,
+                                       winLossRecord: {starts: 0, losses: 0, wins: 0},
+                                       boardSizeOptionName: 'Expert',
+                                       firstMoveNeverMined: true,
+                                       firstMoveAlwaysZero: true,
+                                       userGameType: 'WatchedGameProvider',
+                                   }, this.restart)
+                               }}/>
+                        <br/>
+                        <input type="submit"
+                               className={'game-button restart-button'}
+                               value="User Play Forced Guesses Succeed!"
+                               onClick={() => {
+                                   this.setState({
+                                       boardOptions: Constants.defaultBoardOptions,
+                                       firstMoveNeverMined: true,
+                                       firstMoveAlwaysZero: true,
+                                       userGameType: 'ForcedGuessesAlwaysSucceedGameProvider',
+                                   }, this.restart)
+                               }}/>
+                    </div>
+                    <div className={'options-group'}>
                         <select name={"gameType"}
                                 className={"options-dropdown"}
                                 value={this.state.userGameType}
@@ -395,47 +436,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
 
                     </div>
 
-                    <div className={'options-group'}>
-                        <input type="submit"
-                               className={'game-button restart-button'}
-                               value="Expert Autoplay"
-                               onClick={() => {
-                                   this.setState({
-                                       boardOptions: Constants.autoplayNiceBoardOptions,
-                                       winLossRecord: {starts: 0, losses: 0, wins: 0},
-                                       boardSizeOptionName: 'Expert',
-                                       firstMoveNeverMined: true,
-                                       firstMoveAlwaysZero: false,
-                                       userGameType: 'WatchedGameProvider',
-                                   }, this.restart)
-                               }}/>
-                        <br/>
-                        <input type="submit"
-                               className={'game-button restart-button'}
-                               value="Expert Autoplay Show Knowledge"
-                               onClick={() => {
-                                   this.setState({
-                                       boardOptions: Constants.autoplayShowProbabilityBoardOptions,
-                                       winLossRecord: {starts: 0, losses: 0, wins: 0},
-                                       boardSizeOptionName: 'Expert',
-                                       firstMoveNeverMined: true,
-                                       firstMoveAlwaysZero: true,
-                                       userGameType: 'WatchedGameProvider',
-                                   }, this.restart)
-                               }}/>
-                        <br/>
-                        <input type="submit"
-                               className={'game-button restart-button'}
-                               value="User Play Forced Guesses Succeed!"
-                               onClick={() => {
-                                   this.setState({
-                                       boardOptions: Constants.defaultBoardOptions,
-                                       firstMoveNeverMined: true,
-                                       firstMoveAlwaysZero: true,
-                                       userGameType: 'ForcedGuessesAlwaysSucceedGameProvider',
-                                   }, this.restart)
-                               }}/>
-                    </div>
+
                 </div>
             </div>
         );

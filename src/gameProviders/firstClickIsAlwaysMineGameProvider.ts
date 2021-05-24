@@ -8,6 +8,10 @@ import {FactualMineTestResult} from "../types";
 import {FixedBoardMinesweeperConfig} from "../constants";
 
 
+/**
+ * Provide interaction with a minefield that can morph before the user clicks on a mine, so that the user always clicks
+ * on a mine.
+ */
 class FirstClickIsAlwaysMineGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
     private readonly minelocs = new Set<number>();
     private get mineCount() : number {

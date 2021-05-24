@@ -5,6 +5,11 @@ import Watcher from "../logic/watcher";
 import {iMinesweeperGameProvider} from "./gameProvider";
 import {FixedBoardMinesweeperConfig} from "../constants";
 
+/**
+ * Provide interaction with a minefield that can morph before the user clicks on a mine. In the event that there is
+ * no actually safe square for the user to visit, any visit consistent with the revealed knowledge will be safe.
+ * This is an effective alternative to "no guess" minesweeper and plays more like the original.
+ */
 class ForcedGuessesAlwaysSucceedGameProvider extends WatchedGameProvider implements iMinesweeperGameProvider {
     private static maxAttempts = 200;
     private harshMode: boolean;

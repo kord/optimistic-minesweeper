@@ -5,6 +5,11 @@ import Watcher from "../logic/watcher";
 import {iMinesweeperGameProvider} from "./gameProvider";
 import {FixedBoardMinesweeperConfig} from "../constants";
 
+/**
+ * Provide interaction with a minefield that can morph before the user clicks on a mine. If the user clicks on a
+ * mine, this will search desperately for a minefield consistent with the currently revealed knowledge that can
+ * be swapped in so you made a safe move.
+ */
 class GentleKindnessGameProvider extends WatchedGameProvider implements iMinesweeperGameProvider {
     private static maxAttempts = 100;
 
