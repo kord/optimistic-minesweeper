@@ -4,7 +4,6 @@ import '../css/board.css';
 import {BoardLoc} from "../boardLoc";
 import {BoardOptions} from "../constants";
 import {iMinesweeperGameProvider} from "../gameProviders/gameProvider";
-import {MineTestResult} from "../types";
 
 
 interface BoardProps {
@@ -41,14 +40,14 @@ class Board extends Component<BoardProps, Boardstate> {
         const game = this.props.gameProvider;
         if (game.gameOver) {
             console.error(`Game is over, dummy.`);
-            return ;
+            return;
         }
         // Don't visit a flagged spot, even if we have the information to know full well it's safe.
-        if (this.isFlagged(loc)) return ;
+        if (this.isFlagged(loc)) return;
 
         let lastVisitResult = game.lastVisitResult(loc);
         // No need to revisit, ever.
-        if (!lastVisitResult.onBoard || lastVisitResult.everVisited) return ;
+        if (!lastVisitResult.onBoard || lastVisitResult.everVisited) return;
 
         // console.log(`visiting ${loc.toString()}`);
         this.props.visitFn(loc);
@@ -85,7 +84,7 @@ class Board extends Component<BoardProps, Boardstate> {
         return visitCount;
     }
 
-    private visitNeighboursIfSatisfiedByFlags(loc: BoardLoc)  {
+    private visitNeighboursIfSatisfiedByFlags(loc: BoardLoc) {
         const game = this.props.gameProvider;
         const flagsNeeded = game.lastVisitResult(loc).neighboursWithMine;
         // Ignore if loc has not already been visited.
@@ -111,18 +110,22 @@ class Board extends Component<BoardProps, Boardstate> {
         let visitsMade = 1;
         let roundsMade = 0;
         while (visitsMade > 0 && roundsMade < maxRounds) {
+            roundsMade++;
             visitsMade = 0;
+
             const locs = this.appropriateAutomaticVisits();
             const iter = locs.keys();
-            for (let i = iter.next(); !i.done; i=iter.next()) {
+            for (let i = iter.next(); !i.done; i = iter.next()) {
                 if (game.gameOver) break;
                 const loc = BoardLoc.fromNumber(i.value, game.size);
-                this.props.visitFn(loc);
-                visitsMade++;
+                // Ignore if visited or flagged.
+                if (!game.alreadyVisited(loc) && !this.isFlagged(loc)) {
+                    this.props.visitFn(loc);
+                    visitsMade++;
+                }
             }
             // visitsMade = this.props.visitFn(Array.from(locs).map(loc => BoardLoc.fromNumber(loc, game.size)));
             totalVisits += visitsMade;
-            roundsMade++;
             console.log(`doAppropriateAutomaticVisitsRecursively round ${roundsMade}, visitsMade ${visitsMade}`);
         }
         return totalVisits;
@@ -154,8 +157,10 @@ class Board extends Component<BoardProps, Boardstate> {
         // }
 
         if (this.props.boardOptions.autoVisitNeighboursOfFlagSatisfiedNumbers) {
-            const flagMatches = game.locations.filter(loc =>
-                game.lastVisitResult(loc).neighboursWithMine === this.flaggedNeighbours(loc));
+            const flagMatches = game.locations.filter(loc => {
+                const flags = this.flaggedNeighbours(loc);
+                return game.lastVisitResult(loc).neighboursWithMine === flags;
+            });
             flagMatches.forEach(loc => loc.neighboursOnBoard(game.size)
                 .forEach(nloc => needsOpening.add(nloc.toNumber(game.size)))
             );

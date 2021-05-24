@@ -1,7 +1,6 @@
 import {BoardLoc} from "../boardLoc";
 import {BoardSize} from "../boardSize";
 import {FactualMineTestResult, MineTestResult} from "../types";
-import {BoardOptions} from "../constants";
 
 
 export interface iMinesweeperGameProvider {
@@ -20,6 +19,8 @@ export interface iMinesweeperGameProvider {
     // Check what was the last result of visiting the square. This can be called without changing anything in the
     // provider's state.
     lastVisitResult: (loc: BoardLoc) => MineTestResult,
+    // Has a square been previously visited. Easier to generate than a full visit report.
+    alreadyVisited: (loc: BoardLoc) => boolean,
     // Just to iterate over the places on the board for our view.
     locations: BoardLoc[],
     // Convenient to check if a location is on the board.
@@ -112,7 +113,7 @@ export abstract class MinimalProvider {
      * @param loc Where the user is committing to visit.
      */
     public abstract performVisit(loc: BoardLoc,
-                                 autoVisitNeighboursOfZeros: boolean ,
+                                 autoVisitNeighboursOfZeros: boolean,
                                  autoVisitWatcherKnownNonMines: boolean): FactualMineTestResult;
 
     /**
@@ -121,6 +122,12 @@ export abstract class MinimalProvider {
      * This needs to be implemented by any subclass.
      */
     public abstract mineLocations(): BoardLoc[];
+
+    /**
+     * Check if this square has been visited, cheaply.
+     * @param loc
+     */
+    public alreadyVisited = (loc: BoardLoc) => this.visitResults.has(loc.toNumber(this.size));
 
     /**
      * At any time, you can ask the game what the last result for theching this loc was. No visit is ever madeunder
@@ -181,7 +188,7 @@ export abstract class MinimalProvider {
 
         // Check if this has been visited before, in which case we can just return the result of that visit.
         const lastVisit = this.lastVisitResult(loc);
-        if (lastVisit?.everVisited) return ;
+        if (lastVisit?.everVisited) return;
 
         // Actually do the visit in the gameProvider that extends this class.
         const result = this.performVisit(loc, autoVisitNeighboursOfZeros, autoVisitWatcherKnownNonMines);

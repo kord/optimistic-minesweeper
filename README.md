@@ -14,17 +14,26 @@ For a while I've wanted to be able to play Minesweeper without the problem of ha
 
 It also features an autoplay mode, where the mine locations given the state of revealed knowledge can be seen in an overlay and another where the probabilities of mine placement are shown, again given the state of revealed knowledge.
 
-One more nice feature is labelled "autoVisitNeighboursOfFlagSatisfiedNumbers," and automatically runs chords on the whole board. It gives a slightly different feel and allows one to open up wide swaths of board by nothing more than flagging mines.
+One more nice feature is labelled *autoVisitNeighboursOfFlagSatisfiedNumbers*, and automatically runs chords on the whole board. It gives a slightly different feel and allows one to open up wide swaths of board by nothing more than flagging mines.
 
-Another is "firstMoveAlwaysZero" which just reduces some of the drudgery of handling poor starts.
+Another is *firstMoveAlwaysZero* which just reduces some of the drudgery of handling poor starts.
 
-The heatmap shown by the option "showWatcherMineProbabilities" is something I've dreamed about, wanting to concretely visualize what it might mean for there to be smooth probabilities for complex Minesweeper constraints satisfiable in many different ways.  
+The heatmap shown by the option *showWatcherMineProbabilities* is something I've dreamed about, wanting to concretely visualize what it might mean for there to be smooth probabilities for complex Minesweeper constraints satisfiable in many different ways.  
 
-Minesweeper is NP-Complete (http://web.mat.bham.ac.uk/R.W.Kaye/minesw/ordmsw.htm), so I haven't event tried to generate perfect deductions because I want this to work well in real-time. What I've made works well in practice, even if there are rare situations where it can misjudge a position and autoplay into a mine that is possible to have been known. 
+Minesweeper is known to be [NP-Complete](http://web.mat.bham.ac.uk/R.W.Kaye/minesw/ordmsw.htm), so I haven't event tried to generate perfect deductions because I want this to work well in real-time. What I've made works well in practice, even if there are rare situations where it can misjudge a position and autoplay into a mine that is possible to have been known. 
 
-Here's what it looks like in action, displaying the deductions that can be made from the revealed knowledge.
+Here's what it looks like in action, displaying what can be inferred from the revealed knowledge.
 
-I've learned a lot from this project, particularly from building the inference engine underneath this that provide both deductions and statistical inferences in an "online" fashion. I also learned a lot about how to play well by watching it run. Seeing the situations in which it plays through a poor opening, making choices at times to play out in the open and other times to play in the neighbourhood of already revealed squares makes good sense if you think about it for a while. That said, I do not make the claim that the autoplay mode in this plays optimally. It should be very close to optimal, and it plays every safe square that can be potentially inferred in most cases. 
+![alt text][screenshot1]
+The red and green squares correspond to known mines and empties. These constitute most of the normal inferences a player will make while playing Minesweeper. 
+
+![alt text][screenshot2]
+The red heatmap shows mine probability as evaluated from stochastically generated possible full-board mine configurations. Mine probabilities can be seen by hovering over a square. (The possibility of these being randomly generated with a huge accidental bias can lead to false guesses.)
+
+[screenshot1]: https://minesweeper.therestinmotion.com/screenshot-frontier-deductions.png "Autoplay Making Deductions"
+[screenshot2]: https://minesweeper.therestinmotion.com/screenshot-frontier-probabilities.png "Autoplay Inferring Mine Probabilities"
+
+I've learned a lot from this project, particularly from building the inference engine underneath this that provide both deductions and statistical guidance in an "online" manner. I also learned a lot about how to play well by watching it run. Seeing the situations in which it plays through a poor opening, making choices at times to play out in the open and other times to play in the neighbourhood of already revealed squares makes good sense if you think about it for a while. That said, I do not make the claim that the autoplay mode in this plays optimally. It should be very close to optimal, and it plays every safe square that can be potentially inferred in a large majority of cases. 
 
 It succeeds roughly 25% of the time on classic expert settings. I am unsure what the state-of-the-art for minesweeper solvers is on this setting. One of the biggest improvements that could be made is for it to marshal risk strategically. It is only trying to play the next move in a way that minimizes that being the last, even though there can be situations where that is a worse overall strategy than playing locally into a larger risk, but with some guarantee of making progress. I'd be curious to know if anyone else here has thought deeply about how to characterize good strategic risk-taking in the setting of Minesweeper.
 
