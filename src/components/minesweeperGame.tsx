@@ -438,6 +438,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
 
 
                 </div>
+                <div className={'made-by-text'}>
+                    Made by <a href={'mailto:therestinmotion@gmail.com'}>therestinmotion@gmail.com</a>
+                </div>
             </div>
         );
     }
