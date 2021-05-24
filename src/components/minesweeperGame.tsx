@@ -398,7 +398,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                     <div className={'options-group'}>
                         <input type="submit"
                                className={'game-button restart-button'}
-                               value="Autoplay Expert"
+                               value="Expert Autoplay"
                                onClick={() => {
                                    this.setState({
                                        boardOptions: Constants.autoplayNiceBoardOptions,
@@ -412,7 +412,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                         <br/>
                         <input type="submit"
                                className={'game-button restart-button'}
-                               value="Autoplay Expert Show Knowledge"
+                               value="Expert Autoplay Show Knowledge"
                                onClick={() => {
                                    this.setState({
                                        boardOptions: Constants.autoplayShowProbabilityBoardOptions,

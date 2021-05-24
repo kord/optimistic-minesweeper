@@ -6,7 +6,7 @@ import {iMinesweeperGameProvider} from "./gameProvider";
 import {FixedBoardMinesweeperConfig} from "../constants";
 
 class ForcedGuessesAlwaysSucceedGameProvider extends WatchedGameProvider implements iMinesweeperGameProvider {
-    private static maxAttempts = 100;
+    private static maxAttempts = 200;
     private harshMode: boolean;
 
     constructor(config: FixedBoardMinesweeperConfig, harshMode : boolean = true) {
@@ -33,6 +33,9 @@ class ForcedGuessesAlwaysSucceedGameProvider extends WatchedGameProvider impleme
         if (!this.hasMine(loc)) return undefined;
 
         // If there's something else you could have done that even our simple country watcher knows, you're on your own.
+        // TODO: Consider only local required guess to enable rewriting. It would be nice to shrink a dead-knowledge
+        //  corner just as soon as you can see it's a bust locally, without having to complete the rest of everything
+        //  to dead first. This is doable, but we have to separate the variables into constraint-connected components.
         let iter: IterableIterator<number>;
         if (this.harshMode) {
             // This is harsher because it includes all of the places we've just never successfully imagined a mine.

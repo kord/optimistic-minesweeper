@@ -79,7 +79,7 @@ export class Constants {
 
     static autoplayNiceBoardOptions: BoardOptions = {
         autoPlay: true,
-        autoPlayDelayMs: 100,
+        autoPlayDelayMs: 500,
         showWatcherKnowledge: true,
         showWatcherMineProbabilities: false,
         autoVisitNeighboursOfZeros: true,
@@ -91,7 +91,7 @@ export class Constants {
     };
     static autoplayShowProbabilityBoardOptions: BoardOptions = {
         autoPlay: true,
-        autoPlayDelayMs: 100,
+        autoPlayDelayMs: 500,
         showWatcherKnowledge: false,
         showWatcherMineProbabilities: true,
         autoVisitNeighboursOfZeros: true,

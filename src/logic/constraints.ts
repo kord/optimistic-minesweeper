@@ -299,9 +299,11 @@ export class ConstraintSet {
         this.maxSize = Math.max(this.maxSize, this.size);
 
         // See if we can get any juice out of the new constraints.
-        this.inferenceLoop(false);
-        this.doPigeonHoleInference();
-        this.inferenceLoop(false);
+        this.inferenceLoop(true);
+
+        // this.inferenceLoop(false);
+        // this.doPigeonHoleInference();
+        // this.inferenceLoop(false);
 
         // Report on how we're doing.
         if (ConstraintSet.logSelfAfterConstraintIntro) {

@@ -101,8 +101,8 @@ export interface WatcherConfig {
 
 class Watcher implements iWatcher {
     private static defaultWatcherConfig: WatcherConfig = {
-        maintainedFutures: 500,
-        futureReadsPerMove: 50,
+        maintainedFutures: 200,
+        futureReadsPerMove: 100,
         alwaysKnowSomeConsistentMinefield: true,
     };
     private constraints: ConstraintSet;
