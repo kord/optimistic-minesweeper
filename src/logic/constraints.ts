@@ -180,58 +180,6 @@ export class ConstraintSet {
         }
     }
 
-    //
-    // public findRandomConsistentPartialAssignment(mustBeSet: Set<number>) {
-    //     const toy = this.copy();
-    //     const mustSet = Array.from(mustBeSet);
-    //     // Peel off another variable.
-    //     const randomVar = () => {
-    //         if (mustSet.length === 0) return undefined;
-    //         const loc = Math.floor(Math.random() * mustSet.length);
-    //         const ret = mustSet[loc];
-    //         mustSet[loc] = mustSet[mustSet.length - 1];
-    //         mustSet.pop();
-    //         return ret;
-    //     }
-    //
-    //     let iterCount = 0;
-    //     // If we set enough trues, we'll either fuck up and have an unsatisfiable set of constraints or we'll reduce
-    //     // all of the constraints to trivially true and make them disappear.
-    //     while (toy.constraints.length > 0) {
-    //         iterCount += 1;
-    //         if (iterCount > this.numVars + 10) {
-    //             console.error(`Breaking out early from bad loop.`);
-    //             console.log(toy.constraints);
-    //             return undefined;
-    //         }
-    //
-    //         // Put a mine in a random location.
-    //         let nextvar = randomVar();
-    //         if (nextvar === undefined) return toy.fixedVariables;
-    //         while (toy.fixedVariables.known(nextvar)) {
-    //             nextvar = randomVar();
-    //             if (nextvar === undefined)
-    //                 return toy.fixedVariables;
-    //         }
-    //
-    //         if (Math.random() > .5) {
-    //             toy.fixedVariables.setTrue(nextvar);
-    //         } else {
-    //             toy.fixedVariables.setFalse(nextvar);
-    //         }
-    //
-    //         try {
-    //             toy.doBasicInference();
-    //         } catch (e) {
-    //             // We produced a false constraint with our haphazard guessing.
-    //             // console.log('Failed findRandomCompleteAssignment');
-    //             return undefined;
-    //         }
-    //     }
-    //     // We got here if we constructed a complete assignment.
-    //     return toy.fixedVariables;
-    // }
-
     public findRandomCompleteAssignment(): VariableAssignments | undefined {
         const toy = this.copy();
 
@@ -260,33 +208,6 @@ export class ConstraintSet {
         return toy.fixedVariables;
     }
 
-    //
-    // public consistentWith = (ass: VariableAssignments) => {
-    //     let iter = this.fixedVariables.falses.entries();
-    //     let next = iter.next();
-    //     while (!next.done) {
-    //         if (ass.trues.has(next.value[0])) {
-    //             // console.log(ass.trues);
-    //             // console.log(this.knownFalse);
-    //             return false;
-    //         }
-    //         next = iter.next();
-    //     }
-    //
-    //     iter = this.fixedVariables.trues.entries();
-    //     next = iter.next();
-    //     while (!next.done) {
-    //         if (ass.falses.has(next.value[0])) {
-    //             // console.log(ass.falses);
-    //             // console.log(this.knownTrue);
-    //             return false;
-    //         }
-    //         next = iter.next();
-    //     }
-    //
-    //     return true;
-    // }
-
     /**
      * Add new constraints and propagate some inferences into our fixedVariables
      * @param constraints
@@ -300,10 +221,6 @@ export class ConstraintSet {
 
         // See if we can get any juice out of the new constraints.
         this.inferenceLoop(true);
-
-        // this.inferenceLoop(false);
-        // this.doPigeonHoleInference();
-        // this.inferenceLoop(false);
 
         // Report on how we're doing.
         if (ConstraintSet.logSelfAfterConstraintIntro) {
@@ -331,22 +248,6 @@ export class ConstraintSet {
         const index = 1 + Math.floor(Math.random() * (this.size - 1));
         return this.constraints[index];
     }
-
-    // /**
-    //  * Attempt to separate a pair of constraints from each other is the smaller one subtracts out.
-    //  * This is done for all pairs, so it's relatively expensive.
-    //  * This would be easier to do if we tracked neighbouring constraints.
-    //  */
-    // private doFancyInference(): number {
-    //     let totalChanges = 0;
-    //     for (let i = 0; i < this.size; i++) {
-    //         for (let j = i + 1; j < this.size; j++) {
-    //             totalChanges += this.constraints[i].tryEliminate(this.constraints[j]);
-    //         }
-    //     }
-    //     this.disjointifyInferenceChangesMade += totalChanges;
-    //     return totalChanges;
-    // }
 
     /**
      * Attempt to separate a pair of constraints from each other is the smaller one subtracts out.
@@ -408,42 +309,10 @@ export class ConstraintSet {
         return changes;
     }
 
-    //
-    // private doBasicInference(): number {
-    //     let totalChanges = 0;
-    //     // Dummy value to make sure we run the loop at least once.
-    //     let changes = 1;
-    //     while (changes > 0) {
-    //         changes = 0;
-    //         // Reduce everything with our knowledge.
-    //         changes += this.reWriteConstraints();
-    //
-    //         // If new trivials pop up, incorporate them.
-    //         for (let i = 0; i < this.size; i++) {
-    //             const c = this.constraints[i];
-    //             if (c.isFalse()) {
-    //                 throw new Error('Found false constraint. Bad.');
-    //             }
-    //             if (c.isSimple()) {
-    //                 changes += c.propagateKnowledge(this.fixedVariables.setTrue, this.fixedVariables.setFalse);
-    //             }
-    //         }
-    //
-    //         // We throw away the true constraints because they are boring and empty.
-    //         // We throw away the simple, because we've fully assimilated them.
-    //         this.constraints = this.constraints.filter(c => !c.isTrue() && !c.isSimple())
-    //         totalChanges += changes;
-    //     }
-    //     // console.log(`doBasicInference assigned ${totalChanges} locs.`);
-    //     this.basicInferenceChangesMade += totalChanges;
-    //     return totalChanges;
-    // }
-
     private inferenceLoop(useSlowInferenceTechniques: boolean) {
         let totalChanges = 0;
         let needsReWrite = true;
         let needsPrune = true;
-        // let needsFancy = true;
         let needsPigeonHole = true;
         while (needsPrune || needsReWrite || (useSlowInferenceTechniques && needsPigeonHole)) {
             if (needsPrune) {
@@ -452,7 +321,6 @@ export class ConstraintSet {
                 needsPrune = false;
                 if (changes > 0) {
                     totalChanges += changes;
-                    // needsFancy = true;
                     needsReWrite = (varsAssignedPrePrune !== this.fixedVariables.count);
                     needsPigeonHole = true;
                 }
@@ -462,21 +330,10 @@ export class ConstraintSet {
                 needsReWrite = false;
                 if (changes > 0) {
                     totalChanges += changes;
-                    // needsFancy = true;
                     needsPrune = true;
                     needsPigeonHole = true;
                 }
             }
-            // if (useSlowInferenceTechniques && needsFancy) {
-            //     const changes = this.doFancyInference();
-            //     needsFancy = false;
-            //     if (changes > 0) {
-            //         totalChanges += changes;
-            //         needsPrune = true;
-            //         needsReWrite = true;
-            //         needsPigeonHole = true;
-            //     }
-            // }
             if (useSlowInferenceTechniques && needsPigeonHole) {
                 const varsAssignedPrePigeon = this.fixedVariables.count;
                 const changes = this.doPigeonHoleInference();
@@ -485,24 +342,11 @@ export class ConstraintSet {
                     totalChanges += changes;
                     needsPrune = true;
                     needsReWrite = (this.fixedVariables.count !== varsAssignedPrePigeon);
-                    // needsFancy = true;
                 }
             }
         }
         return totalChanges;
     }
-
-    //
-    // private doAllInference() {
-    //     let total = 0;
-    //     let changes = 1;
-    //     while (changes > 0) {
-    //         changes = this.doBasicInference();
-    //         changes += this.doFancyInference();
-    //         total += changes;
-    //     }
-    //     return total;
-    // }
 
     private copy() {
         const ret = new ConstraintSet(this.numVars);
@@ -520,7 +364,8 @@ export class ConstraintSet {
         let changes = 0;
 
         // If the intersection is the whole of one of the constraints, we can just transform them into disjoint
-        // constraints.
+        // constraints. This is just subtracting one constraint from the other. We don't gain or lose knowledge, but
+        // now our constraints are more independent. This mostly happens to the global minecount constraint.
         let xOnlyVars = x.vars.filter(v => !y.vars.includes(v));
         let yOnlyVars = y.vars.filter(v => !x.vars.includes(v));
         if (xOnlyVars.length === 0 || yOnlyVars.length === 0) {
@@ -538,6 +383,8 @@ export class ConstraintSet {
         let intersectionMinTrues = Math.max(x.trueCount - xOnlyVars.length, y.trueCount - yOnlyVars.length);
         let intersectionMinFalses = Math.max(x.falseCount - xOnlyVars.length, y.falseCount - yOnlyVars.length);
 
+        // If the intersection already satisfies either the number of trues or falses that we need for a constraint,
+        // we can immediately infer the settings for its variables outside the intersection.
         if (intersectionMinTrues === x.trueCount) {
             xOnlyVars.forEach(this.fixedVariables.setFalse);
             this.pigeonHoleTrueInferenceChangesMade += xOnlyVars.length;

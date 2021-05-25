@@ -6,9 +6,8 @@ Thanks to elaborate but not excessive constraint satisfaction modeling, now it j
 
 Also some other nice options, autoplay, showing the deductions on board.
 
-I build a web-based Minesweeper clone.
 
-## Reddit post:
+## [Reddit post](https://www.reddit.com/r/Minesweeper/comments/nkab3h/optimistic_minesweeper_ai/):
 
 For a while I've wanted to be able to play Minesweeper without the problem of having to guess at the end of the game. I've seen the versions where no guesses are required, but I built mine a little differently. Instead, here you are guaranteed to open a non-mine on your next click if you're in a position where there is no safe move available (and you click in a place where it's possible that there is no mine given the currently revealed knowledge.)  This is why I'm calling it [Optimistic Minesweeper](https://minesweeper.therestinmotion.com/). If you *really* have to guess, you'll succeed.
 

@@ -1,9 +1,22 @@
 import {BoardLoc} from "../boardLoc";
-import {DiagnosticInfo, iWatcher, Observation, VariableAssignments} from "../types";
+import {Observation, VariableAssignments} from "../types";
 import {Constraint, ConstraintSet} from "./constraints";
 import {Constants, FixedBoardMinesweeperConfig} from "../constants";
 import {BoardSize} from "../boardSize";
 import {SolutionTracker} from "./solutionTracker";
+
+export interface DiagnosticInfo {
+    knownNonMine?: boolean,
+    knownMine?: boolean,
+    onFrontierAndUnknown?: boolean,
+    mineProbability?: number,
+    couldBeAMine?: boolean,
+}
+
+interface iWatcher {
+    observe: (observations: Observation[]) => void,
+    diagnosticInfo: (loc: BoardLoc) => DiagnosticInfo,
+}
 
 export interface WatcherConfig {
     maintainedFutures: number,

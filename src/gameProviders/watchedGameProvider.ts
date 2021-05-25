@@ -1,7 +1,7 @@
 import {iMinesweeperGameProvider, MinimalProvider} from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
-import Watcher, {WatcherConfig} from "../logic/watcher";
-import {DiagnosticInfo, FactualMineTestResult, Observation} from "../types";
+import Watcher, {DiagnosticInfo, WatcherConfig} from "../logic/watcher";
+import {FactualMineTestResult, Observation} from "../types";
 import {FixedBoardMinesweeperConfig} from "../constants";
 
 class WatchedGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
@@ -129,29 +129,6 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
         return this.visitResults.get(locn)!;
     }
 
-    // /**
-    //  * This should be overridden in subclasses that want to be cooler about how they handle batched visits.
-    //  * @param locs
-    //  */
-    // public batchVisit = (locs: BoardLoc[]) => {
-    //     if (locs.length === 1) {
-    //         this.visit(locs[0]);
-    //         return 1;
-    //     }
-    //     if (this.movesMade === 0) {
-    //         throw new Error(`You should make some moves normally before doing a batch visit.`);
-    //     }
-    //     const movesBefore = this.movesMade;
-    //
-    //     let asYetUnvisited = locs.map(loc => loc.toNumber(this.size))
-    //         .filter(loc => !this.visitResults.has(loc));
-    //
-    //     console.log(`BATCH visiting ${asYetUnvisited.length} squares.`);
-    //
-    //     this.visitAndObserveAll(asYetUnvisited);
-    //     return this.movesMade - movesBefore;
-    // }
-
     /**
      * Required by superclass.
      */
@@ -167,9 +144,11 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
 
         // First move right in the middle baby.
         if (this.movesMade === 0) {
+            // return new BoardLoc(0,0);
             return new BoardLoc(Math.floor(this.size.height / 2), Math.floor(this.size.width / 2));
         }
 
+        // Take one of the known safe moves.
         let visitables = this.watcher.knownSafeLocs();
         let iter = visitables.keys();
         for (let next = iter.next(); !next.done; next = iter.next()) {

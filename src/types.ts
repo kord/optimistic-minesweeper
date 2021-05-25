@@ -1,12 +1,5 @@
 import {BoardLoc} from "./boardLoc";
-
-export interface DiagnosticInfo {
-    knownNonMine?: boolean,
-    knownMine?: boolean,
-    onFrontierAndUnknown?: boolean,
-    mineProbability?: number,
-    couldBeAMine?: boolean,
-}
+import {DiagnosticInfo} from "./logic/watcher";
 
 export interface NeighbourhoodReport {
     neighbours: BoardLoc[],
@@ -115,11 +108,6 @@ export class VariableAssignments {
         }
         return true;
     }
-}
-
-export interface iWatcher {
-    observe: (observations: Observation[]) => void,
-    diagnosticInfo: (loc: BoardLoc) => DiagnosticInfo,
 }
 
 export interface Observation {
