@@ -3,7 +3,7 @@ import {VariableAssignments} from "../types";
 import WatchedGameProvider from "./watchedGameProvider";
 import Watcher from "../logic/watcher";
 import {iMinesweeperGameProvider} from "./gameProvider";
-import {FixedBoardMinesweeperConfig} from "../constants";
+import {Constants, FixedBoardMinesweeperConfig} from "../constants";
 
 /**
  * Provide interaction with a minefield that can morph before the user clicks on a mine. If the user clicks on a
@@ -16,12 +16,7 @@ class GentleKindnessGameProvider extends WatchedGameProvider implements iMineswe
     constructor(config: FixedBoardMinesweeperConfig) {
         // This watcher will always know *some* future.
         // Don't bother doing any complex inference with the incoming clicks.
-        const watcherConfig = {
-            maintainedFutures: 1,
-            futureReadsPerMove: 0,
-            alwaysKnowSomeConsistentMinefield: true
-        };
-        const watcher = new Watcher(config, watcherConfig);
+        const watcher = new Watcher(config, Constants.defaultGameChangingWatcherConfig);
 
         super(config, watcher);
     }
@@ -40,7 +35,7 @@ class GentleKindnessGameProvider extends WatchedGameProvider implements iMineswe
         // clicked.
         const va = new VariableAssignments();
         va.setFalse(locn);
-        const assignment = this.watcher.searchKnownGameExtensions(va, GentleKindnessGameProvider.maxAttempts);
+        const assignment = this.watcher.tryFindGameExtension(va, GentleKindnessGameProvider.maxAttempts);
         if (assignment) {
             console.log(`GentleKindnessGameProvider changed the future.`);
             return assignment.trues;

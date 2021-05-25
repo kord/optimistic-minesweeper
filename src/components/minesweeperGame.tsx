@@ -182,11 +182,13 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 losses: prev.winLossRecord.losses + (prev.gameProvider.failure ? 1 : 0),
                 starts: prev.winLossRecord.starts + 1,
             }
-        }));
+        }), () => {
+            if (this.boardOptions.autoPlay) {
+                this.nextAutoplay = setTimeout(this.doAutomaticVisit, this.boardOptions.autoPlayDelayMs);
+            }
+        });
 
-        if (this.boardOptions.autoPlay) {
-            this.nextAutoplay = setTimeout(this.doAutomaticVisit, 2 * this.boardOptions.autoPlayDelayMs);
-        }
+
     }
 
     componentWillUnmount(): void {
@@ -201,7 +203,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         console.log(`Running doAutomaticVisit`);
         const game = this.state.gameProvider;
         if (game.gameOver) {
-            this.nextAutoplay = setTimeout(this.restart, 5 * this.boardOptions.autoPlayDelayMs);
+            const restartDelayMs = 1000;
+            // const restartDelayMs = Math.max(5 * this.boardOptions.autoPlayDelayMs, 1000);
+            this.nextAutoplay = setTimeout(this.restart, restartDelayMs);
         }
         if (!this.boardOptions.autoPlay) return;
         const loc = game.moveSuggestion();

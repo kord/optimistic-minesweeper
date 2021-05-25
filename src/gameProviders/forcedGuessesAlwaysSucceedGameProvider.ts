@@ -68,7 +68,7 @@ class ForcedGuessesAlwaysSucceedGameProvider extends WatchedGameProvider impleme
         // clicked.
         const va = new VariableAssignments();
         va.setFalse(locn);
-        const assignment = this.watcher.searchKnownGameExtensions(va, ForcedGuessesAlwaysSucceedGameProvider.maxAttempts);
+        const assignment = this.watcher.tryFindGameExtension(va, ForcedGuessesAlwaysSucceedGameProvider.maxAttempts);
         if (assignment) {
             console.log(`ForcedGuessesAlwaysSucceedGameProvider changed the future.`);
             return assignment.trues;

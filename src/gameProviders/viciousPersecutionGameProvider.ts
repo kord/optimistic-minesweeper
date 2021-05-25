@@ -3,7 +3,7 @@ import {VariableAssignments} from "../types";
 import WatchedGameProvider from "./watchedGameProvider";
 import Watcher from "../logic/watcher";
 import {iMinesweeperGameProvider} from "./gameProvider";
-import {FixedBoardMinesweeperConfig} from "../constants";
+import {Constants, FixedBoardMinesweeperConfig} from "../constants";
 
 class ViciousPersecutionGameProvider extends WatchedGameProvider implements iMinesweeperGameProvider {
     private static maxAttempts = 100;
@@ -11,12 +11,7 @@ class ViciousPersecutionGameProvider extends WatchedGameProvider implements iMin
     constructor(config: FixedBoardMinesweeperConfig) {
         // This watcher will always know *some* future.
         // Don't bother doing any complex inference with the incoming clicks.
-        const watcherConfig = {
-            maintainedFutures: 1,
-            futureReadsPerMove: 0,
-            alwaysKnowSomeConsistentMinefield: true
-        };
-        const watcher = new Watcher(config, watcherConfig);
+        const watcher = new Watcher(config, Constants.defaultGameChangingWatcherConfig);
 
         super(config, watcher);
     }
@@ -25,8 +20,8 @@ class ViciousPersecutionGameProvider extends WatchedGameProvider implements iMin
         const diagnosticInfo = this.diagnosticInfo(loc);
         // Nothing we can do for you if it's already written in stone.
         if (diagnosticInfo.knownMine || diagnosticInfo.knownNonMine) return undefined;
-        // Don't bother rewriting anything if you didn't even fuck up.
-        if (!this.hasMine(loc)) return undefined;
+        // Don't bother rewriting anything if you already fucked up.
+        if (this.hasMine(loc)) return undefined;
 
         const locn = loc.toNumber(this.size);
 
@@ -35,7 +30,7 @@ class ViciousPersecutionGameProvider extends WatchedGameProvider implements iMin
         const va = new VariableAssignments();
         va.setTrue(locn);
 
-        const assignment = this.watcher.searchKnownGameExtensions(va, ViciousPersecutionGameProvider.maxAttempts);
+        const assignment = this.watcher.tryFindGameExtension(va, ViciousPersecutionGameProvider.maxAttempts);
         if (assignment) {
             console.log(`ViciousPersecutionGameProvider changed the future.`);
             return assignment.trues;

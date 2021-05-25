@@ -46,6 +46,7 @@
 
 .game-square--killer-mine {
     background-image: url("../img/explosion.svg");
+    background-color: black;
     /*background-size: 90%;*/
 }
 

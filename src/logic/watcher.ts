@@ -128,7 +128,7 @@ class Watcher implements iWatcher {
         return undefined;
     }
 
-    public searchKnownGameExtensions(requirements: VariableAssignments, attempts: number): VariableAssignments | undefined {
+    public tryFindGameExtension(requirements: VariableAssignments, attempts: number): VariableAssignments | undefined {
         const knownExtension = this.solutionTracker.findKnownSolutionConsistentWith(requirements);
         if (knownExtension) return knownExtension;
 
