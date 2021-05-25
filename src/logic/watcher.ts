@@ -1,7 +1,7 @@
 import {BoardLoc} from "../boardLoc";
 import {DiagnosticInfo, iWatcher, Observation, VariableAssignments} from "../types";
 import {Constraint, ConstraintSet} from "./constraints";
-import {FixedBoardMinesweeperConfig} from "../constants";
+import {Constants, FixedBoardMinesweeperConfig} from "../constants";
 import {BoardSize} from "../boardSize";
 import {SolutionTracker} from "./solutionTracker";
 
@@ -12,18 +12,13 @@ export interface WatcherConfig {
 }
 
 class Watcher implements iWatcher {
-    private static defaultWatcherConfig: WatcherConfig = {
-        maintainedFutures: 200,
-        futureReadsPerMove: 100,
-        alwaysKnowSomeConsistentMinefield: true,
-    };
     private constraints: ConstraintSet;
     private solutionTracker: SolutionTracker;
     private successRandomSatisfyingAssignment: number = 0;
     private attemptedRandomSatisfyingAssignment: number = 0;
 
     constructor(public readonly boardConfig: FixedBoardMinesweeperConfig,
-                public readonly config: WatcherConfig = Watcher.defaultWatcherConfig,
+                public readonly config: WatcherConfig = Constants.defaultWatcherConfig,
     ) {
         const numVariables = boardConfig.dimensions.size.height * boardConfig.dimensions.size.width;
         this.constraints = new ConstraintSet(numVariables);

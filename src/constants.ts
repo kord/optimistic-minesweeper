@@ -99,11 +99,16 @@ export class Constants {
         decrementVisibleNumberByAdjacentKnownMines: true,
     };
 
-    static defaultGameChangingWatcherConfig: WatcherConfig = {
+    static defaultWatcherConfig: WatcherConfig =         {
         maintainedFutures: 200,
-        futureReadsPerMove: 50,
-        alwaysKnowSomeConsistentMinefield: true
+        futureReadsPerMove: 100,
+        alwaysKnowSomeConsistentMinefield: true,
     };
 
+    static defaultGameChangingWatcherConfig: WatcherConfig = {
+        maintainedFutures: 200,
+        futureReadsPerMove: 100,
+        alwaysKnowSomeConsistentMinefield: true
+    };
 
 }

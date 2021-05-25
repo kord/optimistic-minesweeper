@@ -16,12 +16,12 @@
   "screenshots" : [
     {
       "src": "screenshot-frontier-deductions.png",
-      "sizes": "1234x949",
+      "sizes": "1232x721",
       "type": "image/png"
     },
     {
       "src": "screenshot-frontier-probabilities.png",
-      "sizes": "1231x941",
+      "sizes": "1218x710",
       "type": "image/png"
     }
   ],
