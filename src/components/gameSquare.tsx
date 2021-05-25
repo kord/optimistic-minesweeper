@@ -3,6 +3,7 @@ import {BoardLoc} from "../boardLoc";
 import {BoardOptions} from "../constants";
 import {MineTestResult} from "../types";
 import ReactTooltip from "react-tooltip";
+import '../css/gameSquare.css';
 
 interface GameSquareProps {
     lastResult: MineTestResult,

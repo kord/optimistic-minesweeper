@@ -1,0 +1,70 @@
+
+.game-square {
+    border: solid gray 1px;
+    background-color: lightgray;
+
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    text-align: center;
+
+    --mine-probability: 0;
+    --mine-probability-color: hsl(0, calc(var(--mine-probability) * 100%), 80%);
+    /*--mine-probability-color: hsl(0, 50%, 50%);*/
+}
+
+.game-square--flagged,
+.game-square--pristine {
+    --border-width: calc(var(--cell-size) * .1);
+    border: outset white var(--border-width);
+    cursor: pointer;
+}
+
+.game-square--pristine:hover {
+    background-color: grey;
+}
+
+.game-square--neighbours-known {
+    --size: calc(var(--cell-size) * .9);
+    font-family: 'Roboto Slab', serif;
+    font-size: var(--size);
+    line-height: var(--size);
+}
+
+.game-square--flagged {
+    background-image: url("../img/flag-1.svg");
+}
+
+.game-square--mined {
+    background-image: url("../img/mine-6.svg");
+}
+
+.game-square--flagged.game-square--mined {
+    background-image: url("../img/flagbomb.svg");
+}
+
+.game-square--killer-mine {
+    background-image: url("../img/explosion.svg");
+    /*background-size: 90%;*/
+}
+
+.game-square--on-frontier-and-unknown {
+    background-color: lightgoldenrodyellow;
+}
+
+.game-square--has-known-probability {
+    background-color: var(--mine-probability-color);
+}
+
+.game-square--known-non-mine {
+    background-color: lightgreen;
+}
+
+.game-square--has-some-chance-of-being-a-mine {
+    background-color: red;
+}
+
+.game-square--known-mine {
+    background-color: red;
+}
