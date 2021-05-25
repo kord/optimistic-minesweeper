@@ -102,6 +102,22 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         }));
     }
 
+    // This works when the underlying input has name="<name of state variable tracking the content>"
+    private handleAutoPlayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        let value = event.target.checked;
+        console.assert(event.target.name === 'autoPlay');
+
+        if (!value) this.cancelAutoPlay();
+        this.setState(prev => ({
+            boardOptions: {
+                ...prev.boardOptions,
+                autoPlay: value,
+            }
+        }), () => {
+            if (value) this.doAutomaticVisit()
+        });
+    }
+
     public get boardOptions(): BoardOptions {
         return this.state.boardOptions;
     };
@@ -123,6 +139,12 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         }
         // Force update because we're changing flaggedLocs in our state without properly setting state.
         this.forceUpdate();
+    }
+
+    private cancelAutoPlay = () => {
+        if (this.nextAutoplay) {
+            clearTimeout(this.nextAutoplay);
+        }
     }
 
     private restart = () => {
@@ -151,10 +173,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         console.log(`Setting gameProvider with ${this.state.userGameType}`);
         console.log(config);
 
-
-        if (this.nextAutoplay) {
-            clearTimeout(this.nextAutoplay);
-        }
+        this.cancelAutoPlay();
         this.setState(prev => ({
             gameProvider: providerFn(config),
             flaggedLocs: new Set<string>(),
@@ -362,7 +381,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                    key={'autoPlay'}
                                    checked={this.boardOptions.autoPlay}
                                    name={'autoPlay'}
-                                   onChange={this.handleBoardOptionsChange}/>
+                                   onChange={this.handleAutoPlayChange}/>
                             autoPlay
                         </label>
                         <br/>
@@ -448,6 +467,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             </div>
         );
     }
+
 }
 
 export default MinesweeperGame;
