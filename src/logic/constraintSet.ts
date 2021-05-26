@@ -78,7 +78,10 @@ export class ConstraintSet {
                 toy.fixedVariables.mergeFrom(newSettings);
                 toy.inferenceLoop(false);
             } catch (e) {
-                // We produced a false constraint with our haphazard guessing.
+                // We produced a false contradiction with our haphazard guessing.
+                // TODO: If we knew we had failed quickly enough (after a single variable assignment) then we could
+                //  use this failure to learn in the outer context. Actually, this would be easy to do and free
+                //  learning.
                 return undefined;
             }
         }
