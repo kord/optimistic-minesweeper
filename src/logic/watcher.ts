@@ -1,6 +1,6 @@
 import {BoardLoc} from "../boardLoc";
 import {Observation, VariableAssignments} from "../types";
-import {ConstraintSet} from "./constraints";
+import {ConstraintSet} from "./constraintSet";
 import {FixedBoardMinesweeperConfig} from "../constants";
 import {BoardSize} from "../boardSize";
 import {SolutionTracker} from "./solutionTracker";

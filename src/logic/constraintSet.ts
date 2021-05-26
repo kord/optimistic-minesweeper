@@ -167,10 +167,6 @@ export class ConstraintSet {
         let changes = 0;
         for (let i = 0; i < this.size; i++) {
             const constraint = this.constraints[i];
-            if (constraint.isTrue()) {
-                changes += 1;
-                continue;
-            }
             if (constraint.isFalse()) {
                 throw new Error('Found false constraint. Bad.');
             }
@@ -181,7 +177,7 @@ export class ConstraintSet {
             // Nothing interesting happened.
         }
         if (changes) {
-            this.constraints = this.constraints.filter(c => !(c.isTrue() || c.isSimple()));
+            this.constraints = this.constraints.filter(c => !c.isSimple());
         }
         this.pruneChangesMade += changes;
         return changes;
