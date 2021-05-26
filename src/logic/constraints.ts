@@ -266,7 +266,8 @@ export class ConstraintSet {
                 const c1 = this.constraints[i];
                 const c2 = this.constraints[j];
                 // We store the location with the constraints just so we can do this shortcutting step.
-                // Here we don't bother investigating constraint pairs that have no chance of having a common variable.
+                // Here we don't bother investigating constraint pairs that have no chance of having a common
+                // variable due to their origin on a minesweeper board.
                 if (!c1.location || !c2.location || c2.location.near(c2.location))
                     totalChanges += this.tryPigeonHole(c1, c2);
             }

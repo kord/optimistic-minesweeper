@@ -46,7 +46,7 @@ export class BoardLoc {
      * Is this near enough to another location that they share a neighbour or more?
      * @param other
      */
-    public near(other: BoardLoc) : boolean {
+    public near(other: BoardLoc): boolean {
         return Math.abs(this.col - other.col) <= 2 && Math.abs(this.row - other.row) <= 2;
     }
 }
