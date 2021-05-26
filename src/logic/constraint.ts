@@ -22,7 +22,7 @@ export class Constraint {
         return `Need ${this.trueCount} of ${this.vars.join(', ')}`;
     }
 
-    public reduce(vars: VariableAssignments) {
+    public rewrite(vars: VariableAssignments) {
         let changes = 0;
         for (let i = 0; i < this.size; i++) {
             const variable = this.vars[i];

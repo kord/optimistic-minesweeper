@@ -90,9 +90,9 @@ export class ConstraintSet {
      * @param constraints
      */
     public introduceConstraints = (constraints: Constraint[]) => {
-        for (let i = 0; i < constraints.length; i++) {
-            constraints[i].reduce(this.fixedVariables);
-        }
+        // for (let i = 0; i < constraints.length; i++) {
+        //     constraints[i].rewrite(this.fixedVariables);
+        // }
         this.constraints.push(...constraints);
         this.maxSize = Math.max(this.maxSize, this.size);
 
@@ -154,7 +154,7 @@ export class ConstraintSet {
         let changes = 0;
         for (let i = 0; i < this.size; i++) {
             const constraint = this.constraints[i];
-            changes += constraint.reduce(this.fixedVariables);
+            changes += constraint.rewrite(this.fixedVariables);
         }
         this.reWriteChangesMade += changes;
         return changes;
@@ -195,6 +195,15 @@ export class ConstraintSet {
         let needsPrune = true;
         let needsPigeonHole = true;
         while (needsPrune || needsReWrite || (useSlowInferenceTechniques && needsPigeonHole)) {
+            if (needsReWrite) {
+                const changes = this.reWriteConstraints();
+                needsReWrite = false;
+                if (changes > 0) {
+                    totalChanges += changes;
+                    needsPrune = true;
+                    needsPigeonHole = true;
+                }
+            }
             if (needsPrune) {
                 const varsAssignedPrePrune = this.fixedVariables.count;
                 const changes = this.pruneTrivialConstraints();
@@ -202,15 +211,6 @@ export class ConstraintSet {
                 if (changes > 0) {
                     totalChanges += changes;
                     needsReWrite = (varsAssignedPrePrune !== this.fixedVariables.count);
-                    needsPigeonHole = true;
-                }
-            }
-            if (needsReWrite) {
-                const changes = this.reWriteConstraints();
-                needsReWrite = false;
-                if (changes > 0) {
-                    totalChanges += changes;
-                    needsPrune = true;
                     needsPigeonHole = true;
                 }
             }
