@@ -1,18 +1,20 @@
 import {iMinesweeperGameProvider, MinimalProvider} from "./gameProvider";
 import {BoardLoc} from "../boardLoc";
-import Watcher, {DiagnosticInfo, WatcherConfig} from "../logic/watcher";
+import Watcher, {DiagnosticInfo, iWatcher, WatcherConfig} from "../logic/watcher";
 import {FactualMineTestResult, Observation} from "../types";
-import {FixedBoardMinesweeperConfig} from "../constants";
+import {Constants, FixedBoardMinesweeperConfig} from "../constants";
 
 class WatchedGameProvider extends MinimalProvider implements iMinesweeperGameProvider {
 
     private mineField = new Set<number>();
     private movesMade: number = 0;
+    protected watcher: iWatcher;
 
     constructor(
         public readonly config: FixedBoardMinesweeperConfig,
-        protected watcher: Watcher = new Watcher(config)) {
+        watcher: Watcher = new Watcher(config, Constants.defaultWatcherConfig)) {
         super(config.dimensions.size);
+        this.watcher = watcher;
     }
 
     /**
@@ -91,7 +93,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
      */
     public performVisit(loc: BoardLoc,
                         autoVisitNeighboursOfZeros: boolean = false,
-                        autoVisitKnownNonMines: boolean = false): FactualMineTestResult {
+                        autoVisitKnownNonMines: boolean = false) {
         // Rewrite the board so the first move is nice.
         if (this.movesMade === 0) {
             this.rewriteStaticMineLocationsAsNeededByConfig(loc);
@@ -115,7 +117,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
         }
 
         if (autoVisitKnownNonMines) {
-            const iter = this.watcher.knownSafeLocs().keys();
+            const iter = this.watcher.knownSafeLocations.keys();
             for (let i = iter.next(); !i.done; i = iter.next()) {
                 const locn = i.value;
                 const loc = BoardLoc.fromNumber(locn, this.size);
@@ -126,7 +128,9 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
 
         this.visitAndObserveAll(Array.from(additionalVisits));
 
-        return this.visitResults.get(locn)!;
+        if (this.gameOver) {
+            this.watcher.logWatcherInfo();
+        }
     }
 
     /**
@@ -140,6 +144,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
      * Override of superclass.
      */
     public moveSuggestion(): BoardLoc | undefined {
+        const logStuffHere = false;
         if (this.gameOver) return undefined;
 
         // First move right in the middle baby.
@@ -149,7 +154,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
         }
 
         // Take one of the known safe moves.
-        let visitables = this.watcher.knownSafeLocs();
+        let visitables = this.watcher.knownSafeLocations;
         let iter = visitables.keys();
         for (let next = iter.next(); !next.done; next = iter.next()) {
             const loc = next.value;
@@ -160,17 +165,21 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
 
         // We no longer have certain knowledge we can work with, so we try spots in order of their heuristic safety
         // according to the number of times they appear as mines in the continuations we know.
+
+        // Before we have to guess, roll out a few more minefields to help us get the stats right.
+        this.watcher.findAndStoreContinuations();
         const safenessOrder = this.watcher.locationsBySafenessOrder();
         for (let i = 0; i < safenessOrder.length; i++) {
             const loc = safenessOrder[i];
             if (!this.visitResults.has(loc)) {
-                console.log('WatchedGameProvider is issuing a possibly unsafe moveSuggestion.');
+                const mineProbability = (this.watcher.diagnosticInfo(BoardLoc.fromNumber(loc, this.size)).mineProbability!).toFixed(2);
+                if (logStuffHere) console.log(`WatchedGameProvider is issuing a possibly unsafe moveSuggestion: ${mineProbability}`);
                 return BoardLoc.fromNumber(loc, this.size);
             }
         }
 
         // Hmm. Nothing in there either. Just return something random.
-        console.log('WatchedGameProvider is issuing a braindead moveSuggestion.');
+        if (logStuffHere) console.log('WatchedGameProvider is issuing a braindead moveSuggestion.');
         return super.moveSuggestion();
     }
 

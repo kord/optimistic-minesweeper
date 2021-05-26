@@ -1,6 +1,9 @@
 import {VariableAssignments} from "../types";
 import {BoardLoc} from "../boardLoc";
 
+/**
+ * A single constraint identifying a collection of boolean variables and their known sum.
+ */
 export class Constraint {
 
     constructor(public vars: number[], public trueCount: number, public location: BoardLoc | undefined = undefined) {
@@ -25,6 +28,7 @@ export class Constraint {
             const variable = this.vars[i];
             if (vars.trues.has(variable)) {
                 changes += 1;
+                // Rewrite the total since we'll be removing this variable later.
                 this.trueCount--;
             }
             if (vars.falses.has(variable)) {
@@ -39,11 +43,9 @@ export class Constraint {
     /**
      * Try to subtract another constraint from ourselves.
      * @param shorterConstraint
-     * @param setTrue
-     * @param setFalse
      */
     public tryEliminate(shorterConstraint: Constraint): number {
-        // We try to use the right order, but whatever, this is fine.
+        // We need to be the longer constraint for this to have any chance of succeeding.
         if (this.size < shorterConstraint.size) {
             return shorterConstraint.tryEliminate(this);
         }
@@ -73,7 +75,7 @@ export class Constraint {
 
     /**
      * If this constraint is trivial, call the passed functions on the known variable assignments, returning the number
-     * of calls performed.
+     * of assignments made.
      */
     public propagateKnowledge(setTrue: (loc: number) => void, setFalse: (loc: number) => void): number {
         if (this.trueCount === 0) {
@@ -132,7 +134,7 @@ export class Constraint {
 }
 
 export class ConstraintSet {
-    static readonly logSelfAfterConstraintIntro = true;
+    static readonly logSelfAfterConstraintIntro = false;
 
     public fixedVariables: VariableAssignments;
     private constraints: Constraint[] = [];
@@ -173,17 +175,20 @@ export class ConstraintSet {
         // On failure to merge, we return undefined.
         if (!toy.fixedVariables.mergeFrom(requirements)) return undefined;
         try {
-            const ret = toy.findRandomCompleteAssignment();
-            return ret;
+            return toy.findRandomCompleteAssignment();
         } catch (e) {
             return undefined;
         }
     }
 
+    /**
+     * Build a minefield satisfying these constraints.
+     * All of our probability measurement is based on this routine succeeding sufficiently frequently.
+     */
     public findRandomCompleteAssignment(): VariableAssignments | undefined {
         const toy = this.copy();
-
         let iterCount = 0;
+
         // If we set enough trues, we'll either fuck up and have an unsatisfiable set of constraints or we'll reduce
         // all of the constraints to trivially true and make them disappear.
         while (toy.size > 0) {
@@ -240,7 +245,7 @@ export class ConstraintSet {
     }
 
     /**
-     * Get a random constraint, always preferring not-the-first, which is in practice just the
+     * Get a random constraint, always preferring not-the-first, which is in practice always the
      * global minecount constraint.
      */
     private randomConstraint() {

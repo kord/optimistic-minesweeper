@@ -114,7 +114,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 autoPlay: value,
             }
         }), () => {
-            if (value) this.doAutomaticVisit()
+            if (value) this.queueAutoPlay();
         });
     }
 
@@ -144,6 +144,12 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
     private cancelAutoPlay = () => {
         if (this.nextAutoplay) {
             clearTimeout(this.nextAutoplay);
+        }
+    }
+
+    private queueAutoPlay = () => {
+        if (this.boardOptions.autoPlay) {
+            this.nextAutoplay = setTimeout(this.doAutomaticVisit, this.boardOptions.autoPlayDelayMs);
         }
     }
 
@@ -183,9 +189,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 starts: prev.winLossRecord.starts + 1,
             }
         }), () => {
-            if (this.boardOptions.autoPlay) {
-                this.nextAutoplay = setTimeout(this.doAutomaticVisit, this.boardOptions.autoPlayDelayMs);
-            }
+            this.queueAutoPlay();
         });
 
 
@@ -200,7 +204,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
     private nextAutoplay?: NodeJS.Timeout;
 
     private doAutomaticVisit = () => {
-        console.log(`Running doAutomaticVisit`);
+        // console.log(`Running doAutomaticVisit`);
         const game = this.state.gameProvider;
         if (game.gameOver) {
             const restartDelayMs = 1000;
@@ -212,10 +216,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         if (loc === undefined) return;
 
         this.boardRef.current?.visitFn(loc);
-
-        if (this.boardOptions.autoPlay) {
-            this.nextAutoplay = setTimeout(this.doAutomaticVisit, this.boardOptions.autoPlayDelayMs);
-        }
+        this.queueAutoPlay();
     }
 
     render() {

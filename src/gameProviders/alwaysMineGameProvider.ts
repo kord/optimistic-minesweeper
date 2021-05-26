@@ -19,10 +19,11 @@ class AlwaysMineGameProvider extends MinimalProvider implements iMinesweeperGame
 
     public performVisit(loc: BoardLoc,
                         autoVisitNeighboursOfZeros: boolean = false,
-                        autoVisitKnownNonMines: boolean = false): FactualMineTestResult {
-        return {
+                        autoVisitKnownNonMines: boolean = false) {
+        const ret = {
             explodedMine: true,
-        }
+        };
+        this.visitResults.set(loc.toNumber(this.size), ret);
     }
 
     mineLocations(): BoardLoc[] {

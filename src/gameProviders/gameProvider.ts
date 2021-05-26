@@ -114,7 +114,7 @@ export abstract class MinimalProvider {
      */
     public abstract performVisit(loc: BoardLoc,
                                  autoVisitNeighboursOfZeros: boolean,
-                                 autoVisitKnownNonMines: boolean): FactualMineTestResult;
+                                 autoVisitKnownNonMines: boolean): void;
 
     /**
      * Return a board state consistent with the results of performVisit calls made before this was requested.
@@ -191,16 +191,15 @@ export abstract class MinimalProvider {
         if (lastVisit?.everVisited) return;
 
         // Actually do the visit in the gameProvider that extends this class.
-        const result = this.performVisit(loc, autoVisitNeighboursOfZeros, autoVisitKnownNonMines);
+        this.performVisit(loc, autoVisitNeighboursOfZeros, autoVisitKnownNonMines);
 
         // Permanantly mark the game as done when we've visited a mine, refusing all future visits.
+        const result = this.visitResults.get(lastVisit.locationNum)!;
         if (result.explodedMine) {
             console.log('BOOM');
             this._failure = true;
         }
 
-        // Sometimes this will be redundant is the subclass does it for us. That's fine.
-        this.visitResults.set(lastVisit.locationNum, result);
 
         // Potentially do some work updating a subclass's view of stuff.
         this.runAfterVisit();

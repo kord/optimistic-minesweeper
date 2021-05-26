@@ -36,7 +36,7 @@ class FirstClickIsAlwaysMineGameProvider extends MinimalProvider implements iMin
         return this.minelocs.has(locNumber);
     }
 
-    public performVisit(loc: BoardLoc): FactualMineTestResult {
+    public performVisit(loc: BoardLoc) {
         const numLocs = this.size.height * this.size.width;
         this.minelocs.add(loc.row * this.size.width + loc.col);
         while (this.minelocs.size < this.mineCount) {
@@ -44,9 +44,10 @@ class FirstClickIsAlwaysMineGameProvider extends MinimalProvider implements iMin
                 Math.floor(Math.random() * numLocs));
         }
 
-        return {
+        const ret = {
             explodedMine: true,
-        }
+        };
+        this.visitResults.set(loc.toNumber(this.size), ret);
     }
 
     mineLocations(): BoardLoc[] {

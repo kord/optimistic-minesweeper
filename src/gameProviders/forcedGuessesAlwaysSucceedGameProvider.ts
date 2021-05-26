@@ -47,10 +47,10 @@ class ForcedGuessesAlwaysSucceedGameProvider extends WatchedGameProvider impleme
             //
             // We explicitly exclude locations off the frontier, where fluctuations in our guessing make more impact
             // and can poison this whole process.
-            iter = this.watcher.neverSeenAsMineLocs().keys();
+            iter = this.watcher.neverSeenAsMineLocations.keys();
         } else {
             // We are absolutely certain that nothing here is a mine given our observations.
-            iter = this.watcher.knownSafeLocs().keys();
+            iter = this.watcher.knownSafeLocations.keys();
         }
 
         for (let i = iter.next(); !i.done; i = iter.next()) {

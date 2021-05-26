@@ -1,7 +1,7 @@
 import {BoardLoc} from "../boardLoc";
 import {Observation, VariableAssignments} from "../types";
 import {Constraint, ConstraintSet} from "./constraints";
-import {Constants, FixedBoardMinesweeperConfig} from "../constants";
+import {FixedBoardMinesweeperConfig} from "../constants";
 import {BoardSize} from "../boardSize";
 import {SolutionTracker} from "./solutionTracker";
 
@@ -13,9 +13,21 @@ export interface DiagnosticInfo {
     couldBeAMine?: boolean,
 }
 
-interface iWatcher {
+export interface iWatcher {
     observe: (observations: Observation[]) => void,
     diagnosticInfo: (loc: BoardLoc) => DiagnosticInfo,
+    knownSafeLocations: Set<number>,
+
+    // A few convenience methods.
+    findAndStoreContinuations: VoidFunction,
+    locationsBySafenessOrder: () => number[],
+
+    // Just for the rewriters.
+    tryFindGameExtension: (requirements: VariableAssignments, attempts: number) => VariableAssignments | undefined,
+    neverSeenAsMineLocations: Set<number>,
+
+    // Internal diagnostics.
+    logWatcherInfo: VoidFunction,
 }
 
 export interface WatcherConfig {
@@ -29,9 +41,10 @@ class Watcher implements iWatcher {
     private solutionTracker: SolutionTracker;
     private successRandomSatisfyingAssignment: number = 0;
     private attemptedRandomSatisfyingAssignment: number = 0;
+    private minFindAndStoreContinuationsSuccessRate: number = Number.MAX_SAFE_INTEGER;
 
     constructor(public readonly boardConfig: FixedBoardMinesweeperConfig,
-                public readonly config: WatcherConfig = Constants.defaultWatcherConfig,
+                public readonly config: WatcherConfig,
     ) {
         const numVariables = boardConfig.dimensions.size.height * boardConfig.dimensions.size.width;
         this.constraints = new ConstraintSet(numVariables);
@@ -58,10 +71,35 @@ class Watcher implements iWatcher {
         return this._frontier;
     }
 
+    public get neverSeenAsMineLocations(): Set<number> {
+        const ret = this.solutionTracker.variablesNotKnownConsistentAsMine();
+
+        function setIntersection(a: Set<number>, b: Set<number>) {
+            const ret = new Set<number>();
+            a.forEach(n1 => {
+                if (b.has(n1)) ret.add(n1);
+            });
+            return ret;
+        }
+
+        // We intersect this with the frontier so fluctuations in our guesses don't sometimes poison
+        // ForcedGuessesAlwaysSucceedGameProvider's decisions.
+        return setIntersection(this.frontier, ret);
+    }
+
+    public get knownSafeLocations(): Set<number> {
+        return this.constraints.fixedVariables.falses;
+    }
+
     private get size(): BoardSize {
         return this.boardConfig.dimensions.size;
     }
 
+    /**
+     * Part of our public interface.
+     * Watch some stuff happen on the board and update our internals to reflect the changes.
+     * @param observations
+     */
     public observe(observations: Observation[]) {
         let newConstraints: Constraint[] = [];
         for (let i = 0; i < observations.length; i++) {
@@ -101,6 +139,11 @@ class Watcher implements iWatcher {
         // setImmediate(this.findAndStoreContinuations);
     }
 
+    /**
+     * Part of our public interface.
+     * Talk about what we can infer about the board location asked about.
+     * @param loc
+     */
     public diagnosticInfo(loc: BoardLoc): DiagnosticInfo {
         const locnum = loc.toNumber(this.size);
         const prob = this.solutionTracker.mineProbability(locnum);
@@ -141,27 +184,8 @@ class Watcher implements iWatcher {
         }
     }
 
-    public knownSafeLocs(): Set<number> {
-        return this.constraints.fixedVariables.falses;
-    }
-
     public locationsBySafenessOrder(): number[] {
         return this.solutionTracker.variablesInOrderOfHeuristicSafety();
-    }
-
-    public neverSeenAsMineLocs() {
-        const ret = this.solutionTracker.variablesNotKnownConsistentAsMine();
-
-        function setIntersection(a: Set<number>, b: Set<number>) {
-            const ret = new Set<number>();
-            a.forEach(n1 => {
-                if (b.has(n1)) ret.add(n1);
-            });
-            return ret;
-        }
-
-        // We intersect this with the frontier so fluctuations in our guesses don't poison ForcedGuessesAlwaysSucceedGameProvider
-        return setIntersection(this.frontier, ret);
     }
 
     /**
@@ -172,7 +196,6 @@ class Watcher implements iWatcher {
      */
     public findAndStoreContinuations = () => {
         const oldSizeKnowns = this.solutionTracker.size;
-        let learnedSomething = false;
 
         if (this.solutionTracker.size >= this.config.maintainedFutures) return;
 
@@ -184,7 +207,7 @@ class Watcher implements iWatcher {
         }
 
         let i = 0;
-        for (i = 0; !enoughContinuations() || i < this.config.futureReadsPerMove; i++) {
+        for (i = 0; !enoughContinuations() && i < this.config.futureReadsPerMove; i++) {
             this.attemptedRandomSatisfyingAssignment++;
             // let ass = this.constraints.findRandomConsistentPartialAssignment(this.frontier);
             let ass = this.constraints.findRandomCompleteAssignment();
@@ -196,31 +219,33 @@ class Watcher implements iWatcher {
 
         const sizeDiff = this.solutionTracker.size - oldSizeKnowns;
 
-        console.log(`KnownSolutions ${oldSizeKnowns} +${sizeDiff} in ${i} attempts.`)
+        if (i === this.config.futureReadsPerMove) {
+            this.minFindAndStoreContinuationsSuccessRate = Math.min(this.minFindAndStoreContinuationsSuccessRate, sizeDiff / this.config.futureReadsPerMove);
+        }
+
+        // console.log(`KnownSolutions ${oldSizeKnowns} +${sizeDiff} in ${i} attempts.`);
 
     }
 
-    private pruneSolutions() {
-        // this.knownSolutions.forEach(ass => this.removeSatisfyingAssignment(ass));
-        // return;
+    public logWatcherInfo = () => {
+        const assignmentSuccessRatio = (this.successRandomSatisfyingAssignment / this.attemptedRandomSatisfyingAssignment).toFixed(2);
+        const info = `Watcher: ` +
+            `Minefield Find Success Rate: ${assignmentSuccessRatio}\n` +
+            `Minimum local success rate: ${this.minFindAndStoreContinuationsSuccessRate}`;
+        console.log(info);
+        console.log(this.constraints.toString());
+    }
 
+    private pruneSolutions() {
         const baddies: VariableAssignments[] = [];
         const iter = this.solutionTracker.knownSolutions.keys();
         for (let ass = iter.next(); !ass.done; ass = iter.next()) {
             if (!this.constraints.allSatisfiedBy(ass.value)) baddies.push(ass.value);
         }
 
-        // if (baddies.length > 0) {
-        //     console.log(`Pruning ${baddies.length} minefields. ${this.solutionTracker.knownSolutions.size - baddies.length} remain.`);
-        // }
         this.solutionTracker.removeSolutions(baddies);
-        // baddies.forEach(ass => this.solutionTracker.removeSolution(ass));
     }
 
-    private testSuspiciousVariables() {
-        const suspicious = this.solutionTracker.unseenVariableSettings();
-        // Don't do anything yet
-    }
 }
 
 export default Watcher;
