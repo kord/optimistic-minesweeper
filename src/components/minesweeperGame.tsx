@@ -263,7 +263,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                        winLossRecord: {starts: 0, losses: 0, wins: 0},
                                        boardSizeOptionName: 'Expert',
                                        firstMoveNeverMined: true,
-                                       firstMoveAlwaysZero: false,
+                                       firstMoveAlwaysZero: true,
                                        userGameType: 'WatchedGameProvider',
                                    }, this.restart)
                                }}/>
