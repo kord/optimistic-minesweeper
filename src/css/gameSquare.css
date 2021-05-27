@@ -54,18 +54,30 @@
     background-color: lightgoldenrodyellow;
 }
 
-.game-square--has-known-probability {
-    background-color: var(--mine-probability-color);
-}
-
 .game-square--known-non-mine {
     background-color: lightgreen;
+}
+
+.game-square--known-mine {
+    background-color: red;
 }
 
 .game-square--has-some-chance-of-being-a-mine {
     background-color: red;
 }
 
-.game-square--known-mine {
+.game-square__probability-overlay {
+    height: 100%;
+    width: 100%;
+}
+
+.game-square--has-known-probability.game-square--on-frontier-and-unknown {
+    /* Unset the yellow color */
+    background-color: lightgray;
+}
+
+.game-square--has-known-probability .game-square__probability-overlay {
     background-color: red;
+    /*background-color: var(--mine-probability-color);*/
+    opacity: var(--mine-probability);
 }

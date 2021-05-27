@@ -42,12 +42,15 @@
 }
 
 .game-button {
-
-}
-
-.restart-button {
     margin-top: 5px;
     font-family: 'Roboto Slab', serif;
     font-size: 20px;
 }
 
+.restart-button {
+}
+
+.step-button {
+    font-size: unset;
+
+}

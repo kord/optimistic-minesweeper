@@ -147,9 +147,10 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         }
     }
 
-    private queueAutoPlay = () => {
+    private queueAutoPlay = (delay?: number) => {
         if (this.boardOptions.autoPlay) {
-            this.nextAutoplay = setTimeout(this.doAutomaticVisit, this.boardOptions.autoPlayDelayMs);
+            if (!delay) delay = this.boardOptions.autoPlayDelayMs;
+            this.nextAutoplay = setTimeout(this.doAutomaticVisit, delay);
         }
     }
 
@@ -176,8 +177,8 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
             return;
         }
 
-        console.log(`Setting gameProvider with ${this.state.userGameType}`);
-        console.log(config);
+        // console.log(`Setting gameProvider with ${this.state.userGameType}`);
+        // console.log(config);
 
         this.cancelAutoPlay();
         this.setState(prev => ({
@@ -206,17 +207,18 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
     private doAutomaticVisit = () => {
         // console.log(`Running doAutomaticVisit`);
         const game = this.state.gameProvider;
-        if (game.gameOver) {
-            const restartDelayMs = 1000;
-            // const restartDelayMs = Math.max(5 * this.boardOptions.autoPlayDelayMs, 1000);
-            this.nextAutoplay = setTimeout(this.restart, restartDelayMs);
-        }
-        if (!this.boardOptions.autoPlay) return;
-        const loc = game.moveSuggestion();
-        if (loc === undefined) return;
 
-        this.boardRef.current?.visitFn(loc);
-        this.queueAutoPlay();
+        if (game.gameOver) {
+            this.restart();
+        } else {
+            const loc = game.moveSuggestion();
+            if (loc === undefined) return;
+            this.boardRef.current?.visitFn(loc);
+        }
+
+        const restartDelayMs = game.gameOver ? 1000 : this.boardOptions.autoPlayDelayMs;
+        this.queueAutoPlay(restartDelayMs);
+
     }
 
     render() {
@@ -250,7 +252,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                 <div className={'options-groups'}>
                     <div className={'options-group'}>
                         <input type="submit"
-                               className={'game-button restart-button'}
+                               className={'game-button'}
                                value="Expert Autoplay"
                                onClick={() => {
                                    this.setState({
@@ -264,7 +266,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                }}/>
                         <br/>
                         <input type="submit"
-                               className={'game-button restart-button'}
+                               className={'game-button'}
                                value="Expert Autoplay Show Knowledge"
                                onClick={() => {
                                    this.setState({
@@ -278,7 +280,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                }}/>
                         <br/>
                         <input type="submit"
-                               className={'game-button restart-button'}
+                               className={'game-button'}
                                value="User Play Forced Guesses Succeed!"
                                onClick={() => {
                                    this.setState({
@@ -389,6 +391,11 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                    onChange={this.handleAutoPlayChange}/>
                             autoPlay
                         </label>
+                        &nbsp;
+                        <input type="submit"
+                               className={'game-button step-button'}
+                               value="Step"
+                               onClick={this.doAutomaticVisit}/>
                         <br/>
                         <label>
                             <input type="checkbox"

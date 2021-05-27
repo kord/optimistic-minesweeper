@@ -43,16 +43,17 @@ class Watcher implements iWatcher {
     private successRandomSatisfyingAssignment: number = 0;
     private attemptedRandomSatisfyingAssignment: number = 0;
     private minFindAndStoreContinuationsSuccessRate: number = Number.MAX_SAFE_INTEGER;
+    private readonly numVariables : number;
 
     constructor(public readonly boardConfig: FixedBoardMinesweeperConfig,
                 public readonly config: WatcherConfig,
     ) {
-        const numVariables = boardConfig.dimensions.size.height * boardConfig.dimensions.size.width;
-        this.constraints = new ConstraintSet(numVariables);
-        this.solutionTracker = new SolutionTracker(numVariables);
+        this.numVariables = boardConfig.dimensions.size.height * boardConfig.dimensions.size.width;
+        this.constraints = new ConstraintSet(this.numVariables);
+        this.solutionTracker = new SolutionTracker(this.numVariables);
 
         const nums = [];
-        for (let i = 0; i < numVariables; i++) {
+        for (let i = 0; i < this.numVariables; i++) {
             nums.push(i);
         }
 
@@ -149,7 +150,7 @@ class Watcher implements iWatcher {
         const locnum = loc.toNumber(this.size);
         const prob = this.solutionTracker.mineProbability(locnum);
         return {
-            onFrontierAndUnknown: this._frontier.has(locnum),
+            onFrontierAndUnknown: this._frontier.has(locnum) && !this.constraints.fixedVariables.known(locnum),
             // onFrontierAndUnknown: this.constraints.unknown.has(locnum),
             knownNonMine: this.constraints.fixedVariables.falses.has(locnum),
             knownMine: this.constraints.fixedVariables.trues.has(locnum),
@@ -224,7 +225,7 @@ class Watcher implements iWatcher {
             this.minFindAndStoreContinuationsSuccessRate = Math.min(this.minFindAndStoreContinuationsSuccessRate, sizeDiff / this.config.futureReadsPerMove);
         }
 
-        // console.log(`KnownSolutions ${oldSizeKnowns} +${sizeDiff} in ${i} attempts.`);
+        console.log(`sTsize ${oldSizeKnowns} +${sizeDiff} in ${i} attempts.`);
 
     }
 
@@ -238,6 +239,10 @@ class Watcher implements iWatcher {
     }
 
     private pruneSolutions() {
+        this.solutionTracker = new SolutionTracker(this.numVariables);
+        return
+
+        // We get bad probabilities if we leave anything! here.
         const baddies: VariableAssignments[] = [];
         const iter = this.solutionTracker.knownSolutions.keys();
         for (let ass = iter.next(); !ass.done; ass = iter.next()) {

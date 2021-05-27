@@ -77,8 +77,8 @@ class BasicGameProvider extends MinimalProvider implements iMinesweeperGameProvi
             prohibitedLocs.forEach(loc => this.mineField.delete(loc.toNumber(this.size)));
             iterationCount++;
         }
-        console.log(`Took ${iterationCount} rounds to find a good board setup.`)
-        console.log(`minelocs.size ${this.mineField.size}`)
+        // console.log(`Took ${iterationCount} rounds to find a good board setup.`)
+        // console.log(`minelocs.size ${this.mineField.size}`)
     }
 
     // rewriteStaticMineLocations = () => {

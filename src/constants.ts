@@ -101,13 +101,13 @@ export class Constants {
 
     static defaultWatcherConfig: WatcherConfig =         {
         maintainedFutures: 500,
-        futureReadsPerMove: 100,
+        futureReadsPerMove: 200,
         alwaysKnowSomeConsistentMinefield: true,
     };
 
     static defaultGameChangingWatcherConfig: WatcherConfig = {
         maintainedFutures: 500,
-        futureReadsPerMove: 100,
+        futureReadsPerMove: 200,
         alwaysKnowSomeConsistentMinefield: true
     };
 

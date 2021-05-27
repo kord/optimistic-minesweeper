@@ -84,13 +84,9 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
                 }
             }
         }
-        const displayNumber = this.props.lastResult.explodedMine ||
-        (!this.props.boardOptions.displayNumberZeroWhenNoMinesAdjacent && neighboursWithMine === 0) ?
-            <></> :
-            <>{neighboursWithMine}</>
 
         const showTooltip = this.props.boardOptions.showProbabilityOverlay &&
-            this.props.lastResult.diagnostics?.mineProbability;
+            this.props.lastResult.diagnostics?.mineProbability !== undefined;
         return (
             <div data-tip data-for={this.props.lastResult.locationName}
                  className={this.classes()}
@@ -98,15 +94,15 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
                  onClick={this.onClick}
                  onContextMenu={this.onClick}
             >
-
-
-                {displayNumber}
-
+                <div className={'game-square__probability-overlay'}>
+                    {this.displayNumber(neighboursWithMine)}
+                </div>
                 {showTooltip ?
                     <ReactTooltip id={this.props.lastResult.locationName}
                                   place="top"
+                                  type="info"
                                   effect="solid">
-                        {`${this.props.lastResult.diagnostics?.mineProbability?.toFixed(2)}`}
+                        {this.tooltipText()}
                     </ReactTooltip>
                     : null}
             </div>
@@ -127,5 +123,18 @@ export class GameSquare extends PureComponent<GameSquareProps, GameSquarestate> 
     private probabilityManipulateFn(mineProbability: number): number {
         return mineProbability;
         // return 1 - (1 - mineProbability) ** 2;
+    }
+
+    private displayNumber(neighboursWithMine: number | undefined) {
+        if (neighboursWithMine === undefined) return '';
+        if (this.props.lastResult.explodedMine) return '';
+        if (!this.props.boardOptions.displayNumberZeroWhenNoMinesAdjacent && neighboursWithMine === 0) return '';
+        return neighboursWithMine.toString();
+    }
+
+    private tooltipText() {
+        if (this.props.lastResult.diagnostics?.knownMine) return 'Mine';
+        if (this.props.lastResult.diagnostics?.knownNonMine) return 'Empty';
+        return `${this.props.lastResult.diagnostics?.mineProbability?.toFixed(2)}`;
     }
 }

@@ -204,23 +204,21 @@ export class ConstraintSet {
                 }
             }
             if (needsPrune) {
-                const varsAssignedPrePrune = this.fixedVariables.count;
                 const changes = this.pruneTrivialConstraints();
                 needsPrune = false;
                 if (changes > 0) {
                     totalChanges += changes;
-                    needsReWrite = (varsAssignedPrePrune !== this.fixedVariables.count);
+                    needsReWrite = true;
                     needsPigeonHole = true;
                 }
             }
             if (useSlowInferenceTechniques && needsPigeonHole) {
-                const varsAssignedPrePigeon = this.fixedVariables.count;
                 const changes = this.doPigeonHoleInference();
                 needsPigeonHole = false;
                 if (changes > 0) {
                     totalChanges += changes;
                     needsPrune = true;
-                    needsReWrite = (this.fixedVariables.count !== varsAssignedPrePigeon);
+                    needsReWrite = true;
                 }
             }
         }

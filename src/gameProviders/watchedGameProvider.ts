@@ -73,8 +73,8 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
             prohibitedLocs.forEach(loc => this.mineField.delete(loc.toNumber(this.size)));
             iterationCount++;
         }
-        console.log(`Took ${iterationCount} rounds to find a good board setup.`)
-        console.log(`minelocs.size ${this.mineField.size}`)
+        // console.log(`Took ${iterationCount} rounds to find a good board setup.`)
+        // console.log(`minelocs.size ${this.mineField.size}`)
     }
 
     private addLocAndZeroNeighbours = (loc: BoardLoc, neededVisits: Set<number>) => {
@@ -144,7 +144,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
      * Override of superclass.
      */
     public moveSuggestion(): BoardLoc | undefined {
-        const logStuffHere = false;
+        const logStuffHere = true;
         if (this.gameOver) return undefined;
 
         // First move right in the middle baby.
