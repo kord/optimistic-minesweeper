@@ -149,7 +149,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
 
         // First move right in the middle baby.
         if (this.movesMade === 0) {
-            // return new BoardLoc(0,0);
+            return new BoardLoc(0,0);
             return new BoardLoc(Math.floor(this.size.height / 2), Math.floor(this.size.width / 2));
         }
 

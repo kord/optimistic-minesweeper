@@ -1,4 +1,4 @@
-import {VariableAssignments} from "../types";
+import {VariableAssignments} from "./variableAssignments";
 
 export class SolutionTracker {
     public knownSolutions: Set<VariableAssignments>;

@@ -1,9 +1,9 @@
 import {BoardLoc} from "../boardLoc";
-import {VariableAssignments} from "../types";
 import WatchedGameProvider from "./watchedGameProvider";
 import Watcher from "../logic/watcher";
 import {iMinesweeperGameProvider} from "./gameProvider";
 import {Constants, FixedBoardMinesweeperConfig} from "../constants";
+import {VariableAssignments} from "../logic/variableAssignments";
 
 /**
  * Provide interaction with a minefield that can morph before the user clicks on a mine. If the user clicks on a

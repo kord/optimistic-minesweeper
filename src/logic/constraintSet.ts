@@ -1,5 +1,5 @@
-import {VariableAssignments} from "../types";
 import {Constraint} from "./constraint";
+import {VariableAssignments} from "./variableAssignments";
 
 /**
  * A set of constraints that we can perform sound inferences on and add additional constraints to.
@@ -17,6 +17,7 @@ export class ConstraintSet {
     private pigeonHoleFalseInferenceChangesMade: number = 0;
     private reWriteChangesMade: number = 0;
     private pruneChangesMade: number = 0;
+    private failedSimpleAssumptionChangesMade: number = 0;
 
     constructor(private numVars: number) {
         this.fixedVariables = new VariableAssignments();
@@ -37,6 +38,7 @@ export class ConstraintSet {
             `ReWrites: ${this.reWriteChangesMade}, ` +
             `Prunes: ${this.pruneChangesMade}, ` +
             `Disjointify: ${this.disjointifyInferenceChangesMade}, ` +
+            `BadGuess: ${this.failedSimpleAssumptionChangesMade}, ` +
             `Pigeon: ${this.pigeonHoleTrueInferenceChangesMade}/${this.pigeonHoleFalseInferenceChangesMade}, \n` +
             `ShortConstraintCount: ${shortConstraints}`;
     }
@@ -59,29 +61,38 @@ export class ConstraintSet {
      */
     public findRandomCompleteAssignment(): VariableAssignments | undefined {
         const toy = this.copy();
-        let iterCount = 0;
+        let fixedConstraintCount = 0;
 
         // If we set enough trues, we'll either fuck up and have an unsatisfiable set of constraints or we'll reduce
         // all of the constraints to trivially true and make them disappear.
         while (toy.size > 0) {
-            iterCount += 1;
-            if (iterCount > this.numVars + 10) {
-                console.error(`Breaking out early from bad loop.`);
-                return undefined;
-            }
-
             // Pick a random constraint and satisfy it with whatever variable assignment.
             const randomConstraint = toy.randomConstraint();
             const newSettings = randomConstraint.randomSatisfyingAssignment();
+            fixedConstraintCount++;
 
             try {
                 toy.fixedVariables.mergeFrom(newSettings);
                 toy.inferenceLoop(false);
             } catch (e) {
                 // We produced a false contradiction with our haphazard guessing.
-                // TODO: If we knew we had failed quickly enough (after a single variable assignment) then we could
-                //  use this failure to learn in the outer context. Actually, this would be easy to do and free
-                //  learning.
+                // If we know we had failed quickly enough (after a single variable assignment) then we could
+                // use this failure to learn in the outer context. Actually, this is easy to do and free learning.
+                if (fixedConstraintCount === 1 && randomConstraint.looksLikeXor) {
+                    // If we're here, we made a bad guess and immediately found a contradiction. There is only
+                    // alternative to the xor constraint we chose, so we can infer it must hold in the original
+                    // constraint system we're looking to satisfy.
+
+                    // HAHAHA, in practice this never runs, even if we use the heavier inference loop in this function.
+                    // Maybe it's covered by by pigeonhole, or maybe we just don't end up with many xor-like
+                    // constraints. I was thinking of implementing some bipartite graph logic for xor-like constraints
+                    // and treating them specially, like so we could resolve "wires" quicker. Total waste of effort,
+                    // nevermind that.
+                    this.failedSimpleAssumptionChangesMade++;
+                    console.log(`BUSTED ON CONSTRAINT ${randomConstraint.toString()}`);
+                    this.fixedVariables.mergeFrom(newSettings.invertAssignments());
+                }
+
                 return undefined;
             }
         }

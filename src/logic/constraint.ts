@@ -1,13 +1,17 @@
 import {BoardLoc} from "../boardLoc";
-import {VariableAssignments} from "../types";
+import {VariableAssignments} from "./variableAssignments";
 
 /**
  * A single constraint identifying a collection of boolean variables and their known sum.
  */
 export class Constraint {
-
     constructor(public vars: number[], public trueCount: number, public location: BoardLoc | undefined = undefined) {
         vars.sort(((a, b) => a - b));
+    }
+
+    get looksLikeXor(): boolean {
+        // This constraint says that of 2 variables, one has to be true, the other false.
+        return this.size === 2 && this.trueCount === 1;
     }
 
     public get falseCount(): number {

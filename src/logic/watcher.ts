@@ -1,10 +1,11 @@
 import {BoardLoc} from "../boardLoc";
-import {Observation, VariableAssignments} from "../types";
+import {Observation} from "../types";
 import {ConstraintSet} from "./constraintSet";
 import {FixedBoardMinesweeperConfig} from "../constants";
 import {BoardSize} from "../boardSize";
 import {SolutionTracker} from "./solutionTracker";
 import {Constraint} from "./constraint";
+import {VariableAssignments} from "./variableAssignments";
 
 export interface DiagnosticInfo {
     knownNonMine?: boolean,
