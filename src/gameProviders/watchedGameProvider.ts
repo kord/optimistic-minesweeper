@@ -143,13 +143,13 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
     /**
      * Override of superclass.
      */
-    public moveSuggestion(): BoardLoc | undefined {
+    public moveSuggestion(guessCornerFirst: boolean): BoardLoc | undefined {
         const logStuffHere = true;
         if (this.gameOver) return undefined;
 
         // First move right in the middle baby.
         if (this.movesMade === 0) {
-            return new BoardLoc(0,0);
+            if (guessCornerFirst) return new BoardLoc(0,0);
             return new BoardLoc(Math.floor(this.size.height / 2), Math.floor(this.size.width / 2));
         }
 
@@ -180,7 +180,7 @@ class WatchedGameProvider extends MinimalProvider implements iMinesweeperGamePro
 
         // Hmm. Nothing in there either. Just return something random.
         if (logStuffHere) console.log('WatchedGameProvider is issuing a braindead moveSuggestion.');
-        return super.moveSuggestion();
+        return super.moveSuggestion(guessCornerFirst);
     }
 
     /**

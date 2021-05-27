@@ -214,7 +214,7 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
         if (game.gameOver) {
             this.restart();
         } else {
-            const loc = game.moveSuggestion();
+            const loc = game.moveSuggestion(this.boardOptions.autoPlayGuessCornerFirst);
             if (loc === undefined) return;
             this.boardRef.current?.visitFn(loc);
         }
@@ -399,6 +399,15 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
                                className={'game-button step-button'}
                                value="Step"
                                onClick={this.doAutomaticVisit}/>
+                        <br/>
+                        <label>
+                            <input type="checkbox"
+                                   key={'autoPlayGuessCornerFirst'}
+                                   checked={this.boardOptions.autoPlayGuessCornerFirst}
+                                   name={'autoPlayGuessCornerFirst'}
+                                   onChange={this.handleBoardOptionsChange}/>
+                            autoPlayGuessCornerFirst
+                        </label>
                         <br/>
                         <label>
                             <input type="checkbox"

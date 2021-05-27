@@ -4,6 +4,7 @@ import {WatcherConfig} from "./logic/watcher";
 export interface BoardOptions {
     autoPlay: boolean,
     autoPlayDelayMs: number,
+    autoPlayGuessCornerFirst: boolean,
     showKnowledgeOverlay: boolean,
     showProbabilityOverlay: boolean,
     autoVisitNeighboursOfZeros: boolean,
@@ -64,6 +65,7 @@ export class Constants {
     static defaultBoardOptions: BoardOptions = {
         autoPlay: false,
         autoPlayDelayMs: 200,
+        autoPlayGuessCornerFirst: false,
         showKnowledgeOverlay: false,
         showProbabilityOverlay: false,
         autoVisitNeighboursOfZeros: true,
@@ -77,6 +79,7 @@ export class Constants {
     static autoplayNiceBoardOptions: BoardOptions = {
         autoPlay: true,
         autoPlayDelayMs: 500,
+        autoPlayGuessCornerFirst: false,
         showKnowledgeOverlay: true,
         showProbabilityOverlay: false,
         autoVisitNeighboursOfZeros: true,
@@ -89,6 +92,7 @@ export class Constants {
     static autoplayShowProbabilityBoardOptions: BoardOptions = {
         autoPlay: true,
         autoPlayDelayMs: 500,
+        autoPlayGuessCornerFirst: false,
         showKnowledgeOverlay: true,
         showProbabilityOverlay: true,
         autoVisitNeighboursOfZeros: true,

@@ -34,7 +34,7 @@ export interface iMinesweeperGameProvider {
     // Reveal the mines, ending the game in the process, if it's not over already.
     mineLocations: () => BoardLoc[],
     // Get a move suggestion straight from the horse's mouth. Used for autoplay mode.
-    moveSuggestion: () => BoardLoc | undefined,
+    moveSuggestion: (guessCornerFirst: boolean) => BoardLoc | undefined,
 }
 
 export abstract class MinimalProvider {
@@ -98,8 +98,12 @@ export abstract class MinimalProvider {
     /**
      * The subclass should reimplement this to use its knowledge to make better move selections.
      */
-    public moveSuggestion(): BoardLoc | undefined {
+    public moveSuggestion(guessCornerFirst: boolean): BoardLoc | undefined {
         if (this.gameOver) return undefined;
+        if (guessCornerFirst && this.visitResults.size === 0) {
+            return new BoardLoc(0, 0);
+        }
+
         let locnum: number | undefined;
         while (locnum === undefined || this.visitResults.has(locnum)) {
             locnum = Math.floor(Math.random() * this.numLocs);
