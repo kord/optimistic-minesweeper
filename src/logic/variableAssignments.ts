@@ -1,3 +1,7 @@
+/**
+ * This captures a collection of boolean variables assigned as you please to true and false.
+ * There are a few convenience functions in here for manipulating these things.
+ */
 export class VariableAssignments {
     public trues = new Set<number>();
     public falses = new Set<number>();
@@ -49,6 +53,11 @@ export class VariableAssignments {
         return true;
     }
 
+    /**
+     * Returns false if some variable in this and in requirements contradict each other, true if it is conceivable
+     * that both this and requirements could hold.
+     * @param requirements
+     */
     public consistentWith(requirements: VariableAssignments) {
         let iter = requirements.falses.keys();
         for (let i = iter.next(); !i.done; i = iter.next()) {
@@ -66,7 +75,7 @@ export class VariableAssignments {
     }
 
     /**
-     * Invert all of the assignments in place and return itself, after flipping everything.
+     * Invert all of the assignments in place and return itself.
      */
     public invertAssignments() {
         const swapper = this.trues;
