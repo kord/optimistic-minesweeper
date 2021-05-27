@@ -206,6 +206,9 @@ class MinesweeperGame extends Component<MinesweeperGameProps, MinesweeperGameSta
 
     private doAutomaticVisit = () => {
         // console.log(`Running doAutomaticVisit`);
+
+        // Can't hurt if we're the one running. Easier than hunting down my bugs that lets this run multiple times.
+        this.cancelAutoPlay();
         const game = this.state.gameProvider;
 
         if (game.gameOver) {
