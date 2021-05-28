@@ -1,4 +1,5 @@
 import {AbbreviatedVariableAssignment, VariableAssignments} from "./variableAssignments";
+import {shuffle} from "../utility";
 
 export class SolutionTracker {
     public knownSolutions: Set<AbbreviatedVariableAssignment>;
@@ -75,6 +76,9 @@ export class SolutionTracker {
     public variablesInOrderOfHeuristicSafety(): number[] {
         const locs = [];
         for (let i = 0; i < this.numVariables; i++) locs.push(i);
+        // Get some disorder in here first, so we don't just have early number variables with the same probability
+        // chosen every time.
+        shuffle(locs);
         locs.sort((a, b) => (this.mineProbability(a) || 0) - (this.mineProbability(b) || 0))
         return locs;
     }
