@@ -27,7 +27,9 @@ class ForcedGuessesAlwaysSucceedGameProvider extends WatchedGameProvider impleme
     protected changedMinefieldInResponseToNextVisit(loc: BoardLoc): Set<number> | undefined {
         const diagnosticInfo = this.diagnosticInfo(loc);
         // Nothing we can do for you if it's already written in stone.
-        if (diagnosticInfo.knownMine || diagnosticInfo.knownNonMine) return undefined;
+        if (diagnosticInfo.knownMine || diagnosticInfo.knownNonMine) {
+            return undefined;
+        }
 
         // Don't bother rewriting anything if you didn't even fuck up.
         if (!this.hasMine(loc)) return undefined;

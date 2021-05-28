@@ -1,5 +1,5 @@
 import {Constraint} from "./constraint";
-import {VariableAssignments} from "./variableAssignments";
+import {AbbreviatedVariableAssignment, VariableAssignments} from "./variableAssignments";
 
 /**
  * A set of constraints that we can perform sound inferences on and add additional constraints to.
@@ -43,6 +43,32 @@ export class ConstraintSet {
             `ShortConstraintCount: ${shortConstraints}`;
     }
 
+    private copy() {
+        const ret = new ConstraintSet(this.numVars);
+        ret.fixedVariables = this.fixedVariables.copy();
+        ret.constraints = this.constraints.map(c => c.copy());
+        return ret;
+    }
+
+    /**
+     * Add new constraints and propagate some inferences into our fixedVariables
+     * @param constraints
+     */
+    public introduceConstraints = (constraints: Constraint[]) => {
+        // for (let i = 0; i < constraints.length; i++) {
+        //     constraints[i].rewrite(this.fixedVariables);
+        // }
+        this.constraints.push(...constraints);
+        this.maxSize = Math.max(this.maxSize, this.size);
+
+        // See if we can get any juice out of the new constraints.
+        this.inferenceLoop(true);
+
+        // Report on how we're doing.
+        if (ConstraintSet.logSelfAfterConstraintIntro) {
+            console.log(this.toString());
+        }
+    };
 
     public tryToBuildExtension(requirements: VariableAssignments): VariableAssignments | undefined {
         const toy = this.copy();
@@ -100,24 +126,32 @@ export class ConstraintSet {
     }
 
     /**
-     * Add new constraints and propagate some inferences into our fixedVariables
-     * @param constraints
+     * Find an AbbreviatedVariableAssignment or fail. This differs from findRandomCompleteAssignment in that we
+     * stop before satisfying the last constraint, returning it intact so we can smooth the probabilities under its
+     * final stage of variable assignment.
      */
-    public introduceConstraints = (constraints: Constraint[]) => {
-        // for (let i = 0; i < constraints.length; i++) {
-        //     constraints[i].rewrite(this.fixedVariables);
-        // }
-        this.constraints.push(...constraints);
-        this.maxSize = Math.max(this.maxSize, this.size);
+    public findRandomAbbreviatedAssignment() : AbbreviatedVariableAssignment | undefined {
+        const toy = this.copy();
 
-        // See if we can get any juice out of the new constraints.
-        this.inferenceLoop(true);
+        // If we set enough trues, we'll either fuck up and have an unsatisfiable set of constraints or we'll reduce
+        // all of the constraints to trivially true and make them disappear.
+        // When we have one constraint remaining
+        while (toy.size > 1) {
+            // Pick a random constraint and satisfy it with whatever variable assignment.
+            const randomConstraint = toy.randomConstraint();
+            const newSettings = randomConstraint.randomSatisfyingAssignment();
 
-        // Report on how we're doing.
-        if (ConstraintSet.logSelfAfterConstraintIntro) {
-            console.log(this.toString());
+            try {
+                toy.fixedVariables.mergeFrom(newSettings);
+                toy.inferenceLoop(false);
+            } catch (e) {
+                return undefined;
+            }
         }
-    };
+        // If we accidentally inferred through the last constraint, we just throw in a true constraint.
+        const lastConstraint = toy.constraints[0] || new Constraint([],0);
+        return new AbbreviatedVariableAssignment(toy.fixedVariables, lastConstraint);
+    }
 
     /**
      * Is the set of constraints represented by this consistent with the proposed variable assignments?
@@ -141,27 +175,6 @@ export class ConstraintSet {
     }
 
     /**
-     * Attempt to separate a pair of constraints from each other is the smaller one subtracts out.
-     * This is done for all pairs, so it's relatively expensive.
-     * This would be easier to do if we tracked neighbouring constraints.
-     */
-    private doPigeonHoleInference(): number {
-        let totalChanges = 0;
-        for (let i = 0; i < this.size; i++) {
-            for (let j = i + 1; j < this.size; j++) {
-                const c1 = this.constraints[i];
-                const c2 = this.constraints[j];
-                // We store the location with the constraints just so we can do this shortcutting step.
-                // Here we don't bother investigating constraint pairs that have no chance of having a common
-                // variable due to their origin on a minesweeper board.
-                if (!c1.location || !c2.location || c2.location.near(c2.location))
-                    totalChanges += this.tryPigeonHole(c1, c2);
-            }
-        }
-        return totalChanges;
-    }
-
-    /**
      * Rewrite every constraint using our current fixedVariables.
      */
     private reWriteConstraints(): number {
@@ -171,29 +184,6 @@ export class ConstraintSet {
             changes += constraint.rewrite(this.fixedVariables);
         }
         this.reWriteChangesMade += changes;
-        return changes;
-    }
-
-    /**
-     * Prune out constraint list, possibly throwing an error if we find a false constraint.
-     */
-    private pruneTrivialConstraints(): number {
-        let changes = 0;
-        for (let i = 0; i < this.size; i++) {
-            const constraint = this.constraints[i];
-            if (constraint.isFalse()) {
-                throw new Error('Found false constraint. Bad.');
-            }
-            if (constraint.isSimple()) {
-                changes += 1;
-                constraint.propagateKnowledge(this.fixedVariables.setTrue, this.fixedVariables.setFalse);
-            }
-            // Nothing interesting happened.
-        }
-        if (changes) {
-            this.constraints = this.constraints.filter(c => !c.isSimple());
-        }
-        this.pruneChangesMade += changes;
         return changes;
     }
 
@@ -236,11 +226,48 @@ export class ConstraintSet {
         return totalChanges;
     }
 
-    private copy() {
-        const ret = new ConstraintSet(this.numVars);
-        ret.fixedVariables = this.fixedVariables.copy();
-        ret.constraints = this.constraints.map(c => c.copy());
-        return ret;
+    /**
+     * Prune out constraint list, possibly throwing an error if we find a false constraint.
+     */
+    private pruneTrivialConstraints(): number {
+        let changes = 0;
+        for (let i = 0; i < this.size; i++) {
+            const constraint = this.constraints[i];
+            if (constraint.isFalse()) {
+                throw new Error('Found false constraint. Bad.');
+            }
+            if (constraint.isSimple()) {
+                changes += 1;
+                constraint.propagateKnowledge(this.fixedVariables.setTrue, this.fixedVariables.setFalse);
+            }
+            // Nothing interesting happened.
+        }
+        if (changes) {
+            this.constraints = this.constraints.filter(c => !c.isSimple());
+        }
+        this.pruneChangesMade += changes;
+        return changes;
+    }
+
+    /**
+     * Attempt to separate a pair of constraints from each other is the smaller one subtracts out.
+     * This is done for all pairs, so it's relatively expensive.
+     * This would be easier to do if we tracked neighbouring constraints.
+     */
+    private doPigeonHoleInference(): number {
+        let totalChanges = 0;
+        for (let i = 0; i < this.size; i++) {
+            for (let j = i + 1; j < this.size; j++) {
+                const c1 = this.constraints[i];
+                const c2 = this.constraints[j];
+                // We store the location with the constraints just so we can do this shortcutting step.
+                // Here we don't bother investigating constraint pairs that have no chance of having a common
+                // variable due to their origin on a minesweeper board.
+                if (!c1.location || !c2.location || c2.location.near(c2.location))
+                    totalChanges += this.tryPigeonHole(c1, c2);
+            }
+        }
+        return totalChanges;
     }
 
     private tryPigeonHole(x: Constraint, y: Constraint): number {
@@ -297,4 +324,5 @@ export class ConstraintSet {
 
         return changes;
     }
+
 }

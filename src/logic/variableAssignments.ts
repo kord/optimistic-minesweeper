@@ -2,6 +2,8 @@
  * This captures a collection of boolean variables assigned as you please to true and false.
  * There are a few convenience functions in here for manipulating these things.
  */
+import {Constraint} from "./constraint";
+
 export class VariableAssignments {
     public trues = new Set<number>();
     public falses = new Set<number>();
@@ -82,5 +84,44 @@ export class VariableAssignments {
         this.trues = this.falses;
         this.falses = swapper;
         return this;
+    }
+}
+
+/**
+ * A variable assignment with the last constraint remaining so we can smooth out all of the probability remaining in
+ * it cleanly instead of sampling from it.
+ */
+export class AbbreviatedVariableAssignment {
+    constructor(private variableAssignments: VariableAssignments, private lastConstraint: Constraint) {
+
+    }
+
+    /**
+     * Get the actual probabilities under this partial assignment and throw them all into the passed functions.
+     * @param addTrueSample Method to call to include trueness
+     * @param addFalseSample Method to call to include falseness
+     * @param constantFactor Multiply
+     */
+    public addSamples(addTrueSample: (variableNumber: number, probabilitySample: number) => void,
+               addFalseSample: (variableNumber: number, probabilitySample: number) => void,
+               constantFactor: number = 1) {
+        this.variableAssignments.trues.forEach(v => addTrueSample(v, constantFactor));
+        this.variableAssignments.falses.forEach(v => addFalseSample(v, constantFactor));
+        // We distribute the probability equally for each variable in the last constraint instead of randomly sampling
+        // solutions. We get a truer and smoother distribution this way.
+        this.lastConstraint.vars.forEach(v => {
+            addTrueSample(v, constantFactor * this.lastConstraint.trueCount / this.lastConstraint.size);
+            addFalseSample(v, constantFactor * this.lastConstraint.falseCount / this.lastConstraint.size);
+        });
+    }
+
+    /**
+     * Get the actual probabilities under this partial assignment and subtract them all via the passed functions.
+     * @param addTrueSample Method to call to include trueness
+     * @param addFalseSample Method to call to include falseness
+     */
+    public removeSamples(addTrueSample: (variableNumber: number, probabilitySample: number) => void,
+                  addFalseSample: (variableNumber: number, probabilitySample: number) => void) {
+        this.addSamples(addTrueSample, addFalseSample, -1);
     }
 }

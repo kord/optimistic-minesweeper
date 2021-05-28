@@ -5,7 +5,7 @@ import {FixedBoardMinesweeperConfig} from "../constants";
 import {BoardSize} from "../boardSize";
 import {SolutionTracker} from "./solutionTracker";
 import {Constraint} from "./constraint";
-import {VariableAssignments} from "./variableAssignments";
+import {AbbreviatedVariableAssignment, VariableAssignments} from "./variableAssignments";
 
 export interface DiagnosticInfo {
     knownNonMine?: boolean,
@@ -44,7 +44,7 @@ class Watcher implements iWatcher {
     private successRandomSatisfyingAssignment: number = 0;
     private attemptedRandomSatisfyingAssignment: number = 0;
     private minFindAndStoreContinuationsSuccessRate: number = Number.MAX_SAFE_INTEGER;
-    private readonly numVariables : number;
+    private readonly numVariables: number;
 
     constructor(public readonly boardConfig: FixedBoardMinesweeperConfig,
                 public readonly config: WatcherConfig,
@@ -74,6 +74,10 @@ class Watcher implements iWatcher {
         return this._frontier;
     }
 
+    public get knownSafeLocations(): Set<number> {
+        return this.constraints.fixedVariables.falses;
+    }
+
     public get neverSeenAsMineLocations(): Set<number> {
         const ret = this.solutionTracker.variablesNotKnownConsistentAsMine();
 
@@ -90,12 +94,26 @@ class Watcher implements iWatcher {
         return setIntersection(this.frontier, ret);
     }
 
-    public get knownSafeLocations(): Set<number> {
-        return this.constraints.fixedVariables.falses;
-    }
-
     private get size(): BoardSize {
         return this.boardConfig.dimensions.size;
+    }
+
+    /**
+     * Part of our public interface.
+     * Talk about what we can infer about the board location asked about.
+     * @param loc
+     */
+    public diagnosticInfo(loc: BoardLoc): DiagnosticInfo {
+        const locnum = loc.toNumber(this.size);
+        const prob = this.solutionTracker.mineProbability(locnum);
+        return {
+            onFrontierAndUnknown: this._frontier.has(locnum) && !this.constraints.fixedVariables.known(locnum),
+            // onFrontierAndUnknown: this.constraints.unknown.has(locnum),
+            knownNonMine: this.constraints.fixedVariables.falses.has(locnum),
+            knownMine: this.constraints.fixedVariables.trues.has(locnum),
+            mineProbability: prob,
+            couldBeAMine: prob === undefined || prob > 0,
+        }
     }
 
     /**
@@ -142,42 +160,13 @@ class Watcher implements iWatcher {
         // setImmediate(this.findAndStoreContinuations);
     }
 
-    /**
-     * Part of our public interface.
-     * Talk about what we can infer about the board location asked about.
-     * @param loc
-     */
-    public diagnosticInfo(loc: BoardLoc): DiagnosticInfo {
-        const locnum = loc.toNumber(this.size);
-        const prob = this.solutionTracker.mineProbability(locnum);
-        return {
-            onFrontierAndUnknown: this._frontier.has(locnum) && !this.constraints.fixedVariables.known(locnum),
-            // onFrontierAndUnknown: this.constraints.unknown.has(locnum),
-            knownNonMine: this.constraints.fixedVariables.falses.has(locnum),
-            knownMine: this.constraints.fixedVariables.trues.has(locnum),
-            mineProbability: prob,
-            couldBeAMine: prob === undefined || prob > 0,
-        }
-    }
-
-    public findPartialSatisfyingAssignment(predicate: (sat: VariableAssignments) => boolean) {
-        const iter = this.solutionTracker.knownSolutions.keys();
-        for (let ass = iter.next(); !ass.done; ass = iter.next()) {
-            if (predicate(ass.value)) return ass.value;
-        }
-        // for (let i = 0; i < this.knownSolutions.size; i++) {
-        //     const assignment = this.knownSolutions[i];
-        //     if (predicate(assignment)) {
-        //         return assignment;
-        //     }
-        // }
-        return undefined;
-    }
-
     public tryFindGameExtension(requirements: VariableAssignments, attempts: number): VariableAssignments | undefined {
-        const knownExtension = this.solutionTracker.findKnownSolutionConsistentWith(requirements);
-        if (knownExtension) return knownExtension;
+        // const knownExtension = this.solutionTracker.findKnownSolutionConsistentWith(requirements);
+        // if (knownExtension) return knownExtension;
 
+        // Build ourselves an extension, ignoring possibly useful stuff in this.solutionTracker
+        // TODO: Utilize SolutionTracker stuff by extending them. Not important though, probably slower than just
+        //  searching for one here.
         for (let i = 0; i < attempts; i++) {
             const ass = this.constraints.tryToBuildExtension(requirements);
             if (ass) {
@@ -212,10 +201,9 @@ class Watcher implements iWatcher {
         let i = 0;
         for (i = 0; !enoughContinuations() && i < this.config.futureReadsPerMove; i++) {
             this.attemptedRandomSatisfyingAssignment++;
-            // let ass = this.constraints.findRandomConsistentPartialAssignment(this.frontier);
-            let ass = this.constraints.findRandomCompleteAssignment();
-            if (ass) {
-                this.solutionTracker.addSolution(ass);
+            let abbreviatedAssignment = this.constraints.findRandomAbbreviatedAssignment();
+            if (abbreviatedAssignment) {
+                this.solutionTracker.addSolution(abbreviatedAssignment);
                 this.successRandomSatisfyingAssignment++;
             }
         }
@@ -241,16 +229,20 @@ class Watcher implements iWatcher {
 
     private pruneSolutions() {
         this.solutionTracker = new SolutionTracker(this.numVariables);
-        return
+        return;
 
-        // We get bad probabilities if we leave anything! here.
-        const baddies: VariableAssignments[] = [];
-        const iter = this.solutionTracker.knownSolutions.keys();
-        for (let ass = iter.next(); !ass.done; ass = iter.next()) {
-            if (!this.constraints.allSatisfiedBy(ass.value)) baddies.push(ass.value);
-        }
-
-        this.solutionTracker.removeSolutions(baddies);
+        // We get bad probabilities if we leave anything here.
+        // Also, this shouldn't work for abbreviatedVariableAssignments.
+        // const baddies: AbbreviatedVariableAssignment[] = [];
+        // const iter = this.solutionTracker.knownSolutions.keys();
+        // for (let ass = iter.next(); !ass.done; ass = iter.next()) {
+        //     const abbreviatedVariableAssignment = ass.value;
+        //     if (!this.constraints.allSatisfiedBy(abbreviatedVariableAssignment)) {
+        //         baddies.push(abbreviatedVariableAssignment);
+        //     }
+        // }
+        //
+        // this.solutionTracker.removeSolutions(baddies);
     }
 
 }

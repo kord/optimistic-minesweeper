@@ -1,12 +1,12 @@
-import {VariableAssignments} from "./variableAssignments";
+import {AbbreviatedVariableAssignment, VariableAssignments} from "./variableAssignments";
 
 export class SolutionTracker {
-    public knownSolutions: Set<VariableAssignments>;
+    public knownSolutions: Set<AbbreviatedVariableAssignment>;
     private timesMineInSolutions: number[];
     private timesEmptyInSolutions: number[];
 
     constructor(private numVariables: number) {
-        this.knownSolutions = new Set<VariableAssignments>();
+        this.knownSolutions = new Set<AbbreviatedVariableAssignment>();
         this.timesMineInSolutions = new Array(numVariables);
         this.timesEmptyInSolutions = new Array(numVariables);
         for (let i = 0; i < numVariables; i++) {
@@ -31,14 +31,21 @@ export class SolutionTracker {
     }
 
 
-    public removeSolutions(baddies: VariableAssignments[]) {
+    public removeSolutions(baddies: AbbreviatedVariableAssignment[]) {
         baddies.forEach(this.removeSolution);
     }
 
-    public addSolution(solution: VariableAssignments) {
+    public addSolution(solution: AbbreviatedVariableAssignment) {
         this.knownSolutions.add(solution);
-        solution.trues.forEach(loc => this.timesMineInSolutions[loc]++);
-        solution.falses.forEach(loc => this.timesEmptyInSolutions[loc]++);
+        solution.addSamples(this.addTrueSample, this.addFalseSample);
+    }
+
+    private addTrueSample = (variableNumber: number, probabilitySample: number) => {
+        this.timesMineInSolutions[variableNumber] += probabilitySample;
+    }
+
+    private addFalseSample = (variableNumber: number, probabilitySample: number) =>{
+        this.timesEmptyInSolutions[variableNumber] += probabilitySample;
     }
 
     public variablesNotKnownConsistentAsMine(): Set<number> {
@@ -49,21 +56,21 @@ export class SolutionTracker {
         return ret;
     }
 
-    public unseenVariableSettings(): VariableAssignments {
-        const ret = new VariableAssignments();
-        // If we're not even tracking anything, this is useless knowledge and would contain inconsistencies so
-        // we jump out early..
-        if (this.knownSolutions.size === 0) {
-            return ret;
-        }
-        this.timesEmptyInSolutions.forEach((val, variable) => {
-            if (val === 0) ret.setFalse(variable);
-        })
-        this.timesMineInSolutions.forEach((val, variable) => {
-            if (val === 0) ret.setTrue(variable);
-        })
-        return ret;
-    }
+    // public unseenVariableSettings(): VariableAssignments {
+    //     const ret = new VariableAssignments();
+    //     // If we're not even tracking anything, this is useless knowledge and would contain inconsistencies so
+    //     // we jump out early..
+    //     if (this.knownSolutions.size === 0) {
+    //         return ret;
+    //     }
+    //     this.timesEmptyInSolutions.forEach((val, variable) => {
+    //         if (val === 0) ret.setFalse(variable);
+    //     })
+    //     this.timesMineInSolutions.forEach((val, variable) => {
+    //         if (val === 0) ret.setTrue(variable);
+    //     })
+    //     return ret;
+    // }
 
     public variablesInOrderOfHeuristicSafety(): number[] {
         const locs = [];
@@ -72,23 +79,23 @@ export class SolutionTracker {
         return locs;
     }
 
-    public findKnownSolutionConsistentWith(requirements: VariableAssignments): VariableAssignments | undefined {
-        // Some early rejection criteria.
-        if (Array.from(requirements.trues).some(v => this.timesMineInSolutions[v] === 0)) return undefined;
-        if (Array.from(requirements.falses).some(v => this.timesEmptyInSolutions[v] === 0)) return undefined;
+    // public findKnownSolutionConsistentWith(requirements: VariableAssignments): VariableAssignments | undefined {
+    //     // Some early rejection criteria.
+    //     if (Array.from(requirements.trues).some(v => this.timesMineInSolutions[v] === 0)) return undefined;
+    //     if (Array.from(requirements.falses).some(v => this.timesEmptyInSolutions[v] === 0)) return undefined;
+    //
+    //     const iter = this.knownSolutions.keys();
+    //     for (let ass = iter.next(); !ass.done; ass = iter.next()) {
+    //         const assignment = ass.value;
+    //         const completion = assignment.completionConsistentWith(requirements);
+    //         if (completion) return completion;
+    //     }
+    // }
 
-        const iter = this.knownSolutions.keys();
-        for (let ass = iter.next(); !ass.done; ass = iter.next()) {
-            const assignment = ass.value;
-            if (assignment.consistentWith(requirements)) return assignment;
-        }
-    }
-
-    private removeSolution = (solution: VariableAssignments) => {
+    private removeSolution = (solution: AbbreviatedVariableAssignment) => {
         console.assert(this.knownSolutions.has(solution));
         this.knownSolutions.delete(solution);
-        solution.trues.forEach(loc => this.timesMineInSolutions[loc]--);
-        solution.falses.forEach(loc => this.timesEmptyInSolutions[loc]--);
+        solution.removeSamples(this.addTrueSample, this.addFalseSample);
     }
 
 }
