@@ -4,6 +4,7 @@
 
 .board {
     border: solid black var(--game-border-size);
+    /* https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting */
     -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
     -khtml-user-select: none; /* Konqueror HTML */
