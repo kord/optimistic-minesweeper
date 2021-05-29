@@ -44,8 +44,20 @@ class Board extends Component<BoardProps, Boardstate> {
 
         // Don't visit a flagged spot, even if we have the information to know full well it's safe.
         if (this.isFlagged(loc)) return;
-        if (game.alreadyVisited(loc)) return;
         if (!game.size.onBoard(loc)) return;
+        if (game.alreadyVisited(loc)) {
+            // Try to chord visit this.
+            const lastVisitResult = game.lastVisitResult(loc);
+            const flaggedNeighbours = this.flaggedNeighbours(loc);
+            if (flaggedNeighbours === lastVisitResult.neighboursWithMine!) {
+                const neighbours = loc.neighboursOnBoard(game.size)
+                    .filter(loc => !this.isFlagged(loc) && !game.alreadyVisited(loc));
+                for (let loc of neighbours) {
+                    if (!game.gameOver) this.props.visitFn(loc);
+                }
+            }
+            return;
+        }
 
         this.props.visitFn(loc);
 
@@ -158,7 +170,7 @@ class Board extends Component<BoardProps, Boardstate> {
                                     flaggedOrInferredMineNeighbours={this.flaggedOrInferredMineNeighbours(testResultRecord.location)}
                                     lastResult={testResultRecord}
                                     flagFn={this.toggleFlagFn}
-                                    visitFn={loc => this.visitFn(loc)}
+                                    visitFn={this.visitFn}
                                     boardOptions={this.props.boardOptions}
                         />)}
                 </div>
